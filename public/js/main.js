@@ -5,7 +5,9 @@ import { PCDLoader } from './PCDLoader.js';
 import { GeometryUtils } from './GeometryUtils.js';
 
 var container, stats;
-var camera, controls, scene, renderer;
+var camera, controls, scene, renderer, raycaster;
+var mouse, INTERSECTED;
+var bboxes = [];
 
 init();
 animate();
@@ -16,7 +18,7 @@ function init() {
     scene.background = new THREE.Color( 0x000000 );
     camera = new THREE.PerspectiveCamera( 65, window.innerWidth / window.innerHeight, 1, 800 );
     camera.position.x = -50;
-    camera.position.z = 50;
+    camera.position.z = 10;
     camera.position.y = 5;
     camera.up.set( 0, 0, 1);
     camera.lookAt( 0, 0, 0 );
@@ -24,8 +26,8 @@ function init() {
     var camera2 = new THREE.PerspectiveCamera( 40, 1, 1, 1000 );
     camera2.position.copy( camera.position );
 
-
-
+    mouse = new THREE.Vector2();
+    raycaster = new THREE.Raycaster();
     renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
@@ -80,9 +82,11 @@ function init() {
     //lineSegments.computeLineDistances();
     //objects.push( lineSegments );
     scene.add( lineSegments );
+    bboxes.push(lineSegments);
 
     lineSegments = new THREE.LineSegments( geometryCube.head, new THREE.LineBasicMaterial( { color: 0x00ff00 } ) );
     scene.add( lineSegments );
+    bboxes.push(lineSegments);
 
 
 
@@ -104,13 +108,27 @@ function init() {
     container.appendChild( stats.dom );
     window.addEventListener( 'resize', onWindowResize, false );
     window.addEventListener( 'keypress', keyboard );
+
+    document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 }
+
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize( window.innerWidth, window.innerHeight );
     controls.handleResize();
 }
+
+
+
+function onDocumentMouseMove( event ) {
+    event.preventDefault();
+    mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+    mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+    //console.log(mouse);
+}
+
+
 function keyboard( ev ) {
     var points = scene.getObjectByName( 'test.pcd' );
     switch ( ev.key || String.fromCharCode( ev.keyCode || ev.charCode ) ) {
@@ -129,11 +147,33 @@ function keyboard( ev ) {
     }
 }
 
+function render(){
+    raycaster.setFromCamera( mouse, camera );
+    var intersects = raycaster.intersectObjects( bboxes);
+    if ( intersects.length > 0 ) {
+        if ( INTERSECTED != intersects[ 0 ].object ) {
+            if ( INTERSECTED ) {
+                //INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+            } else {
 
+                INTERSECTED = intersects[ 0 ].object;
+                //INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
+                //INTERSECTED.material.emissive.setHex( 0xff0000 );
+                INTERSECTED.material.color={r:1,g:0,b:0};
+            }
+        }
+    } else {
+        if ( INTERSECTED ) 
+        INTERSECTED.material.color={r:0,g:0,b:1};
+        INTERSECTED = null;
+    }
+    
+    renderer.render( scene, camera );
+}
 function animate() {
     requestAnimationFrame( animate );
     controls.update();
-    renderer.render( scene, camera );
+    render();
     stats.update();
 }
 

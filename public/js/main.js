@@ -79,6 +79,13 @@ animate();
 render();
 
 function init() {
+    document.body.addEventListener('keydown', event => {
+        if (event.ctrlKey && 'asdv'.indexOf(event.key) !== -1) {
+          event.preventDefault()
+        }
+    })
+
+
     scene = new THREE.Scene();
     //scene.background = new THREE.Color( 0x000033 );
     // camera = new THREE.PerspectiveCamera( 65, window.innerWidth / window.innerHeight, 1, 800 );
@@ -295,6 +302,40 @@ function init() {
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 }
 
+
+function update_subview_by_windowsize(){
+    for ( var ii = 0; ii < views.length; ++ ii ) {
+        var view = views[ ii ];
+        var camera = view.camera;
+
+        var camera_width = camera.right - camera.left;
+        var camera_height  = camera.top - camera.bottom ;
+
+        var view_width = Math.floor( window.innerWidth * view.width );
+        var view_height = Math.floor( window.innerHeight * view.height );
+
+        if (camera_width/camera_height > view_width/view_height){
+            //increase height
+            camera_height = camera_width * view_height/view_width;
+            camera.top = camera_height/2;
+            camera.bottom = camera_height/-2;
+        }
+        else
+        {
+            camera_width = camera_height * view_width/view_height;
+            camera.right = camera_width/2;
+            camera.left = camera_width/-2;
+
+        }
+
+
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        if (ii>0)
+            view.cameraHelper.update();
+    }
+}
+
 function update_subview_by_bbox(mesh){
     var p = mesh.position;
     var r = mesh.rotation;
@@ -326,6 +367,7 @@ function update_subview_by_bbox(mesh){
     //views[2].camera.rotation.z= r.z;
     views[3].camera.far = mesh.scale.x/2 + 0.2;
     views[3].camera.near = - mesh.scale.x/2 - 0.2;
+    views[3].camera.updateProjectionMatrix();
     views[3].cameraHelper.update();
 }
 
@@ -337,7 +379,6 @@ function on_transform_change(event){
 
 
 function render(){
-    //renderer.render( scene, views[0].camera );
     for ( var ii = 0; ii < views.length; ++ ii ) {
         var view = views[ ii ];
         var camera = view.camera;
@@ -354,38 +395,10 @@ function render(){
         //renderer.clearColor(0x000000,1); // clear color buffer
 
         //camera.aspect = width / height;
-        camera.updateProjectionMatrix();
+        //camera.updateProjectionMatrix();
         renderer.render( scene, camera );
     }
 
-
-
-    // var left = Math.floor( window.innerWidth);
-    // var bottom = Math.floor( window.innerHeight);
-    // var width = Math.floor( window.innerWidth);
-    // var height = Math.floor( window.innerHeight);
-    // renderer.setViewport( left, bottom, width, height );
-    //renderer.setScissor( left, bottom, width, height );
-    //renderer.setScissorTest( true );
-    
-    //renderer.render( scene, camera );
-    //dirLightShadowMapViewer.render( renderer );
-
-    // if (view){
-    //     var vcamera = view.camera;
-    //     //view.updateCamera( camera, scene, mouseX, mouseY );
-    //     var left = Math.floor( window.innerWidth * view.left );
-    //     var bottom = Math.floor( window.innerHeight * view.bottom );
-    //     var width = Math.floor( window.innerWidth * view.width );
-    //     var height = Math.floor( window.innerHeight * view.height );
-    //     // renderer.setViewport( left, bottom, width, height );
-    //     // renderer.setScissor( left, bottom, width, height );
-    //     // renderer.setScissorTest( true );
-    //     // renderer.setClearColor( view.background );
-    //     // vcamera.aspect = width / height;
-    //     // vcamera.updateProjectionMatrix();
-    //     //renderer.render( scene, vcamera );
-    // }
 }
 
 
@@ -487,11 +500,15 @@ function onWindowResize() {
     //renderer.setSize( window.innerWidth, window.innerHeight );
 
     if ( windowWidth != window.innerWidth || windowHeight != window.innerHeight ) {
+
+        update_subview_by_windowsize();
+
         windowWidth = window.innerWidth;
         windowHeight = window.innerHeight;
         renderer.setSize( windowWidth, windowHeight );
     }
-                    
+    
+
     //controls.handleResize();
 
     //dirLightShadowMapViewer.updateForWindowResize();
@@ -509,29 +526,35 @@ function keydown( ev ) {
             points.material.size /= 1.2;
             points.material.needsUpdate = true;
             break;
-        case 'c':
-            points.material.color.setHex( Math.random() * 0xffffff );
-            //points.material.transparent = true;
-            //points.material.opacity = 0.8;
-            points.material.needsUpdate = true;
+        case 'r': // Q
+            //transform_control.setSpace( transform_control.space === "local" ? "world" : "local" );
+            if (selected_box){
+                selected_box.rotation.x=0;
+                selected_box.rotation.y=0;
+                selected_box.rotation.z=0;
+                update_subview_by_bbox(selected_box);
+            }
             break;
         
-        case 'q': // Q
-            transform_control.setSpace( transform_control.space === "local" ? "world" : "local" );
-            break;
-        case 17: // Ctrl
-            transform_control.setTranslationSnap( 100 );
-            transform_control.setRotationSnap( Math.degToRad( 15 ) );
-            break;
-        case 'w': // W
+        case '1': 
             transform_control.setMode( "translate" );
+            transform_control.showY=true;
+            transform_control.showX=true;
+            transform_control.showz=true;
             break;
-        case 'e': // E
+        case '2': 
             transform_control.setMode( "rotate" );
+            transform_control.showY=false;
+            transform_control.showX=false;
+            transform_control.showz=true;
             break;
-        case 'r': // R
+        case '3': 
             transform_control.setMode( "scale" );
+            transform_control.showY=true;
+            transform_control.showX=true;
+            transform_control.showz=true;
             break;
+
 
         case 'b':
             mesh = new_bbox();
@@ -547,71 +570,112 @@ function keydown( ev ) {
         //case 109: // -, _, num-
         transform_control.setSize( Math.max( transform_control.size - 0.1, 0.1 ) );
             break;
-        case 'x': // X
-        transform_control.showX = ! transform_control.showX;
+        case 'z': // X
+            transform_control.showX = ! transform_control.showX;
             break;
-        case 'y': // Y
-        transform_control.showY = ! transform_control.showY;
+        case 'x': // Y
+            transform_control.showY = ! transform_control.showY;
             break;
-        case 'z': // Z
-        transform_control.showZ = ! transform_control.showZ;
+        case 'c': // Z
+            transform_control.showZ = ! transform_control.showZ;
             break;
         case ' ': // Spacebar
             transform_control.enabled = ! transform_control.enabled;
             break;
-        case '1':            
-        case '2':
-        case '3':
-            views[ev.key].cameraHelper.visible = !views[ev.key].cameraHelper.visible;
+        case '4':            
+        case '5':
+        case '6':
+            views[ev.key-'3'].cameraHelper.visible = !views[ev.key-'3'].cameraHelper.visible;
             break;
+
         case 'a':
             if (selected_box){
-                selected_box.position.x+=0.05;
+                selected_box.position.x -= 0.05;
                 update_subview_by_bbox(selected_box);
             }
             break;
         case 'A':
             if (selected_box){
-                selected_box.position.x-=0.05;
+                selected_box.position.x += 0.05;
                 update_subview_by_bbox(selected_box);
-            }
+            }            
             break;
         case 's':
             if (selected_box){
-                selected_box.position.y+=0.05;
+                selected_box.position.y -= 0.05;
                 update_subview_by_bbox(selected_box);
             }
             break;
         case 'S':
             if (selected_box){
-                selected_box.position.y-=0.05;
+                selected_box.position.y += 0.05;
                 update_subview_by_bbox(selected_box);
-            }
+            }            
             break;
         case 'd':
             if (selected_box){
-                selected_box.position.z+=0.05;
+                selected_box.position.z -= 0.05;
                 update_subview_by_bbox(selected_box);
             }
             break;
         case 'D':
             if (selected_box){
-                selected_box.position.z-=0.05;
+                selected_box.position.z += 0.05;
                 update_subview_by_bbox(selected_box);
-            }
-            break;
+            }            
+            break;        
+        
         case 'f':
             if (selected_box){
-                selected_box.rotation.z+=0.02;
+                selected_box.rotation.z -= 0.01;
                 update_subview_by_bbox(selected_box);
             }
             break;
         case 'F':
             if (selected_box){
-                selected_box.rotation.z-=0.02;
+                selected_box.rotation.z += 0.01;
                 update_subview_by_bbox(selected_box);
             }
             break;
+        
+        case 'q':
+            if (selected_box){
+                selected_box.scale.x /= 1.01;
+                update_subview_by_bbox(selected_box);
+            }
+            break;
+        case 'Q':
+            if (selected_box){
+                selected_box.scale.x *= 1.01;
+                update_subview_by_bbox(selected_box);
+            }
+            break;
+        case 'w':
+            if (selected_box){
+                selected_box.scale.y /= 1.01;
+                update_subview_by_bbox(selected_box);
+            }
+            break;
+        case 'W':
+            if (selected_box){
+                selected_box.scale.y *= 1.01;
+                update_subview_by_bbox(selected_box);
+            }
+            break;
+        case 'e':
+            if (selected_box){
+                selected_box.scale.z /= 1.01;
+                update_subview_by_bbox(selected_box);
+            }
+            break;
+        case 'E':
+            if (selected_box){
+                selected_box.scale.z *= 1.01;
+                update_subview_by_bbox(selected_box);
+            }
+            break;
+    
+    
     }
 }
 

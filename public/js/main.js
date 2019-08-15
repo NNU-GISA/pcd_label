@@ -10,7 +10,8 @@ import { ShadowMapViewer } from './examples/jsm/utils/ShadowMapViewer.js';
 
 var container;
 //var stats;
-var camera, controls, scene, renderer, transform_control, orbit;
+//var camera, 
+var controls, scene, renderer, transform_control, orbit;
 var mesh;
 var raycaster;
 var mouse, INTERSECTED;
@@ -20,18 +21,53 @@ var mouseX = 0, mouseY = 0;
 var windowWidth, windowHeight;
             
 var bboxes=[];
+var views;
+var mouseX = 0, mouseY = 0;
+var windowWidth, windowHeight;
+var views = [
+    {
+        left: 0,
+        bottom: 0,
+        width: 1.0,
+        height: 1.0,
+        background: new THREE.Color( 0.5, 0.5, 0.7 ),
+        eye: [ 0, 0, 50 ],
+        up: [ 0, 0, 1 ],
+        fov: 65
+    },
+    {
+        left: 0.7,
+        bottom: 0.7,
+        width: 0.3,
+        height: 0.3,
+        background: new THREE.Color( 0.7, 0.5, 0.5 ),
+        eye: [ 0, 1800, 0 ],
+        up: [ 0, 0, 1 ],
+        fov: 45
+    },
+    {
+        left: 0.7,
+        bottom: 0.4,
+        width: 0.3,
+        height: 0.3,
+        background: new THREE.Color( 0.5, 0.7, 0.7 ),
+        eye: [ 1400, 800, 1400 ],
+        up: [ 0, 1, 0 ],
+        fov: 60
+    },
 
-var view={
-    left: 0,
-    bottom: 0,
-    width: 0.1,
-    height: 0.1,
-    background: new THREE.Color( 0.0, 0.0, 1 ),
-    eye: [ -50, 50, 5 ],
-    up: [ 0, 0, 1 ],
-    fov: 60,
-    
-};
+    {
+        left: 0.7,
+        bottom: 0.1,
+        width: 0.3,
+        height: 0.3,
+        background: new THREE.Color( 0.5, 0.7, 0.7 ),
+        eye: [ 1400, 800, 1400 ],
+        up: [ 0, 1, 0 ],
+        fov: 60
+    }
+];
+
 
 var dirLight, spotLight;
 var dirLightShadowMapViewer, spotLightShadowMapViewer;
@@ -43,39 +79,95 @@ render();
 function init() {
     scene = new THREE.Scene();
     scene.background = new THREE.Color( 0x000000 );
-    camera = new THREE.PerspectiveCamera( 65, window.innerWidth / window.innerHeight, 1, 800 );
-    camera.position.x = -50;
-    camera.position.z = 50;
-    camera.position.y = 5;
-    camera.up.set( 0, 0, 1);
-    camera.lookAt( 0, 0, 0 );
+    // camera = new THREE.PerspectiveCamera( 65, window.innerWidth / window.innerHeight, 1, 800 );
+    // camera.position.x = 0;
+    // camera.position.z = 50;
+    // camera.position.y = 0;
+    // camera.up.set( 0, 0, 1);
+    // camera.lookAt( 1, 10, 0 );
 
+    //scene.add( new THREE.CameraHelper( camera ) );
 
-    if (view){
-        var vcamera = new THREE.PerspectiveCamera( view.fov, window.innerWidth / window.innerHeight, 1, 800 );
-        vcamera.position.fromArray( view.eye );
-        vcamera.up.fromArray( view.up );
-        view.camera = vcamera;
+    if (true){
+        var view = views[ 0 ];
+        var camera = new THREE.PerspectiveCamera( 65, window.innerWidth / window.innerHeight, 1, 800 );
+        camera.position.x = 0;
+        camera.position.z = 50;
+        camera.position.y = 0;
+        camera.up.set( 0, 0, 1);
+        camera.lookAt( 1, 10, 0 );
+        view.camera = camera;
     }
-                    
-    dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
-    dirLight.name = 'Dir. Light';
-    dirLight.position.set( 0, 10, 0 );
-    dirLight.castShadow = true;
-    dirLight.shadow.camera.near = 1;
-    dirLight.shadow.camera.far = 10;
-    dirLight.shadow.camera.right = 15;
-    dirLight.shadow.camera.left = - 15;
-    dirLight.shadow.camera.top	= 15;
-    dirLight.shadow.camera.bottom = - 15;
-    dirLight.shadow.mapSize.width = 1024;
-    dirLight.shadow.mapSize.height = 1024;
-    scene.add( dirLight );
-    scene.add( new THREE.CameraHelper( dirLight.shadow.camera ) );
-    
 
-    var camera2 = new THREE.PerspectiveCamera( 40, 1, 1, 1000 );
-    camera2.position.copy( camera.position );
+    if (true){
+        var view = views[ 1];
+        //var camera = new THREE.PerspectiveCamera( 65, window.innerWidth / window.innerHeight, 1, 800 );
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+        var asp = width/height;
+
+        var camera = new THREE.OrthographicCamera( -3*asp, 3*asp, 3, -3, -3, 3 );
+
+        var cameraOrthoHelper = new THREE.CameraHelper( camera );
+        scene.add( cameraOrthoHelper );
+        view["cameraHelper"] = cameraOrthoHelper;
+                
+        camera.position.x = 0;
+        camera.position.z = 0;
+        camera.position.y = 0;
+        camera.up.set( 0, 1, 0);
+        camera.lookAt( 0, 0, -3 );
+        view.camera = camera;
+    }
+
+    if (true){
+        var view = views[ 2];
+        //var camera = new THREE.PerspectiveCamera( 65, window.innerWidth / window.innerHeight, 1, 800 );
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+        var asp = width/height;
+
+        var camera = new THREE.OrthographicCamera( -3*asp, 3*asp, 3, -3, -3, 3 );
+
+        var cameraOrthoHelper = new THREE.CameraHelper( camera );
+        scene.add( cameraOrthoHelper );
+        view["cameraHelper"] = cameraOrthoHelper;
+                
+        camera.position.x = 0;
+        camera.position.z = 0;
+        camera.position.y = 0;
+        camera.up.set( 0, 0, 1);
+        camera.lookAt( 0, -3, 0 );
+        view.camera = camera;
+    }
+
+    if (true){
+        var view = views[ 3];
+        //var camera = new THREE.PerspectiveCamera( 65, window.innerWidth / window.innerHeight, 1, 800 );
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+        var asp = width/height;
+
+        var camera = new THREE.OrthographicCamera( -3*asp, 3*asp, 3, -3, -3, 3 );
+
+        var cameraOrthoHelper = new THREE.CameraHelper( camera );
+        scene.add( cameraOrthoHelper );
+        view["cameraHelper"] = cameraOrthoHelper;
+                
+        camera.position.x = 0;
+        camera.position.z = 0;
+        camera.position.y = 0;
+        camera.up.set( 0, 0, 1);
+        camera.lookAt( -3, 0, 0 );
+        view.camera = camera;
+    }
+
+    
+    //camera = views[0].camera;
+   
+
+    // var camera2 = new THREE.PerspectiveCamera( 40, 1, 1, 1000 );
+    // camera2.position.copy( camera.position );
 
     mouse = new THREE.Vector2();
     raycaster = new THREE.Raycaster();
@@ -83,7 +175,8 @@ function init() {
     renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
-
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.BasicShadowMap;
 
 
     renderer.setClearColor( 0x000000, 0 );
@@ -109,13 +202,15 @@ function init() {
     // controls.minDistance = 3;
     // controls.maxDistance = 3 * 100;
 
-    orbit = new OrbitControls( camera, renderer.domElement );
+    orbit = new OrbitControls( views[0].camera, renderer.domElement );
     orbit.update();
     orbit.addEventListener( 'change', render );
 
 
-    transform_control = new TransformControls( camera, renderer.domElement );
+    transform_control = new TransformControls( views[0].camera, renderer.domElement );
     transform_control.addEventListener( 'change', render );
+    transform_control.addEventListener( 'objectChange', on_transform_change );
+    
     transform_control.addEventListener( 'dragging-changed', function ( event ) {
         orbit.enabled = ! event.value;
     } );
@@ -138,6 +233,7 @@ function init() {
     
     var loader = new PCDLoader();
     loader.load( 'static/pcd/test.pcd', function ( points ) {
+        points.castShadow = true;
         scene.add( points );
         var center = points.geometry.boundingSphere.center;
         //controls.target.set( center.x, center.y, center.z );
@@ -159,6 +255,7 @@ function init() {
     //scene.add( line );
     
     mesh = new_bbox();
+    mesh.castShadow=true;
     bboxes.push(mesh);
     scene.add(mesh);
 
@@ -183,41 +280,104 @@ function init() {
     
      //container.appendChild( stats.dom );
      
-     dirLightShadowMapViewer = new ShadowMapViewer( dirLight );
-     dirLightShadowMapViewer.position.x = 10;
-     dirLightShadowMapViewer.position.y = 10;
-     dirLightShadowMapViewer.size.width = 256;
-     dirLightShadowMapViewer.size.height = 256;
-     dirLightShadowMapViewer.update(); 
+
 
 
     window.addEventListener( 'resize', onWindowResize, false );
     window.addEventListener( 'keydown', keydown );
 
-    //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+    document.addEventListener( 'mousemove', onDocumentMouseMove, false );
     document.addEventListener( 'mousedown', onDocumentMouseDown, false );
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-    document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+    //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 }
 
+function update_subview_by_bbox(mesh){
+    var p = mesh.position;
+    var r = mesh.rotation;
+
+    views[1].camera.position.x= p.x;
+    views[1].camera.position.y= p.y;
+    views[1].camera.position.z= p.z;
+
+    //views[1].camera.rotation.x= r.x;
+    //views[1].camera.rotation.y= r.y;
+    views[1].camera.rotation.z= r.z;
+
+
+    views[2].camera.position.x= p.x;
+    views[2].camera.position.y= p.y;
+    views[2].camera.position.z= p.z;
+
+    //views[2].camera.rotation.x= r.x;
+    views[2].camera.rotation.y= -r.z;
+    //views[2].camera.rotation.z= r.z;
+
+
+    views[3].camera.position.x= p.x;
+    views[3].camera.position.y= p.y;
+    views[3].camera.position.z= p.z;
+
+    //views[2].camera.rotation.x= r.x;
+    views[3].camera.rotation.y= Math.PI/2 + r.z;
+    //views[2].camera.rotation.z= r.z;
+    views[3].camera.far = mesh.scale.x/2 + 0.2;
+    views[3].camera.near = - mesh.scale.x/2 - 0.2;
+    views[3].cameraHelper.update();
+}
+
+function on_transform_change(event){
+    console.log("transform changed");
+    var mesh = event.target.object;
+    update_subview_by_bbox(mesh);    
+}
+
+
 function render(){
-    renderer.render( scene, camera );
-    dirLightShadowMapViewer.render( renderer );
-    //if (view){
-    //    var vcamera = view.camera;
-        // //view.updateCamera( camera, scene, mouseX, mouseY );
-        // var left = Math.floor( windowWidth * view.left );
-        // var bottom = Math.floor( windowHeight * view.bottom );
-        // var width = Math.floor( windowWidth * view.width );
-        // var height = Math.floor( windowHeight * view.height );
-        // renderer.setViewport( left, bottom, width, height );
-        // renderer.setScissor( left, bottom, width, height );
-        // renderer.setScissorTest( true );
-        // renderer.setClearColor( view.background );
-        // vcamera.aspect = width / height;
-        // vcamera.updateProjectionMatrix();
-    //    renderer.render( scene, vcamera );
-    //}
+    //renderer.render( scene, views[0].camera );
+    for ( var ii = 0; ii < views.length; ++ ii ) {
+        var view = views[ ii ];
+        var camera = view.camera;
+        //view.updateCamera( camera, scene, mouseX, mouseY );
+        var left = Math.floor( window.innerWidth * view.left );
+        var bottom = Math.floor( window.innerHeight * view.bottom );
+        var width = Math.floor( window.innerWidth * view.width );
+        var height = Math.floor( window.innerHeight * view.height );
+        renderer.setViewport( left, bottom, width, height );
+        renderer.setScissor( left, bottom, width, height );
+        renderer.setScissorTest( true );
+        renderer.setClearColor( view.background );
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.render( scene, camera );
+    }
+
+    // var left = Math.floor( window.innerWidth);
+    // var bottom = Math.floor( window.innerHeight);
+    // var width = Math.floor( window.innerWidth);
+    // var height = Math.floor( window.innerHeight);
+    // renderer.setViewport( left, bottom, width, height );
+    //renderer.setScissor( left, bottom, width, height );
+    //renderer.setScissorTest( true );
+    
+    //renderer.render( scene, camera );
+    //dirLightShadowMapViewer.render( renderer );
+
+    // if (view){
+    //     var vcamera = view.camera;
+    //     //view.updateCamera( camera, scene, mouseX, mouseY );
+    //     var left = Math.floor( window.innerWidth * view.left );
+    //     var bottom = Math.floor( window.innerHeight * view.bottom );
+    //     var width = Math.floor( window.innerWidth * view.width );
+    //     var height = Math.floor( window.innerHeight * view.height );
+    //     // renderer.setViewport( left, bottom, width, height );
+    //     // renderer.setScissor( left, bottom, width, height );
+    //     // renderer.setScissorTest( true );
+    //     // renderer.setClearColor( view.background );
+    //     // vcamera.aspect = width / height;
+    //     // vcamera.updateProjectionMatrix();
+    //     //renderer.render( scene, vcamera );
+    // }
 }
 
 
@@ -226,10 +386,9 @@ function onDocumentMouseMove( event ) {
     event.preventDefault();
     mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
     mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-    //console.log(mouse);
+   //console.log(mouse);
 
-    mouseX = ( event.clientX - windowWidth / 2 );
-	mouseY = ( event.clientY - windowHeight / 2 );
+    
 }
 
 
@@ -266,7 +425,7 @@ function getIntersects( point, objects ) {
 
     mouse.set( ( point.x * 2 ) - 1, - ( point.y * 2 ) + 1 );
 
-    raycaster.setFromCamera( mouse, camera );
+    raycaster.setFromCamera( mouse, views[0].camera );
 
     return raycaster.intersectObjects( objects, false );  // 2nd argument: recursive.
 
@@ -289,10 +448,12 @@ function handleClick() {
                 // helper
 
                 transform_control.attach( object.userData.object );
+                update_subview_by_bbox(object.userData.object);
 
             } else {
 
                 transform_control.attach( object );
+                update_subview_by_bbox(object);
 
             }
 
@@ -310,12 +471,19 @@ function handleClick() {
 
 
 function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize( window.innerWidth, window.innerHeight );
+    //camera.aspect = window.innerWidth / window.innerHeight;
+    //camera.updateProjectionMatrix();
+    //renderer.setSize( window.innerWidth, window.innerHeight );
+
+    if ( windowWidth != window.innerWidth || windowHeight != window.innerHeight ) {
+        windowWidth = window.innerWidth;
+        windowHeight = window.innerHeight;
+        renderer.setSize( windowWidth, windowHeight );
+    }
+                    
     //controls.handleResize();
 
-    dirLightShadowMapViewer.updateForWindowResize();
+    //dirLightShadowMapViewer.updateForWindowResize();
 
 }
 
@@ -353,17 +521,12 @@ function keydown( ev ) {
         case 'r': // R
             transform_control.setMode( "scale" );
             break;
-        case 'd': // E
-            transform_control.detach();
-            break;
-        case 'a': // E
-            transform_control.attach(mesh);
-            break;
+
         case 'b':
-                mesh = new_bbox();
-                bboxes.push(mesh);
-                scene.add(mesh);
-                break;
+            mesh = new_bbox();
+            bboxes.push(mesh);
+            scene.add(mesh);
+            break;
         
         case '+':
         case '=': // +, =, num+
@@ -383,7 +546,12 @@ function keydown( ev ) {
         transform_control.showZ = ! transform_control.showZ;
             break;
         case ' ': // Spacebar
-        transform_control.enabled = ! transform_control.enabled;
+            transform_control.enabled = ! transform_control.enabled;
+            break;
+        case '1':            
+        case '2':
+        case '3':
+            views[ev.key].cameraHelper.visible = !views[ev.key].cameraHelper.visible;
             break;
     }
 }
@@ -397,14 +565,17 @@ function animate() {
 }
 
 function new_bbox(){
-    var geometry = new THREE.BoxBufferGeometry( 2, 4, 3 );
+    var geometry = new THREE.BoxBufferGeometry(1, 1, 1);    
     var material = new THREE.MeshBasicMaterial({
     color: 0x00ff00,
     opacity: 0.4,
-    wireframe: false,
+    wireframe: true,
     transparent: true});// { map: texture, transparent: true } );
 
     mesh = new THREE.Mesh( geometry, material );
+    mesh.scale.x=1.8;
+    mesh.scale.y=4.5;
+    mesh.scale.z=1.5;
     return mesh;
 }
 

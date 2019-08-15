@@ -6,7 +6,7 @@ import { GeometryUtils } from './examples/jsm/utils/GeometryUtils.js';
 //import {BBoxBufferGeometry } from './BBoxGeometry.js';
 import { OrbitControls } from './examples/jsm/controls/OrbitControls.js';
 import { TransformControls } from './examples/jsm/controls/TransformControls.js';
-            
+import { ShadowMapViewer } from './examples/jsm/utils/ShadowMapViewer.js';
 
 var container;
 //var stats;
@@ -16,8 +16,25 @@ var raycaster;
 var mouse, INTERSECTED;
 var onDownPosition = new THREE.Vector2();
 var onUpPosition = new THREE.Vector2();
-
+var mouseX = 0, mouseY = 0;
+var windowWidth, windowHeight;
+            
 var bboxes=[];
+
+var view={
+    left: 0,
+    bottom: 0,
+    width: 0.1,
+    height: 0.1,
+    background: new THREE.Color( 0.0, 0.0, 1 ),
+    eye: [ -50, 50, 5 ],
+    up: [ 0, 0, 1 ],
+    fov: 60,
+    
+};
+
+var dirLight, spotLight;
+var dirLightShadowMapViewer, spotLightShadowMapViewer;
 
 init();
 animate();
@@ -32,6 +49,30 @@ function init() {
     camera.position.y = 5;
     camera.up.set( 0, 0, 1);
     camera.lookAt( 0, 0, 0 );
+
+
+    if (view){
+        var vcamera = new THREE.PerspectiveCamera( view.fov, window.innerWidth / window.innerHeight, 1, 800 );
+        vcamera.position.fromArray( view.eye );
+        vcamera.up.fromArray( view.up );
+        view.camera = vcamera;
+    }
+                    
+    dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
+    dirLight.name = 'Dir. Light';
+    dirLight.position.set( 0, 10, 0 );
+    dirLight.castShadow = true;
+    dirLight.shadow.camera.near = 1;
+    dirLight.shadow.camera.far = 10;
+    dirLight.shadow.camera.right = 15;
+    dirLight.shadow.camera.left = - 15;
+    dirLight.shadow.camera.top	= 15;
+    dirLight.shadow.camera.bottom = - 15;
+    dirLight.shadow.mapSize.width = 1024;
+    dirLight.shadow.mapSize.height = 1024;
+    scene.add( dirLight );
+    scene.add( new THREE.CameraHelper( dirLight.shadow.camera ) );
+    
 
     var camera2 = new THREE.PerspectiveCamera( 40, 1, 1, 1000 );
     camera2.position.copy( camera.position );
@@ -51,9 +92,10 @@ function init() {
     //matLine.resolution.set( window.innerWidth, window.innerHeight ); // resolution of the viewport
     
 
-    container = document.createElement( 'div' );
+    container = document.createElement( 'container' );
     
-    document.body.appendChild( container );
+
+     document.body.appendChild( container );
     container.appendChild( renderer.domElement );
     
     // controls = new TrackballControls( camera, renderer.domElement );
@@ -140,6 +182,13 @@ function init() {
     // stats = new Stats();
     
      //container.appendChild( stats.dom );
+     
+     dirLightShadowMapViewer = new ShadowMapViewer( dirLight );
+     dirLightShadowMapViewer.position.x = 10;
+     dirLightShadowMapViewer.position.y = 10;
+     dirLightShadowMapViewer.size.width = 256;
+     dirLightShadowMapViewer.size.height = 256;
+     dirLightShadowMapViewer.update(); 
 
 
     window.addEventListener( 'resize', onWindowResize, false );
@@ -148,10 +197,27 @@ function init() {
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
     document.addEventListener( 'mousedown', onDocumentMouseDown, false );
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+    document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 }
 
 function render(){
     renderer.render( scene, camera );
+    dirLightShadowMapViewer.render( renderer );
+    //if (view){
+    //    var vcamera = view.camera;
+        // //view.updateCamera( camera, scene, mouseX, mouseY );
+        // var left = Math.floor( windowWidth * view.left );
+        // var bottom = Math.floor( windowHeight * view.bottom );
+        // var width = Math.floor( windowWidth * view.width );
+        // var height = Math.floor( windowHeight * view.height );
+        // renderer.setViewport( left, bottom, width, height );
+        // renderer.setScissor( left, bottom, width, height );
+        // renderer.setScissorTest( true );
+        // renderer.setClearColor( view.background );
+        // vcamera.aspect = width / height;
+        // vcamera.updateProjectionMatrix();
+    //    renderer.render( scene, vcamera );
+    //}
 }
 
 
@@ -161,6 +227,9 @@ function onDocumentMouseMove( event ) {
     mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
     mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
     //console.log(mouse);
+
+    mouseX = ( event.clientX - windowWidth / 2 );
+	mouseY = ( event.clientY - windowHeight / 2 );
 }
 
 
@@ -212,6 +281,7 @@ function handleClick() {
 
         if ( intersects.length > 0 ) {
 
+            //var object = intersects[ 0 ].object;
             var object = intersects[ 0 ].object;
 
             if ( object.userData.object !== undefined ) {
@@ -244,6 +314,9 @@ function onWindowResize() {
     camera.updateProjectionMatrix();
     renderer.setSize( window.innerWidth, window.innerHeight );
     //controls.handleResize();
+
+    dirLightShadowMapViewer.updateForWindowResize();
+
 }
 
 function keydown( ev ) {
@@ -335,18 +408,29 @@ function new_bbox(){
     return mesh;
 }
 
-function new_bbox2(){
-    var bbox = cube2( 5 );
-    var body = new THREE.LineSegments( bbox, new THREE.LineBasicMaterial( { color: 0x00ff00 } ) );    
-    //var head = new THREE.LineSegments( bbox.head, new THREE.LineBasicMaterial( { color: 0x00ff00 } ) );    
-    return body;
+function new_bbox_group(){
+    var bbox = cube( 5 );
+    var body = new THREE.LineSegments( bbox.body, new THREE.LineBasicMaterial( { color: 0xffffff } ) );    
+    var head = new THREE.LineSegments( bbox.head, new THREE.LineBasicMaterial( { color: 0x00ff00 } ) );    
     
-    // var group = new THREE.Group();
     
-    // group.add(body);
-    // group.add(head);
+    var group = new THREE.Group();
+    
+    group.add(body);
+    group.add(head);
 
-    // return group;
+    group.userData={object: null};
+    group.raycast = function( raycaster, intersects ){
+        
+        var temp_intersects=[];
+        body.raycast(raycaster, temp_intersects);
+        head.raycast(raycaster, temp_intersects);
+
+        if (temp_intersects.length>0)
+            intersects.push(group);
+    };
+
+    return group;
 }
 
 

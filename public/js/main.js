@@ -19,7 +19,9 @@ var onDownPosition = new THREE.Vector2();
 var onUpPosition = new THREE.Vector2();
 var mouseX = 0, mouseY = 0;
 var windowWidth, windowHeight;
-            
+
+var selected_box;
+
 var bboxes=[];
 var views;
 var mouseX = 0, mouseY = 0;
@@ -30,7 +32,7 @@ var views = [
         bottom: 0,
         width: 1.0,
         height: 1.0,
-        background: new THREE.Color( 0.5, 0.5, 0.7 ),
+        background: new THREE.Color( 0.0, 0.0, 0.0 ),
         eye: [ 0, 0, 50 ],
         up: [ 0, 0, 1 ],
         fov: 65
@@ -40,7 +42,7 @@ var views = [
         bottom: 0.7,
         width: 0.3,
         height: 0.3,
-        background: new THREE.Color( 0.7, 0.5, 0.5 ),
+        background: new THREE.Color( 0.1, 0.1, 0.2 ),
         eye: [ 0, 1800, 0 ],
         up: [ 0, 0, 1 ],
         fov: 45
@@ -50,7 +52,7 @@ var views = [
         bottom: 0.4,
         width: 0.3,
         height: 0.3,
-        background: new THREE.Color( 0.5, 0.7, 0.7 ),
+        background: new THREE.Color( 0.1, 0.2, 0.1 ),
         eye: [ 1400, 800, 1400 ],
         up: [ 0, 1, 0 ],
         fov: 60
@@ -61,7 +63,7 @@ var views = [
         bottom: 0.1,
         width: 0.3,
         height: 0.3,
-        background: new THREE.Color( 0.5, 0.7, 0.7 ),
+        background: new THREE.Color( 0.2, 0.1, 0.1 ),
         eye: [ 1400, 800, 1400 ],
         up: [ 0, 1, 0 ],
         fov: 60
@@ -78,7 +80,7 @@ render();
 
 function init() {
     scene = new THREE.Scene();
-    scene.background = new THREE.Color( 0x000000 );
+    //scene.background = new THREE.Color( 0x000033 );
     // camera = new THREE.PerspectiveCamera( 65, window.innerWidth / window.innerHeight, 1, 800 );
     // camera.position.x = 0;
     // camera.position.z = 50;
@@ -233,7 +235,8 @@ function init() {
     
     var loader = new PCDLoader();
     loader.load( 'static/pcd/test.pcd', function ( points ) {
-        points.castShadow = true;
+        //points.castShadow = true;
+        points.material.color.setHex( 0xffffff );
         scene.add( points );
         var center = points.geometry.boundingSphere.center;
         //controls.target.set( center.x, center.y, center.z );
@@ -345,12 +348,17 @@ function render(){
         var height = Math.floor( window.innerHeight * view.height );
         renderer.setViewport( left, bottom, width, height );
         renderer.setScissor( left, bottom, width, height );
+        renderer.setClearColor(view.background );
         renderer.setScissorTest( true );
-        renderer.setClearColor( view.background );
-        camera.aspect = width / height;
+        
+        //renderer.clearColor(0x000000,1); // clear color buffer
+
+        //camera.aspect = width / height;
         camera.updateProjectionMatrix();
         renderer.render( scene, camera );
     }
+
+
 
     // var left = Math.floor( window.innerWidth);
     // var bottom = Math.floor( window.innerHeight);
@@ -449,17 +457,20 @@ function handleClick() {
 
                 transform_control.attach( object.userData.object );
                 update_subview_by_bbox(object.userData.object);
+                selected_box = object.userData.object;
 
             } else {
 
                 transform_control.attach( object );
                 update_subview_by_bbox(object);
+                selected_box = object;
 
             }
 
         } else {
 
             transform_control.detach();
+            selected_box = null;
 
         }
 
@@ -509,11 +520,11 @@ function keydown( ev ) {
             transform_control.setSpace( transform_control.space === "local" ? "world" : "local" );
             break;
         case 17: // Ctrl
-        transform_control.setTranslationSnap( 100 );
-        transform_control.setRotationSnap( Math.degToRad( 15 ) );
+            transform_control.setTranslationSnap( 100 );
+            transform_control.setRotationSnap( Math.degToRad( 15 ) );
             break;
         case 'w': // W
-        transform_control.setMode( "translate" );
+            transform_control.setMode( "translate" );
             break;
         case 'e': // E
             transform_control.setMode( "rotate" );
@@ -552,6 +563,54 @@ function keydown( ev ) {
         case '2':
         case '3':
             views[ev.key].cameraHelper.visible = !views[ev.key].cameraHelper.visible;
+            break;
+        case 'a':
+            if (selected_box){
+                selected_box.position.x+=0.05;
+                update_subview_by_bbox(selected_box);
+            }
+            break;
+        case 'A':
+            if (selected_box){
+                selected_box.position.x-=0.05;
+                update_subview_by_bbox(selected_box);
+            }
+            break;
+        case 's':
+            if (selected_box){
+                selected_box.position.y+=0.05;
+                update_subview_by_bbox(selected_box);
+            }
+            break;
+        case 'S':
+            if (selected_box){
+                selected_box.position.y-=0.05;
+                update_subview_by_bbox(selected_box);
+            }
+            break;
+        case 'd':
+            if (selected_box){
+                selected_box.position.z+=0.05;
+                update_subview_by_bbox(selected_box);
+            }
+            break;
+        case 'D':
+            if (selected_box){
+                selected_box.position.z-=0.05;
+                update_subview_by_bbox(selected_box);
+            }
+            break;
+        case 'f':
+            if (selected_box){
+                selected_box.rotation.z+=0.02;
+                update_subview_by_bbox(selected_box);
+            }
+            break;
+        case 'F':
+            if (selected_box){
+                selected_box.rotation.z-=0.02;
+                update_subview_by_bbox(selected_box);
+            }
             break;
     }
 }

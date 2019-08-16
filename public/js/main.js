@@ -234,6 +234,7 @@ function init() {
 
 
     transform_control = new TransformControls( views[0].camera, renderer.domElement );
+    transform_control.setSpace("local");
     transform_control.addEventListener( 'change', render );
     transform_control.addEventListener( 'objectChange', on_transform_change );
     

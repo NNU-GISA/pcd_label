@@ -39,9 +39,9 @@ var views = [
         fov: 65,
     },
     {
-        left: 0.7,
+        left: 0.8,
         bottom: 0.7,
-        width: 0.3,
+        width: 0.2,
         height: 0.3,
         background: new THREE.Color( 0.1, 0.1, 0.2 ),
         eye: [ 0, 1800, 0 ],
@@ -49,9 +49,9 @@ var views = [
         fov: 45
     },
     {
-        left: 0.7,
+        left: 0.8,
         bottom: 0.4,
-        width: 0.3,
+        width: 0.2,
         height: 0.3,
         background: new THREE.Color( 0.1, 0.2, 0.1 ),
         eye: [ 1400, 800, 1400 ],
@@ -60,9 +60,9 @@ var views = [
     },
 
     {
-        left: 0.7,
+        left: 0.8,
         bottom: 0.1,
-        width: 0.3,
+        width: 0.2,
         height: 0.3,
         background: new THREE.Color( 0.2, 0.1, 0.1 ),
         eye: [ 1400, 800, 1400 ],

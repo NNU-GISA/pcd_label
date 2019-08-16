@@ -7,7 +7,7 @@ import { GeometryUtils } from './examples/jsm/utils/GeometryUtils.js';
 import { OrbitControls } from './examples/jsm/controls/OrbitControls.js';
 import { TransformControls } from './examples/jsm/controls/TransformControls.js';
 import { ShadowMapViewer } from './examples/jsm/utils/ShadowMapViewer.js';
-
+import { GUI } from './examples/jsm/libs/dat.gui.module.js';
 var container;
 //var stats;
 //var camera, 
@@ -21,12 +21,22 @@ var mouseX = 0, mouseY = 0;
 var windowWidth, windowHeight;
 
 var selected_box;
+var sideview_mesh=null;
 
 var bboxes=[];
 var views;
 var mouseX = 0, mouseY = 0;
 var windowWidth, windowHeight;
-var sideview_mesh=null;
+
+
+var params = {
+    uniform: true,
+    tension: 0.5,
+    centripetal: true,
+    chordal: true,
+};
+
+
 var views = [
     {
         left: 0,
@@ -39,7 +49,7 @@ var views = [
         fov: 65,
     },
     {
-        left: 0.8,
+        left: 0,
         bottom: 0.7,
         width: 0.2,
         height: 0.3,
@@ -49,7 +59,7 @@ var views = [
         fov: 45
     },
     {
-        left: 0.8,
+        left: 0,
         bottom: 0.4,
         width: 0.2,
         height: 0.3,
@@ -60,7 +70,7 @@ var views = [
     },
 
     {
-        left: 0.8,
+        left: 0,
         bottom: 0.1,
         width: 0.2,
         height: 0.3,
@@ -105,7 +115,7 @@ function init() {
         camera.position.z = 50;
         camera.position.y = 0;
         camera.up.set( 0, 0, 1);
-        camera.lookAt( 1, 10, 0 );
+        camera.lookAt( 0, 0, 0 );
         view.camera = camera;
     }
 
@@ -215,6 +225,9 @@ function init() {
     // controls.minDistance = 3;
     // controls.maxDistance = 3 * 100;
 
+    init_gui();
+    init_gui2();
+
     orbit = new OrbitControls( views[0].camera, renderer.domElement );
     orbit.update();
     orbit.addEventListener( 'change', render );
@@ -297,7 +310,7 @@ function init() {
      
 
 
-    update_subview_by_windowsize();
+    onWindowResize();
 
     window.addEventListener( 'resize', onWindowResize, false );
     window.addEventListener( 'keydown', keydown );
@@ -309,14 +322,35 @@ function init() {
 }
 
 
+
+function init_gui(){
+    var gui = new GUI();
+    gui.add( params, 'uniform' );
+    gui.add( params, 'tension', 0, 1 ).step( 0.01 ).onChange( function ( value ) {
+        splines.uniform.tension = value;
+        updateSplineOutline();
+    } );
+    gui.add( params, 'centripetal' );
+    gui.add( params, 'chordal' );
+    gui.open();
+}
+function init_gui2(){
+    var gui = new GUI();
+    gui.add( params, 'uniform' );
+    
+    gui.add( params, 'chordal' );
+    gui.open();
+}
+
+function update_mainview(){
+    views[0].camera.aspect = window.innerWidth / window.innerHeight;
+    views[0].camera.updateProjectionMatrix();
+}
+
 function update_subview_by_windowsize(){
 
     if (sideview_mesh === null)
         return;
-
-    // main view
-    views[0].camera.aspect = window.innerWidth / window.innerHeight;
-    views[0].camera.updateProjectionMatrix();
 
     // side views
     var exp_camera_width, exp_camera_height, exp_camera_clip;
@@ -426,11 +460,20 @@ function onDocumentMouseMove( event ) {
     event.preventDefault();
     mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
     mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-   //console.log(mouse);
-
-    
+   
+    //console.log(mouse, x, y);   
 }
 
+function get_current_mouse_location_in_world(){
+    raycaster.setFromCamera( mouse, views[0].camera );
+    var o = raycaster.ray.origin;
+    var d = raycaster.ray.direction;
+
+    var alpha = - o.z/d.z;
+    var x = o.x + d.x*alpha;
+    var y = o.y + d.y*alpha;
+    return {x:x, y:y, z:0};
+}
 
 function onDocumentMouseDown( event ) {
 
@@ -520,6 +563,7 @@ function onWindowResize() {
 
     if ( windowWidth != window.innerWidth || windowHeight != window.innerHeight ) {
 
+        update_mainview();
         update_subview_by_windowsize();
 
         windowWidth = window.innerWidth;
@@ -556,18 +600,21 @@ function keydown( ev ) {
             break;
         
         case '1': 
+            transform_control.setSpace( transform_control.space === "local" ? "world" : "local" );
+            break;
+        case '2':
             transform_control.setMode( "translate" );
             transform_control.showY=true;
             transform_control.showX=true;
             transform_control.showz=true;
             break;
-        case '2': 
+        case '3': 
             transform_control.setMode( "rotate" );
             transform_control.showY=false;
             transform_control.showX=false;
             transform_control.showz=true;
             break;
-        case '3': 
+        case '4': 
             transform_control.setMode( "scale" );
             transform_control.showY=true;
             transform_control.showX=true;
@@ -576,12 +623,19 @@ function keydown( ev ) {
 
 
         case 'b':
+            {
             mesh = new_bbox();
             bboxes.push(mesh);
+            
+            var pos = get_current_mouse_location_in_world();
+
+            mesh.position.x = pos.x;
+            mesh.position.y = pos.y;
+            mesh.position.z = pos.z;
             scene.add(mesh);
             sideview_mesh=mesh;
             //update_subview_by_windowsize();
-
+            }
             break;
         
         case '+':
@@ -604,10 +658,10 @@ function keydown( ev ) {
         case ' ': // Spacebar
             transform_control.enabled = ! transform_control.enabled;
             break;
-        case '4':            
-        case '5':
+        case '5':            
         case '6':
-            views[ev.key-'3'].cameraHelper.visible = !views[ev.key-'3'].cameraHelper.visible;
+        case '7':
+            views[ev.key-'4'].cameraHelper.visible = !views[ev.key-'4'].cameraHelper.visible;
             break;
 
         case 'a':
@@ -696,7 +750,17 @@ function keydown( ev ) {
                 update_subview_by_bbox(selected_box);
             }
             break;
-    
+        case 'Delete':
+            if (selected_box){
+                transform_control.detach();
+                scene.remove(selected_box);
+                selected_box.geometry.dispose();
+                selected_box.material.dispose();
+                //selected_box.dispose();
+
+                selected_box = null;
+                sideview_mesh = null;
+            }
     
     }
 }

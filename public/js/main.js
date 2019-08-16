@@ -426,8 +426,9 @@ function update_subview_by_bbox(mesh){
 }
 
 function on_transform_change(event){
-    console.log("transform changed");
+    
     var mesh = event.target.object;
+    console.log("bbox rotation z", mesh.rotation.z);
     update_subview_by_bbox(mesh);    
 }
 
@@ -681,13 +682,15 @@ function keydown( ev ) {
             break;
         case 's':
             if (selected_box){
-                selected_box.position.y -= 0.05;
+                selected_box.position.x -= 0.05*Math.cos(Math.PI/2 + selected_box.rotation.z);
+                selected_box.position.y -= 0.05*Math.sin(Math.PI/2 + selected_box.rotation.z);
                 update_subview_by_bbox(selected_box);
             }
             break;
         case 'S':
             if (selected_box){
-                selected_box.position.y += 0.05;
+                selected_box.position.x += 0.05*Math.cos(Math.PI/2 + selected_box.rotation.z);
+                selected_box.position.y += 0.05*Math.sin(Math.PI/2 + selected_box.rotation.z);
                 update_subview_by_bbox(selected_box);
             }            
             break;

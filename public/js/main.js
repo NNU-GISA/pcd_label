@@ -26,6 +26,7 @@ var bboxes=[];
 var views;
 var mouseX = 0, mouseY = 0;
 var windowWidth, windowHeight;
+var sideview_mesh=null;
 var views = [
     {
         left: 0,
@@ -35,7 +36,7 @@ var views = [
         background: new THREE.Color( 0.0, 0.0, 0.0 ),
         eye: [ 0, 0, 50 ],
         up: [ 0, 0, 1 ],
-        fov: 65
+        fov: 65,
     },
     {
         left: 0.7,
@@ -118,6 +119,7 @@ function init() {
         var camera = new THREE.OrthographicCamera( -3*asp, 3*asp, 3, -3, -3, 3 );
 
         var cameraOrthoHelper = new THREE.CameraHelper( camera );
+        cameraOrthoHelper.visible=false;
         scene.add( cameraOrthoHelper );
         view["cameraHelper"] = cameraOrthoHelper;
                 
@@ -139,6 +141,7 @@ function init() {
         var camera = new THREE.OrthographicCamera( -3*asp, 3*asp, 3, -3, -3, 3 );
 
         var cameraOrthoHelper = new THREE.CameraHelper( camera );
+        cameraOrthoHelper.visible=false;
         scene.add( cameraOrthoHelper );
         view["cameraHelper"] = cameraOrthoHelper;
                 
@@ -160,6 +163,7 @@ function init() {
         var camera = new THREE.OrthographicCamera( -3*asp, 3*asp, 3, -3, -3, 3 );
 
         var cameraOrthoHelper = new THREE.CameraHelper( camera );
+        cameraOrthoHelper.visible=false;
         scene.add( cameraOrthoHelper );
         view["cameraHelper"] = cameraOrthoHelper;
                 
@@ -264,10 +268,11 @@ function init() {
     //objects.push( line );
     //scene.add( line );
     
-    mesh = new_bbox();
-    mesh.castShadow=true;
-    bboxes.push(mesh);
-    scene.add(mesh);
+    // mesh = new_bbox();
+    // mesh.castShadow=true;
+    // bboxes.push(mesh);
+    // scene.add(mesh);
+
 
 //    var geometry = new THREE.BoxBufferGeometry( 2, 4, 3 );
 //    var material = new THREE.MeshBasicMaterial({
@@ -280,7 +285,7 @@ function init() {
     
    
     
-   scene.add( new THREE.AxesHelper( 2 ) );
+    scene.add( new THREE.AxesHelper( 2 ) );
 
     
     scene.add( transform_control );
@@ -292,6 +297,7 @@ function init() {
      
 
 
+    update_subview_by_windowsize();
 
     window.addEventListener( 'resize', onWindowResize, false );
     window.addEventListener( 'keydown', keydown );
@@ -304,32 +310,70 @@ function init() {
 
 
 function update_subview_by_windowsize(){
-    for ( var ii = 0; ii < views.length; ++ ii ) {
+
+    if (sideview_mesh === null)
+        return;
+
+    // main view
+    views[0].camera.aspect = window.innerWidth / window.innerHeight;
+    views[0].camera.updateProjectionMatrix();
+
+    // side views
+    var exp_camera_width, exp_camera_height, exp_camera_clip;
+
+    for ( var ii = 1; ii < views.length; ++ ii ) {
         var view = views[ ii ];
         var camera = view.camera;
 
         var camera_width = camera.right - camera.left;
         var camera_height  = camera.top - camera.bottom ;
+        var camera_clip = camera.near - camera.far;
 
         var view_width = Math.floor( window.innerWidth * view.width );
         var view_height = Math.floor( window.innerHeight * view.height );
 
-        if (camera_width/camera_height > view_width/view_height){
+        if (ii==1){
+            exp_camera_width = sideview_mesh.scale.x*1.5;
+            exp_camera_height = sideview_mesh.scale.y*1.5;
+            exp_camera_clip = sideview_mesh.scale.z+0.6;
+            
+        
+        } else if (ii==2){
+            exp_camera_width = sideview_mesh.scale.x*1.5;
+            exp_camera_height = sideview_mesh.scale.z*1.5;
+            exp_camera_clip = sideview_mesh.scale.y+0.6;
+           
+        
+        }else if (ii==3){
+            exp_camera_width = sideview_mesh.scale.y*1.5;
+            exp_camera_height = sideview_mesh.scale.z*1.5;
+            exp_camera_clip = sideview_mesh.scale.x+0.6;
+           
+        
+        }else{
+            exp_camera_width = camera_width;
+            exp_camera_height = camera_height;
+            exp_camera_clip = camera_clip;
+        }
+
+
+        if (exp_camera_width/exp_camera_height > view_width/view_height){
             //increase height
-            camera_height = camera_width * view_height/view_width;
-            camera.top = camera_height/2;
-            camera.bottom = camera_height/-2;
+            exp_camera_height = exp_camera_width * view_height/view_width;
         }
         else
         {
-            camera_width = camera_height * view_width/view_height;
-            camera.right = camera_width/2;
-            camera.left = camera_width/-2;
-
+            exp_camera_width = exp_camera_height * view_width/view_height;
         }
 
+        camera.top = exp_camera_height/2;
+        camera.bottom = exp_camera_height/-2;
+        camera.right = exp_camera_width/2;
+        camera.left = exp_camera_width/-2;
+        camera.near = exp_camera_clip/2;
+        camera.near = exp_camera_clip/-2;
 
-        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.aspect = view_width / view_height;
         camera.updateProjectionMatrix();
         if (ii>0)
             view.cameraHelper.update();
@@ -340,35 +384,24 @@ function update_subview_by_bbox(mesh){
     var p = mesh.position;
     var r = mesh.rotation;
 
-    views[1].camera.position.x= p.x;
-    views[1].camera.position.y= p.y;
-    views[1].camera.position.z= p.z;
+    sideview_mesh = mesh;
 
-    //views[1].camera.rotation.x= r.x;
-    //views[1].camera.rotation.y= r.y;
+    update_subview_by_windowsize();
+
     views[1].camera.rotation.z= r.z;
-
-
-    views[2].camera.position.x= p.x;
-    views[2].camera.position.y= p.y;
-    views[2].camera.position.z= p.z;
-
-    //views[2].camera.rotation.x= r.x;
     views[2].camera.rotation.y= -r.z;
-    //views[2].camera.rotation.z= r.z;
-
-
-    views[3].camera.position.x= p.x;
-    views[3].camera.position.y= p.y;
-    views[3].camera.position.z= p.z;
-
-    //views[2].camera.rotation.x= r.x;
     views[3].camera.rotation.y= Math.PI/2 + r.z;
-    //views[2].camera.rotation.z= r.z;
-    views[3].camera.far = mesh.scale.x/2 + 0.2;
-    views[3].camera.near = - mesh.scale.x/2 - 0.2;
-    views[3].camera.updateProjectionMatrix();
-    views[3].cameraHelper.update();
+
+    for (var i=1; i<views.length; ++i){
+        views[i].camera.position.x= p.x;
+        views[i].camera.position.y= p.y;
+        views[i].camera.position.z= p.z;
+
+        views[i].camera.updateProjectionMatrix();
+        views[i].cameraHelper.update();
+    }
+
+    update_box_info_text(sideview_mesh.scale);
 }
 
 function on_transform_change(event){
@@ -560,6 +593,9 @@ function keydown( ev ) {
             mesh = new_bbox();
             bboxes.push(mesh);
             scene.add(mesh);
+            sideview_mesh=mesh;
+            //update_subview_by_windowsize();
+
             break;
         
         case '+':
@@ -824,4 +860,9 @@ function cube2( size ) {
     var gbody = new THREE.BufferGeometry();
     gbody.addAttribute( 'position', new THREE.Float32BufferAttribute(body, 3 ) );
     return gbody;
+}
+
+
+function update_box_info_text(scale){
+    document.getElementById("info").innerHTML="w "+scale.x.toFixed(2) +" l "+scale.y.toFixed(2) + " h " + scale.z.toFixed(2);
 }

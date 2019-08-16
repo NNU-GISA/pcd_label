@@ -666,13 +666,15 @@ function keydown( ev ) {
 
         case 'a':
             if (selected_box){
-                selected_box.position.x -= 0.05;
+                selected_box.position.x -= 0.05*Math.cos(selected_box.rotation.z);
+                selected_box.position.y -= 0.05*Math.sin(selected_box.rotation.z);
                 update_subview_by_bbox(selected_box);
             }
             break;
         case 'A':
             if (selected_box){
-                selected_box.position.x += 0.05;
+                selected_box.position.x += 0.05*Math.cos(selected_box.rotation.z);
+                selected_box.position.y += 0.05*Math.sin(selected_box.rotation.z);
                 update_subview_by_bbox(selected_box);
             }            
             break;

@@ -325,10 +325,6 @@ function update_subview_by_windowsize(){
         var view = views[ ii ];
         var camera = view.camera;
 
-        var camera_width = camera.right - camera.left;
-        var camera_height  = camera.top - camera.bottom ;
-        var camera_clip = camera.near - camera.far;
-
         var view_width = Math.floor( window.innerWidth * view.width );
         var view_height = Math.floor( window.innerHeight * view.height );
 
@@ -336,24 +332,14 @@ function update_subview_by_windowsize(){
             exp_camera_width = sideview_mesh.scale.x*1.5;
             exp_camera_height = sideview_mesh.scale.y*1.5;
             exp_camera_clip = sideview_mesh.scale.z+0.6;
-            
-        
         } else if (ii==2){
             exp_camera_width = sideview_mesh.scale.x*1.5;
             exp_camera_height = sideview_mesh.scale.z*1.5;
             exp_camera_clip = sideview_mesh.scale.y+0.6;
-           
-        
         }else if (ii==3){
             exp_camera_width = sideview_mesh.scale.y*1.5;
             exp_camera_height = sideview_mesh.scale.z*1.5;
             exp_camera_clip = sideview_mesh.scale.x+0.6;
-           
-        
-        }else{
-            exp_camera_width = camera_width;
-            exp_camera_height = camera_height;
-            exp_camera_clip = camera_clip;
         }
 
 
@@ -371,7 +357,7 @@ function update_subview_by_windowsize(){
         camera.right = exp_camera_width/2;
         camera.left = exp_camera_width/-2;
         camera.near = exp_camera_clip/2;
-        camera.near = exp_camera_clip/-2;
+        camera.far = exp_camera_clip/-2;
 
         camera.aspect = view_width / view_height;
         camera.updateProjectionMatrix();
@@ -401,7 +387,7 @@ function update_subview_by_bbox(mesh){
         views[i].cameraHelper.update();
     }
 
-    update_box_info_text(sideview_mesh.scale);
+    update_box_info_text(sideview_mesh);
 }
 
 function on_transform_change(event){
@@ -863,6 +849,10 @@ function cube2( size ) {
 }
 
 
-function update_box_info_text(scale){
-    document.getElementById("info").innerHTML="w "+scale.x.toFixed(2) +" l "+scale.y.toFixed(2) + " h " + scale.z.toFixed(2);
+function update_box_info_text(mesh){
+    var scale = mesh.scale;
+    var pos = mesh.position;
+
+    document.getElementById("info").innerHTML = "w "+scale.x.toFixed(2) +" l "+scale.y.toFixed(2) + " h " + scale.z.toFixed(2) +
+                                                 " x "+pos.x.toFixed(2) +" y "+pos.y.toFixed(2) + " z " + pos.z.toFixed(2);
 }

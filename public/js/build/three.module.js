@@ -7324,13 +7324,10 @@ Object.assign( Ray.prototype, {
 
 		// Compute the offset origin, edges, and normal.
 
-		if ( _diff === undefined ) {
-
-			_diff = new Vector3();
+		if ( _edge1===undefined) {			
 			_edge1 = new Vector3();
 			_edge2 = new Vector3();
 			_normal = new Vector3();
-
 		}
 
 		// from http://www.geometrictools.com/GTEngine/Include/Mathematics/GteIntrRay3Triangle3.h

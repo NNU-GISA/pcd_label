@@ -270,44 +270,12 @@ function init() {
 
 
 
-    // var objects = [];
-    // var subdivisions = 6;
-    // var recursion = 1;
-    // var points = GeometryUtils.hilbert3D( new THREE.Vector3( 0, 0, 0 ), 25.0, recursion, 0, 1, 2, 3, 4, 5, 6, 7 );
-    // var spline = new THREE.CatmullRomCurve3( points );
-    // var samples = spline.getPoints( points.length * subdivisions );
-    // var geometrySpline = new THREE.BufferGeometry().setFromPoints( samples );
-    //var line = new THREE.Line( geometrySpline, new THREE.LineDashedMaterial( { color: 0xffffff, dashSize: 1, gapSize: 0.5 } ) );
-    //line.computeLineDistances();
-    //objects.push( line );
-    //scene.add( line );
-    
-    // mesh = new_bbox();
-    // mesh.castShadow=true;
-    // bboxes.push(mesh);
-    // scene.add(mesh);
-
-
-//    var geometry = new THREE.BoxBufferGeometry( 2, 4, 3 );
-//    var material = new THREE.MeshBasicMaterial({
-//          color: 0x00ff00,
-//          opacity: 0.3,
-//          wireframe: true,
-//          transparent: true});// { map: texture, transparent: true } );
-//    mesh = new THREE.Mesh( geometry, material );
-
-    
-   
-    
     scene.add( new THREE.AxesHelper( 2 ) );
-
-    
     scene.add( transform_control );
 
 
-    // stats = new Stats();
-    
-     //container.appendChild( stats.dom );
+    //stats = new Stats();
+    //container.appendChild( stats.dom );
      
 
 
@@ -544,9 +512,18 @@ function handleClick() {
 
             }
 
+            selected_box.material.color.r=1;
+            selected_box.material.color.g=0;
+            selected_box.material.color.b=1;
+
         } else {
 
             transform_control.detach();
+            if (selected_box){
+                selected_box.material.color.r=0;
+                selected_box.material.color.g=1;
+                selected_box.material.color.b=0;
+            }
             selected_box = null;
 
         }
@@ -591,12 +568,25 @@ function keydown( ev ) {
             points.material.size /= 1.2;
             points.material.needsUpdate = true;
             break;
+        case 'R': // Q
+            //transform_control.setSpace( transform_control.space === "local" ? "world" : "local" );
+            if (selected_box){
+                selected_box.rotation.x = 0;
+                selected_box.rotation.y = 0;
+                selected_box.rotation.z = 0;
+                selected_box.position.z = 0;
+                update_subview_by_bbox(selected_box);
+            }
+            break;
         case 'r': // Q
             //transform_control.setSpace( transform_control.space === "local" ? "world" : "local" );
             if (selected_box){
-                selected_box.rotation.x=0;
-                selected_box.rotation.y=0;
-                selected_box.rotation.z=0;
+                if (selected_box.rotation.z > 0){
+                    selected_box.rotation.z -= Math.PI;
+                }else{
+                    selected_box.rotation.z += Math.PI;
+                }
+
                 update_subview_by_bbox(selected_box);
             }
             break;
@@ -623,10 +613,13 @@ function keydown( ev ) {
             transform_control.showz=true;
             break;
 
-
+        case 'B':    
         case 'b':
             {
-            mesh = new_bbox();
+
+            //mesh = ev.key=='b'?new_bbox(): new_bbox_cube();
+            mesh = new_bbox_cube();
+
             bboxes.push(mesh);
             
             var pos = get_current_mouse_location_in_world();
@@ -794,6 +787,10 @@ function new_bbox(){
     return mesh;
 }
 
+
+
+
+
 function new_bbox_group(){
     var bbox = cube( 5 );
     var body = new THREE.LineSegments( bbox.body, new THREE.LineBasicMaterial( { color: 0xffffff } ) );    
@@ -818,6 +815,54 @@ function new_bbox_group(){
 
     return group;
 }
+
+
+function new_bbox_cube(){
+
+    var h = 0.5;
+    
+    var body = [
+        //top
+        -h,h,h,  h,h,h,
+        h,h,h,   h,-h,h,
+        h,-h,h,  -h,-h,h,
+        -h,-h,h, -h, h, h, 
+
+        //botom
+        -h,h,-h,  h,h,-h,
+        h,h,-h,   h,-h,-h,
+        h,-h,-h,  -h,-h,-h,
+        -h,-h,-h, -h, h, -h, 
+
+        // vertical lines
+        -h,h,h, -h,h,-h,
+        h,h,h,   h,h,-h,
+        h,-h,h,  h,-h,-h,
+        -h,-h,h, -h,-h,-h,
+
+        //direction
+        0, 0, h, 0, h, h,
+        -h,h/2,h, 0, h, h,
+        h,h/2,h, 0, h, h,
+        
+    ];
+    
+
+    var bbox = new THREE.BufferGeometry();
+    bbox.addAttribute( 'position', new THREE.Float32BufferAttribute(body, 3 ) );
+    
+    var box = new THREE.LineSegments( bbox, new THREE.LineBasicMaterial( { color: 0x00ff00 } ) );    
+    
+    box.scale.x=1.8;
+    box.scale.y=4.5;
+    box.scale.z=1.5;
+    box.name="bbox";
+
+    box.computeLineDistances();
+
+    return box;
+}
+
 
 
 function cube( size ) {

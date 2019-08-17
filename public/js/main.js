@@ -117,6 +117,20 @@ function init() {
         camera.up.set( 0, 0, 1);
         camera.lookAt( 0, 0, 0 );
         view.camera = camera;
+        
+        /*
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+        var asp = width/height;
+
+        var camera = new THREE.OrthographicCamera(-400*asp,400*asp, 400, -400, -20, 20);       
+        camera.position.x = 0;
+        camera.position.z = 0;
+        camera.position.y = 0;
+        camera.up.set( 1, 0, 0);
+        camera.lookAt( 0, 0, -3 );
+        view.camera = camera;
+        */
     }
 
     if (true){

@@ -21,6 +21,8 @@ var mouseX = 0, mouseY = 0;
 var windowWidth, windowHeight;
 
 var selected_box;
+var box_navigate_index=0;
+
 var sideview_mesh=null;
 
 var bboxes=[];
@@ -358,6 +360,8 @@ function create_bboxs(annotations){
     });
 }
 
+
+
 function load_annotation(){var xhr = new XMLHttpRequest();
     // we defined the xhr
     
@@ -367,6 +371,9 @@ function load_annotation(){var xhr = new XMLHttpRequest();
         if (this.status == 200) {
             var data = JSON.parse(this.responseText);
             console.log(data);
+
+            remove_all_boxes();
+
             create_bboxs(data);
         }
     
@@ -403,6 +410,12 @@ function init_gui(){
     saveFolder.add( params, 'load');
 
 
+    params['clear'] = function () {
+        remove_all_boxes();
+    };
+    saveFolder.add( params, 'clear');
+
+
     saveFolder.open();
     gui.open();
 }
@@ -432,7 +445,7 @@ function update_subview_by_windowsize(){
         if (ii==1){
             exp_camera_width = sideview_mesh.scale.x*1.5;
             exp_camera_height = sideview_mesh.scale.y*1.5;
-            
+
             exp_camera_clip = sideview_mesh.scale.z+0.8;
         } else if (ii==2){
             exp_camera_width = sideview_mesh.scale.x*1.5;
@@ -536,7 +549,7 @@ function onDocumentMouseMove( event ) {
     //console.log(mouse, x, y);   
 }
 
-function get_current_mouse_location_in_world(){
+function get_mouse_location_in_world(mouse){
     raycaster.setFromCamera( mouse, views[0].camera );
     var o = raycaster.ray.origin;
     var d = raycaster.ray.direction;
@@ -740,7 +753,7 @@ function add_bbox(){
 
     bboxes.push(mesh);
 
-    var pos = get_current_mouse_location_in_world();
+    var pos = get_mouse_location_in_world(mouse);
 
     mesh.position.x = pos.x;
     mesh.position.y = pos.y;
@@ -827,6 +840,34 @@ function transform_bbox(command){
     update_subview_by_bbox(selected_box);
 }
 
+
+function switch_bbox_type(){
+    if (!selected_box)
+        return;
+
+    switch (selected_box.obj_type){
+        case "car":
+            selected_box.obj_type = "bus";
+            selected_box.scale.x=2.8;
+            selected_box.scale.y=10;
+            selected_box.scale.z=3.0;
+            break;
+        case "bus":
+            selected_box.obj_type = "pedestrian";
+            selected_box.scale.x=0.5;
+            selected_box.scale.y=0.4;
+            selected_box.scale.z=1.7;
+            break;
+        case "pedestrian":
+            selected_box.obj_type = "car";
+            selected_box.scale.x=1.8;
+            selected_box.scale.y=4.5;
+            selected_box.scale.z=1.5;
+            break;
+    }
+    
+}
+
 function keydown( ev ) {
     var points = scene.getObjectByName( 'test.pcd' );
     switch ( ev.key) {
@@ -839,15 +880,41 @@ function keydown( ev ) {
             points.material.needsUpdate = true;
             break;
         case '1': 
-            transform_control.setSpace( transform_control.space === "local" ? "world" : "local" );
+            {
+                //transform_control.setSpace( transform_control.space === "local" ? "world" : "local" );
+                box_navigate_index++;
+                box_navigate_index %= bboxes.length;
+                select_bbox(bboxes[box_navigate_index]);
+                //views[0].camera.position.x = bboxes[box_navigate_index].position.x;
+                //views[0].camera.position.y = bboxes[box_navigate_index].position.y;
+                //views[0].camera.lookAt(bboxes[box_navigate_index].position.x, bboxes[box_navigate_index].position.y, bboxes[box_navigate_index].position.z);
+                //views[0].camera.updateProjectionMatrix();
+                
+                // var lookat = get_mouse_location_in_world({x:0, y:0});
+                
+                // views[0].camera.position.x += bboxes[box_navigate_index].position.x - lookat.x;
+                // views[0].camera.position.y += bboxes[box_navigate_index].position.y - lookat.y;
+                // views[0].camera.updateProjectionMatrix();
+                var p = bboxes[box_navigate_index].position;
+                orbit.target.x=p.x;
+                orbit.target.y=p.y;
+                orbit.target.z=p.z;
+                orbit.update();
+
+
+            }
             break;
         case 'v':
             change_transform_control_view();
             break;
-        case 'B':    
-        case 'b':
+        case 'N':    
+        case 'n':
             add_bbox();
             break;        
+        case 'B':
+        case 'b':
+            switch_bbox_type();
+            break;
         case '+':
         case '=': // +, =, num+
             transform_control.setSize( transform_control.size + 0.1 );
@@ -978,20 +1045,38 @@ function keydown( ev ) {
             break;
         
         case 'Delete':
-            if (selected_box){
-                transform_control.detach();
-                scene.remove(selected_box);
-                selected_box.geometry.dispose();
-                selected_box.material.dispose();
-                //selected_box.dispose();
-                bboxes = bboxes.filter(function(x){return x !=selected_box;});
-                selected_box = null;
-                sideview_mesh = null;
-            }
+            remove_selected_box();
+            break;
     
     }
 }
 
+function remove_selected_box(){
+    if (selected_box){
+        unselect_bbox(null);
+        unselect_bbox(null); //twice to safely unselect.
+        //transform_control.detach();
+
+
+        scene.remove(selected_box);
+        selected_box.geometry.dispose();
+        selected_box.material.dispose();
+        //selected_box.dispose();
+        bboxes = bboxes.filter(function(x){return x !=selected_box;});
+        selected_box = null;
+        sideview_mesh = null;
+    }
+}
+
+function remove_all_boxes(){
+    bboxes.forEach(function(b){
+        scene.remove(b);
+        b.geometry.dispose();
+        b.material.dispose();
+    });
+
+    bboxes = [];
+}
 
 function animate() {
     requestAnimationFrame( animate );
@@ -1012,6 +1097,9 @@ function new_bbox(){
     mesh.scale.x=1.8;
     mesh.scale.y=4.5;
     mesh.scale.z=1.5;
+    
+    mesh.type = "car";
+
     return mesh;
 }
 
@@ -1090,6 +1178,8 @@ function new_bbox_cube(){
     box.scale.y=4.5;
     box.scale.z=1.5;
     box.name="bbox";
+    box.obj_type="car";
+    box.obj_id="1";
 
     box.computeLineDistances();
 

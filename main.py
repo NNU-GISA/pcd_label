@@ -17,18 +17,18 @@ class Root(object):
       return tmpl.render()
     
     @cherrypy.expose
-    def save(self):
+    def save(self, frame):
       cl = cherrypy.request.headers['Content-Length']
       rawbody = cherrypy.request.body.read(int(cl))
       print(rawbody)
-      with open('annotations.txt','w') as f:
+      with open(frame+".anno.txt",'w') as f:
         f.write(rawbody)
       
       return "ok"
 
     @cherrypy.expose    
-    def load(self):
-      with open("annotations.txt","r") as f:
+    def load(self, frame):
+      with open(frame+".anno.txt","r") as f:
         y=f.read()
         return y
     

@@ -8,6 +8,10 @@ import { OrbitControls } from './examples/jsm/controls/OrbitControls.js';
 import { TransformControls } from './examples/jsm/controls/TransformControls.js';
 import { ShadowMapViewer } from './examples/jsm/utils/ShadowMapViewer.js';
 import { GUI } from './examples/jsm/libs/dat.gui.module.js';
+
+import {data} from './data.js'
+
+
 var container;
 //var stats;
 //var camera, 
@@ -25,10 +29,10 @@ var box_navigate_index=0;
 
 var sideview_mesh=null;
 
-var bboxes=[];
 var views;
 var mouseX = 0, mouseY = 0;
 var windowWidth, windowHeight;
+
 
 
 var params = {
@@ -307,8 +311,8 @@ function init() {
 
 function save_annotation(){
     var bbox_annotations=[];
-    console.log(bboxes.length, "boxes");
-    bboxes.forEach(function(b){
+    console.log(data.bboxes.length, "boxes");
+    data.bboxes.forEach(function(b){
         var b = {
             position:{
                 x: b.position.x,
@@ -333,7 +337,7 @@ function save_annotation(){
     });
 
     var xhr = new XMLHttpRequest();
-    xhr.open("POST", "/save", true);
+    xhr.open("POST", "/save" +"?frame="+data.file_info.frame, true);
     xhr.setRequestHeader('Content-Type', 'application/json');
     var b = JSON.stringify(bbox_annotations);
     console.log(b);
@@ -355,14 +359,15 @@ function create_bboxs(annotations){
         mesh.rotation.y = b.rotation.y;
         mesh.rotation.z = b.rotation.z;
 
-        bboxes.push(mesh);
+        data.bboxes.push(mesh);
         scene.add(mesh);        
     });
 }
 
 
 
-function load_annotation(){var xhr = new XMLHttpRequest();
+function load_annotation(){
+    var xhr = new XMLHttpRequest();
     // we defined the xhr
     
     xhr.onreadystatechange = function () {
@@ -380,7 +385,7 @@ function load_annotation(){var xhr = new XMLHttpRequest();
         // end of state change: it can be after some time (async)
     };
     
-    xhr.open('GET', "/load", true);
+    xhr.open('GET', "/load"+"?frame="+data.file_info.frame, true);
     xhr.send();
 
 }
@@ -615,7 +620,7 @@ function handleClick() {
 
     if ( onDownPosition.distanceTo( onUpPosition ) === 0 ) {
 
-        var intersects = getIntersects( onUpPosition, bboxes );
+        var intersects = getIntersects( onUpPosition, data.bboxes );
 
         if ( intersects.length > 0 ) {
 
@@ -751,7 +756,7 @@ function add_bbox(){
     //mesh = ev.key=='b'?new_bbox(): new_bbox_cube();
     mesh = new_bbox_cube();
 
-    bboxes.push(mesh);
+    data.bboxes.push(mesh);
 
     var pos = get_mouse_location_in_world(mouse);
 
@@ -885,31 +890,30 @@ function keydown( ev ) {
                 //transform_control.setSpace( transform_control.space === "local" ? "world" : "local" );
 
                 //select current index
-                if (bboxes[box_navigate_index]!= selected_box){
+                if (data.bboxes[box_navigate_index]!= selected_box){
 
                 }
                 else {
                     if (ev.key== '1')
                         box_navigate_index += 1;
                     else 
-                        box_navigate_index += (bboxes.length-1);
+                        box_navigate_index += (data.bboxes.length-1);
                     
-                    box_navigate_index %= bboxes.length;
+                    box_navigate_index %= data.bboxes.length;
                 }
-                
                 console.log(box_navigate_index);
-                select_bbox(bboxes[box_navigate_index]);
-                //views[0].camera.position.x = bboxes[box_navigate_index].position.x;
-                //views[0].camera.position.y = bboxes[box_navigate_index].position.y;
-                //views[0].camera.lookAt(bboxes[box_navigate_index].position.x, bboxes[box_navigate_index].position.y, bboxes[box_navigate_index].position.z);
+                select_bbox(data.bboxes[box_navigate_index]);
+                //views[0].camera.position.x = data.bboxes[box_navigate_index].position.x;
+                //views[0].camera.position.y = data.bboxes[box_navigate_index].position.y;
+                //views[0].camera.lookAt(data.bboxes[box_navigate_index].position.x, data.bboxes[box_navigate_index].position.y, data.bboxes[box_navigate_index].position.z);
                 //views[0].camera.updateProjectionMatrix();
                 
                 // var lookat = get_mouse_location_in_world({x:0, y:0});
                 
-                // views[0].camera.position.x += bboxes[box_navigate_index].position.x - lookat.x;
-                // views[0].camera.position.y += bboxes[box_navigate_index].position.y - lookat.y;
+                // views[0].camera.position.x += data.bboxes[box_navigate_index].position.x - lookat.x;
+                // views[0].camera.position.y += data.bboxes[box_navigate_index].position.y - lookat.y;
                 // views[0].camera.updateProjectionMatrix();
-                var p = bboxes[box_navigate_index].position;
+                var p = data.bboxes[box_navigate_index].position;
                 orbit.target.x=p.x;
                 orbit.target.y=p.y;
                 orbit.target.z=p.z;
@@ -1077,20 +1081,20 @@ function remove_selected_box(){
         selected_box.geometry.dispose();
         selected_box.material.dispose();
         //selected_box.dispose();
-        bboxes = bboxes.filter(function(x){return x !=selected_box;});
+        data.bboxes = data.bboxes.filter(function(x){return x !=selected_box;});
         selected_box = null;
         sideview_mesh = null;
     }
 }
 
 function remove_all_boxes(){
-    bboxes.forEach(function(b){
+    data.bboxes.forEach(function(b){
         scene.remove(b);
         b.geometry.dispose();
         b.material.dispose();
     });
 
-    bboxes = [];
+    data.bboxes = [];
 }
 
 function animate() {

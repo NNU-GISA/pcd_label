@@ -117,7 +117,7 @@ function init() {
         camera.up.set( 0, 0, 1);
         camera.lookAt( 0, 0, 0 );
         view.camera = camera;
-        
+
         /*
         var width = window.innerWidth;
         var height = window.innerHeight;
@@ -240,7 +240,7 @@ function init() {
     // controls.maxDistance = 3 * 100;
 
     init_gui();
-    init_gui2();
+
 
     orbit = new OrbitControls( views[0].camera, renderer.domElement );
     orbit.update();
@@ -268,7 +268,6 @@ function init() {
     // //matLine.resolution.set( insetWidth, insetHeight ); // resolution of the inset viewport
     // //renderer.render( scene, camera2 );
                 
-
 
     document.body.appendChild( renderer.domElement );
     
@@ -304,6 +303,80 @@ function init() {
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 }
 
+function save_annotation(){
+    var bbox_annotations=[];
+    console.log(bboxes.length, "boxes");
+    bboxes.forEach(function(b){
+        var b = {
+            position:{
+                x: b.position.x,
+                y: b.position.y,
+                z: b.position.z,
+            },
+            scale:{
+                x: b.scale.x,
+                y: b.scale.y,
+                z: b.scale.z,                
+            },
+            rotation:{                
+                x: b.rotation.x,
+                y: b.rotation.y,
+                z: b.rotation.z,                
+            },
+        };
+
+
+        bbox_annotations.push(b);
+        
+    });
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/save", true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    var b = JSON.stringify(bbox_annotations);
+    console.log(b);
+    xhr.send(b);
+}
+
+function create_bboxs(annotations){
+    annotations.forEach(function(b){
+        mesh = new_bbox_cube();
+        mesh.position.x = b.position.x;
+        mesh.position.y = b.position.y;
+        mesh.position.z = b.position.z;
+
+        mesh.scale.x = b.scale.x;
+        mesh.scale.y = b.scale.y;
+        mesh.scale.z = b.scale.z;
+
+        mesh.rotation.x = b.rotation.x;
+        mesh.rotation.y = b.rotation.y;
+        mesh.rotation.z = b.rotation.z;
+
+        bboxes.push(mesh);
+        scene.add(mesh);        
+    });
+}
+
+function load_annotation(){var xhr = new XMLHttpRequest();
+    // we defined the xhr
+    
+    xhr.onreadystatechange = function () {
+        if (this.readyState != 4) return;
+    
+        if (this.status == 200) {
+            var data = JSON.parse(this.responseText);
+            console.log(data);
+            create_bboxs(data);
+        }
+    
+        // end of state change: it can be after some time (async)
+    };
+    
+    xhr.open('GET', "/load", true);
+    xhr.send();
+
+}
 
 
 function init_gui(){
@@ -315,15 +388,26 @@ function init_gui(){
     } );
     gui.add( params, 'centripetal' );
     gui.add( params, 'chordal' );
-    gui.open();
-}
-function init_gui2(){
-    var gui = new GUI();
-    gui.add( params, 'uniform' );
+
+
+    var saveFolder = gui.addFolder( 'File' );
+    params['save'] = function () {
+        save_annotation();
+    };
+    saveFolder.add( params, 'save');
+
     
-    gui.add( params, 'chordal' );
+    params['load'] = function () {
+        load_annotation();
+    };
+    saveFolder.add( params, 'load');
+
+
+    saveFolder.open();
     gui.open();
 }
+
+
 
 function update_mainview(){
     views[0].camera.aspect = window.innerWidth / window.innerHeight;
@@ -644,16 +728,7 @@ function change_transform_control_view(){
     }
 }
 
-function reset_bbox(){
-    if (selected_box){
-        
-        update_subview_by_bbox(selected_box);
-    }
-}
 
-function reverse_bbox(){
-    
-}
 
 function add_bbox(){
     //mesh = ev.key=='b'?new_bbox(): new_bbox_cube();

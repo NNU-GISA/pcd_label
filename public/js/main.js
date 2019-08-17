@@ -432,15 +432,18 @@ function update_subview_by_windowsize(){
         if (ii==1){
             exp_camera_width = sideview_mesh.scale.x*1.5;
             exp_camera_height = sideview_mesh.scale.y*1.5;
-            exp_camera_clip = sideview_mesh.scale.z+0.6;
+            
+            exp_camera_clip = sideview_mesh.scale.z+0.8;
         } else if (ii==2){
             exp_camera_width = sideview_mesh.scale.x*1.5;
             exp_camera_height = sideview_mesh.scale.z*1.5;
-            exp_camera_clip = sideview_mesh.scale.y+0.6;
+
+            exp_camera_clip = sideview_mesh.scale.y*1.2;
         }else if (ii==3){
             exp_camera_width = sideview_mesh.scale.y*1.5;
             exp_camera_height = sideview_mesh.scale.z*1.5;
-            exp_camera_clip = sideview_mesh.scale.x+0.6;
+
+            exp_camera_clip = sideview_mesh.scale.x*1.2;
         }
 
 
@@ -457,8 +460,9 @@ function update_subview_by_windowsize(){
         camera.bottom = exp_camera_height/-2;
         camera.right = exp_camera_width/2;
         camera.left = exp_camera_width/-2;
-        camera.near = exp_camera_clip/2;
-        camera.far = exp_camera_clip/-2;
+
+        camera.near = exp_camera_clip/-2;
+        camera.far = exp_camera_clip/2;
 
         camera.aspect = view_width / view_height;
         camera.updateProjectionMatrix();
@@ -1065,9 +1069,14 @@ function new_bbox_cube(){
         -h,-h,h, -h,-h,-h,
 
         //direction
-        0, 0, h, 0, h, h,
-        -h,h/2,h, 0, h, h,
-        h,h/2,h, 0, h, h,
+        0, 0, h+0.1, 0, h, h+0.1,
+        -h,h/2,h+0.1, 0, h, h+0.1,
+        h,h/2,h+0.1, 0, h, h+0.1,
+
+        //side direction
+        // h, h/2, h,  h, h, 0,
+        // h, h/2, -h,  h, h, 0,
+        // h, 0, 0,  h, h, 0,
         
     ];
     

@@ -508,35 +508,16 @@ function handleClick() {
             var object = intersects[ 0 ].object;
 
             if ( object.userData.object !== undefined ) {
-
                 // helper
-
-                transform_control.attach( object.userData.object );
-                update_subview_by_bbox(object.userData.object);
-                selected_box = object.userData.object;
+                select_bbox( object.userData.object );
 
             } else {
 
-                transform_control.attach( object );
-                update_subview_by_bbox(object);
-                selected_box = object;
-
+                select_bbox( object );
             }
-
-            selected_box.material.color.r=1;
-            selected_box.material.color.g=0;
-            selected_box.material.color.b=1;
-
         } else {
 
-            transform_control.detach();
-            if (selected_box){
-                selected_box.material.color.r=0;
-                selected_box.material.color.g=1;
-                selected_box.material.color.b=0;
-            }
-            selected_box = null;
-
+                unselect_bbox(null);
         }
 
         render();
@@ -544,6 +525,68 @@ function handleClick() {
     }
 
 }
+
+// new_object
+function unselect_bbox(new_object){
+
+    if (new_object==null){
+        if (transform_control.visible)
+        {
+            //unselect first time
+            transform_control.detach();
+        }else{
+            //unselect second time
+            if (selected_box){
+                selected_box.material.color.r=0;
+                selected_box.material.color.g=1;
+                selected_box.material.color.b=0;
+            }
+            selected_box = null;
+        }
+    }
+    else{
+        //unselect all
+        transform_control.detach();
+        if (selected_box){
+            selected_box.material.color.r=0;
+            selected_box.material.color.g=1;
+            selected_box.material.color.b=0;
+        }
+        selected_box = null;
+    }
+
+}
+
+function select_bbox(object){
+
+    if (selected_box != object){
+        // unselect old bbox
+        unselect_bbox(object);
+
+        // select me, the first time
+        selected_box = object;
+
+        selected_box.material.color.r=1;
+        selected_box.material.color.g=0;
+        selected_box.material.color.b=1;
+
+        update_subview_by_bbox(object);  
+    }
+    else {
+        //reselect the same box
+        if (transform_control.visible){
+
+        }
+        else{
+            //select me the second time
+            transform_control.attach( object );
+        }
+    }
+
+    
+    
+}
+
 
 
 function onWindowResize() {
@@ -1008,3 +1051,4 @@ function update_box_info_text(mesh){
     document.getElementById("info").innerHTML = "w "+scale.x.toFixed(2) +" l "+scale.y.toFixed(2) + " h " + scale.z.toFixed(2) +
                                                  " x "+pos.x.toFixed(2) +" y "+pos.y.toFixed(2) + " z " + pos.z.toFixed(2);
 }
+

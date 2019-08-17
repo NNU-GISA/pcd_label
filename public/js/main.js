@@ -980,7 +980,7 @@ function keydown( ev ) {
                 selected_box.geometry.dispose();
                 selected_box.material.dispose();
                 //selected_box.dispose();
-
+                bboxes = bboxes.filter(function(x){return x !=selected_box;});
                 selected_box = null;
                 sideview_mesh = null;
             }

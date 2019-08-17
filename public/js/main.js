@@ -445,21 +445,32 @@ function get_current_mouse_location_in_world(){
     return {x:x, y:y, z:0};
 }
 
+var mouse_right_down = false;
+
 function onDocumentMouseDown( event ) {
 
-    var array = getMousePosition( renderer.domElement, event.clientX, event.clientY );
-    onDownPosition.fromArray( array );
-
+    if (event.which==3){
+        mouse_right_down = true;
+    }
+    else{
+        var array = getMousePosition( renderer.domElement, event.clientX, event.clientY );
+        onDownPosition.fromArray( array );
+    }
     document.addEventListener( 'mouseup', onMouseUp, false );
 
 }
 
 function onMouseUp( event ) {
 
-    var array = getMousePosition( renderer.domElement, event.clientX, event.clientY );
-    onUpPosition.fromArray( array );
+    if (event.which==3){
+        mouse_right_down = false;
+    }
+    else{
+        var array = getMousePosition( renderer.domElement, event.clientX, event.clientY );
+        onUpPosition.fromArray( array );
 
-    handleClick();
+        handleClick();
+    }
 
     document.removeEventListener( 'mouseup', onMouseUp, false );
 
@@ -661,8 +672,14 @@ function keydown( ev ) {
 
         case 'a':
             if (selected_box){
-                selected_box.position.x -= 0.05*Math.cos(selected_box.rotation.z);
-                selected_box.position.y -= 0.05*Math.sin(selected_box.rotation.z);
+                if (!mouse_right_down){
+                    selected_box.position.x -= 0.05*Math.cos(selected_box.rotation.z);
+                    selected_box.position.y -= 0.05*Math.sin(selected_box.rotation.z);
+                }
+                else{
+                    selected_box.position.x += 0.05*Math.cos(selected_box.rotation.z);
+                    selected_box.position.y += 0.05*Math.sin(selected_box.rotation.z);
+                }
                 update_subview_by_bbox(selected_box);
             }
             break;
@@ -675,8 +692,13 @@ function keydown( ev ) {
             break;
         case 's':
             if (selected_box){
-                selected_box.position.x -= 0.05*Math.cos(Math.PI/2 + selected_box.rotation.z);
-                selected_box.position.y -= 0.05*Math.sin(Math.PI/2 + selected_box.rotation.z);
+                if (!mouse_right_down){
+                    selected_box.position.x -= 0.05*Math.cos(Math.PI/2 + selected_box.rotation.z);
+                    selected_box.position.y -= 0.05*Math.sin(Math.PI/2 + selected_box.rotation.z);
+                }else{
+                    selected_box.position.x += 0.05*Math.cos(Math.PI/2 + selected_box.rotation.z);
+                    selected_box.position.y += 0.05*Math.sin(Math.PI/2 + selected_box.rotation.z);    
+                }
                 update_subview_by_bbox(selected_box);
             }
             break;
@@ -689,7 +711,10 @@ function keydown( ev ) {
             break;
         case 'd':
             if (selected_box){
-                selected_box.position.z -= 0.05;
+                if (!mouse_right_down)
+                    selected_box.position.z -= 0.05;
+                else
+                    selected_box.position.z += 0.05;
                 update_subview_by_bbox(selected_box);
             }
             break;
@@ -702,7 +727,10 @@ function keydown( ev ) {
         
         case 'f':
             if (selected_box){
-                selected_box.rotation.z -= 0.01;
+                if (!mouse_right_down)
+                    selected_box.rotation.z -= 0.01;
+                else
+                    selected_box.rotation.z += 0.01;
                 update_subview_by_bbox(selected_box);
             }
             break;
@@ -715,19 +743,25 @@ function keydown( ev ) {
         
         case 'q':
             if (selected_box){
-                selected_box.scale.x /= 1.01;
+                if (!mouse_right_down)
+                    selected_box.scale.x /= 1.01;
+                else
+                    selected_box.scale.x *= 1.01;
+
                 update_subview_by_bbox(selected_box);
             }
             break;
         case 'Q':
             if (selected_box){
-                selected_box.scale.x *= 1.01;
                 update_subview_by_bbox(selected_box);
             }
             break;
         case 'w':
             if (selected_box){
-                selected_box.scale.y /= 1.01;
+                if (!mouse_right_down)
+                    selected_box.scale.y /= 1.01;
+                else
+                    selected_box.scale.y *= 1.01;
                 update_subview_by_bbox(selected_box);
             }
             break;
@@ -739,7 +773,10 @@ function keydown( ev ) {
             break;
         case 'e':
             if (selected_box){
-                selected_box.scale.z /= 1.01;
+                if (!mouse_right_down)
+                    selected_box.scale.z /= 1.01;
+                else
+                    selected_box.scale.z *= 1.01;
                 update_subview_by_bbox(selected_box);
             }
             break;

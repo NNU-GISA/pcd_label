@@ -4,3 +4,4 @@
 1. remove bbox in bbox list when deleted.
 2. reverse the direction
 3. unselect when add new box
+4. edit on side view

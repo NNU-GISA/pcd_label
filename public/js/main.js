@@ -50,9 +50,9 @@ var views = [
     },
     {
         left: 0,
-        bottom: 0.7,
+        bottom: 0.6,
         width: 0.2,
-        height: 0.3,
+        height: 0.4,
         background: new THREE.Color( 0.1, 0.1, 0.2 ),
         eye: [ 0, 1800, 0 ],
         up: [ 0, 0, 1 ],
@@ -60,7 +60,7 @@ var views = [
     },
     {
         left: 0,
-        bottom: 0.4,
+        bottom: 0.3,
         width: 0.2,
         height: 0.3,
         background: new THREE.Color( 0.1, 0.2, 0.1 ),
@@ -71,7 +71,7 @@ var views = [
 
     {
         left: 0,
-        bottom: 0.1,
+        bottom: 0,
         width: 0.2,
         height: 0.3,
         background: new THREE.Color( 0.2, 0.1, 0.1 ),
@@ -611,6 +611,129 @@ function onWindowResize() {
 
 }
 
+function change_transform_control_view(){
+    if (transform_control.mode=="scale"){
+        transform_control.setMode( "translate" );
+        transform_control.showY=true;
+        transform_control.showX=true;
+        transform_control.showz=true;
+    }else if (transform_control.mode=="translate"){
+        transform_control.setMode( "rotate" );
+        transform_control.showY=false;
+        transform_control.showX=false;
+        transform_control.showz=true;
+    }else if (transform_control.mode=="rotate"){
+        transform_control.setMode( "scale" );
+        transform_control.showY=true;
+        transform_control.showX=true;
+        transform_control.showz=true;
+    }
+}
+
+function reset_bbox(){
+    if (selected_box){
+        
+        update_subview_by_bbox(selected_box);
+    }
+}
+
+function reverse_bbox(){
+    
+}
+
+function add_bbox(){
+    //mesh = ev.key=='b'?new_bbox(): new_bbox_cube();
+    mesh = new_bbox_cube();
+
+    bboxes.push(mesh);
+
+    var pos = get_current_mouse_location_in_world();
+
+    mesh.position.x = pos.x;
+    mesh.position.y = pos.y;
+    mesh.position.z = pos.z;
+    scene.add(mesh);
+    sideview_mesh=mesh;
+    //unselect_bbox(mesh);
+    select_bbox(mesh);
+    //update_subview_by_windowsize();
+}
+
+// axix, xyz, action: scale, move, direction, up/down
+function transform_bbox(command){
+    if (!select_bbox)
+        return;
+
+    switch (command){
+        case 'x_move_up':
+            selected_box.position.x += 0.05*Math.cos(selected_box.rotation.z);
+            selected_box.position.y += 0.05*Math.sin(selected_box.rotation.z);
+            break;
+        case 'x_move_down':
+            selected_box.position.x -= 0.05*Math.cos(selected_box.rotation.z);
+            selected_box.position.y -= 0.05*Math.sin(selected_box.rotation.z);
+            break;
+        case 'x_scale_up':
+            selected_box.scale.x *= 1.01;    
+            break;
+        case 'x_scale_down':
+            selected_box.scale.x /= 1.01;
+            break;
+        
+        case 'y_move_up':
+            selected_box.position.x += 0.05*Math.cos(Math.PI/2 + selected_box.rotation.z);
+            selected_box.position.y += 0.05*Math.sin(Math.PI/2 + selected_box.rotation.z);    
+            break;
+        case 'y_move_down':        
+            selected_box.position.x -= 0.05*Math.cos(Math.PI/2 + selected_box.rotation.z);
+            selected_box.position.y -= 0.05*Math.sin(Math.PI/2 + selected_box.rotation.z);
+            break;
+        case 'y_scale_up':
+            selected_box.scale.y *= 1.01;    
+            break;
+        case 'y_scale_down':
+            selected_box.scale.y /= 1.01;
+            break;
+        
+        case 'z_move_up':
+            selected_box.position.z += 0.05;
+            break;
+        case 'z_move_down':        
+            selected_box.position.z -= 0.05;
+            break;
+        case 'z_scale_up':
+            selected_box.scale.z *= 1.01;    
+            break;
+        case 'z_scale_down':
+            selected_box.scale.z /= 1.01;
+            break;
+        
+        case 'z_rotate_left':
+            selected_box.rotation.z += 0.01;
+            break;
+        case 'z_rotate_right':
+            selected_box.rotation.z -= 0.01;
+            break;
+        
+        case 'z_rotate_reverse':        
+            if (selected_box.rotation.z > 0){
+                selected_box.rotation.z -= Math.PI;
+            }else{
+                selected_box.rotation.z += Math.PI;
+            }    
+            break;
+        case 'reset':
+            selected_box.rotation.x = 0;
+            selected_box.rotation.y = 0;
+            selected_box.rotation.z = 0;
+            selected_box.position.z = 0;
+            break;
+
+    }
+
+    update_subview_by_bbox(selected_box);
+}
+
 function keydown( ev ) {
     var points = scene.getObjectByName( 'test.pcd' );
     switch ( ev.key) {
@@ -622,79 +745,23 @@ function keydown( ev ) {
             points.material.size /= 1.2;
             points.material.needsUpdate = true;
             break;
-        case 'R': // Q
-            //transform_control.setSpace( transform_control.space === "local" ? "world" : "local" );
-            if (selected_box){
-                selected_box.rotation.x = 0;
-                selected_box.rotation.y = 0;
-                selected_box.rotation.z = 0;
-                selected_box.position.z = 0;
-                update_subview_by_bbox(selected_box);
-            }
-            break;
-        case 'r': // Q
-            //transform_control.setSpace( transform_control.space === "local" ? "world" : "local" );
-            if (selected_box){
-                if (selected_box.rotation.z > 0){
-                    selected_box.rotation.z -= Math.PI;
-                }else{
-                    selected_box.rotation.z += Math.PI;
-                }
-
-                update_subview_by_bbox(selected_box);
-            }
-            break;
-        
         case '1': 
             transform_control.setSpace( transform_control.space === "local" ? "world" : "local" );
             break;
         case 'v':
-            if (transform_control.mode=="scale"){
-                transform_control.setMode( "translate" );
-                transform_control.showY=true;
-                transform_control.showX=true;
-                transform_control.showz=true;
-            }else if (transform_control.mode=="translate"){
-                transform_control.setMode( "rotate" );
-                transform_control.showY=false;
-                transform_control.showX=false;
-                transform_control.showz=true;
-            }else if (transform_control.mode=="rotate"){
-                transform_control.setMode( "scale" );
-                transform_control.showY=true;
-                transform_control.showX=true;
-                transform_control.showz=true;
-            }
+            change_transform_control_view();
             break;
         case 'B':    
         case 'b':
-            {
-
-            //mesh = ev.key=='b'?new_bbox(): new_bbox_cube();
-            mesh = new_bbox_cube();
-
-            bboxes.push(mesh);
-            
-            var pos = get_current_mouse_location_in_world();
-
-            mesh.position.x = pos.x;
-            mesh.position.y = pos.y;
-            mesh.position.z = pos.z;
-            scene.add(mesh);
-            sideview_mesh=mesh;
-            //unselect_bbox(mesh);
-            select_bbox(mesh);
-            //update_subview_by_windowsize();
-            }
-            break;
-        
+            add_bbox();
+            break;        
         case '+':
         case '=': // +, =, num+
-        transform_control.setSize( transform_control.size + 0.1 );
+            transform_control.setSize( transform_control.size + 0.1 );
             break;
         case '-':
-        //case 109: // -, _, num-
-        transform_control.setSize( Math.max( transform_control.size - 0.1, 0.1 ) );
+            //case 109: // -, _, num-
+            transform_control.setSize( Math.max( transform_control.size - 0.1, 0.1 ) );
             break;
         case 'z': // X
             transform_control.showX = ! transform_control.showX;
@@ -704,10 +771,11 @@ function keydown( ev ) {
             break;
         case 'c': // Z
             transform_control.showZ = ! transform_control.showZ;
-            break;
+            break;            
         case ' ': // Spacebar
             transform_control.enabled = ! transform_control.enabled;
             break;
+            
         case '5':            
         case '6':
         case '7':
@@ -717,119 +785,105 @@ function keydown( ev ) {
         case 'a':
             if (selected_box){
                 if (!mouse_right_down){
-                    selected_box.position.x -= 0.05*Math.cos(selected_box.rotation.z);
-                    selected_box.position.y -= 0.05*Math.sin(selected_box.rotation.z);
+                    transform_bbox("x_move_down");
                 }
                 else{
-                    selected_box.position.x += 0.05*Math.cos(selected_box.rotation.z);
-                    selected_box.position.y += 0.05*Math.sin(selected_box.rotation.z);
+                    transform_bbox("x_scale_down");
                 }
-                update_subview_by_bbox(selected_box);
             }
             break;
         case 'A':
-            if (selected_box){
-                selected_box.position.x += 0.05*Math.cos(selected_box.rotation.z);
-                selected_box.position.y += 0.05*Math.sin(selected_box.rotation.z);
-                update_subview_by_bbox(selected_box);
-            }            
+            transform_bbox("x_scale_down");
             break;
+        case 'q':
+            if (selected_box){
+                if (!mouse_right_down){
+                    transform_bbox("x_move_up");
+                }
+                else{
+                    transform_bbox("x_scale_up");
+                }                
+            }            
+            break;        
+        case 'Q':
+            transform_bbox("x_scale_up");
+            break;
+            
         case 's':
             if (selected_box){
                 if (!mouse_right_down){
-                    selected_box.position.x -= 0.05*Math.cos(Math.PI/2 + selected_box.rotation.z);
-                    selected_box.position.y -= 0.05*Math.sin(Math.PI/2 + selected_box.rotation.z);
+                    transform_bbox("y_move_down");
                 }else{
-                    selected_box.position.x += 0.05*Math.cos(Math.PI/2 + selected_box.rotation.z);
-                    selected_box.position.y += 0.05*Math.sin(Math.PI/2 + selected_box.rotation.z);    
+                    transform_bbox("y_scale_down");
                 }
-                update_subview_by_bbox(selected_box);
             }
             break;
         case 'S':
             if (selected_box){
-                selected_box.position.x += 0.05*Math.cos(Math.PI/2 + selected_box.rotation.z);
-                selected_box.position.y += 0.05*Math.sin(Math.PI/2 + selected_box.rotation.z);
-                update_subview_by_bbox(selected_box);
+                transform_bbox("y_scale_down");
             }            
-            break;
-        case 'd':
-            if (selected_box){
-                if (!mouse_right_down)
-                    selected_box.position.z -= 0.05;
-                else
-                    selected_box.position.z += 0.05;
-                update_subview_by_bbox(selected_box);
-            }
-            break;
-        case 'D':
-            if (selected_box){
-                selected_box.position.z += 0.05;
-                update_subview_by_bbox(selected_box);
-            }            
-            break;        
-        
-        case 'f':
-            if (selected_box){
-                if (!mouse_right_down)
-                    selected_box.rotation.z -= 0.01;
-                else
-                    selected_box.rotation.z += 0.01;
-                update_subview_by_bbox(selected_box);
-            }
-            break;
-        case 'F':
-            if (selected_box){
-                selected_box.rotation.z += 0.01;
-                update_subview_by_bbox(selected_box);
-            }
-            break;
-        
-        case 'q':
-            if (selected_box){
-                if (!mouse_right_down)
-                    selected_box.scale.x /= 1.01;
-                else
-                    selected_box.scale.x *= 1.01;
-
-                update_subview_by_bbox(selected_box);
-            }
-            break;
-        case 'Q':
-            if (selected_box){
-                update_subview_by_bbox(selected_box);
-            }
             break;
         case 'w':
             if (selected_box){
                 if (!mouse_right_down)
-                    selected_box.scale.y /= 1.01;
+                    transform_bbox("y_move_up");
                 else
-                    selected_box.scale.y *= 1.01;
-                update_subview_by_bbox(selected_box);
+                    transform_bbox("y_scale_up");                
             }
             break;
         case 'W':
             if (selected_box){
-                selected_box.scale.y *= 1.01;
-                update_subview_by_bbox(selected_box);
+                transform_bbox("y_scale_up");
             }
             break;
-        case 'e':
+
+
+        case 'd':
             if (selected_box){
                 if (!mouse_right_down)
-                    selected_box.scale.z /= 1.01;
+                    transform_bbox("z_move_down");
                 else
-                    selected_box.scale.z *= 1.01;
-                update_subview_by_bbox(selected_box);
+                    transform_bbox("z_scale_down");
+                
             }
             break;
+        case 'D':
+            if (selected_box){
+                transform_bbox("z_scale_down");
+            }            
+            break;        
+        case 'e':
+                if (selected_box){
+                    if (!mouse_right_down)
+                        transform_bbox("z_move_up");
+                    else
+                        transform_bbox("z_scale_up");                    
+                }
+                break;
         case 'E':
             if (selected_box){
-                selected_box.scale.z *= 1.01;
-                update_subview_by_bbox(selected_box);
+                transform_bbox("z_scale_up");
             }
             break;
+
+        case 'f':
+            if (selected_box){                
+                transform_bbox("z_rotate_right");                
+            }
+            break;
+        case 'r':
+            if (selected_box){
+                transform_bbox("z_rotate_left");
+            }
+            break;
+        
+        case 'g':
+            transform_bbox("z_rotate_reverse");
+            break;
+        case 't':
+            transform_bbox("reset");
+            break;
+        
         case 'Delete':
             if (selected_box){
                 transform_control.detach();

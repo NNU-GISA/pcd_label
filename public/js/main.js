@@ -880,10 +880,24 @@ function keydown( ev ) {
             points.material.needsUpdate = true;
             break;
         case '1': 
+        case '2':
             {
                 //transform_control.setSpace( transform_control.space === "local" ? "world" : "local" );
-                box_navigate_index++;
-                box_navigate_index %= bboxes.length;
+
+                //select current index
+                if (bboxes[box_navigate_index]!= selected_box){
+
+                }
+                else {
+                    if (ev.key== '1')
+                        box_navigate_index += 1;
+                    else 
+                        box_navigate_index += (bboxes.length-1);
+                    
+                    box_navigate_index %= bboxes.length;
+                }
+                
+                console.log(box_navigate_index);
                 select_bbox(bboxes[box_navigate_index]);
                 //views[0].camera.position.x = bboxes[box_navigate_index].position.x;
                 //views[0].camera.position.y = bboxes[box_navigate_index].position.y;
@@ -900,8 +914,9 @@ function keydown( ev ) {
                 orbit.target.y=p.y;
                 orbit.target.z=p.z;
                 orbit.update();
-
-
+                
+                
+                
             }
             break;
         case 'v':

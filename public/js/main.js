@@ -396,7 +396,7 @@ function update_subview_by_bbox(mesh){
 function on_transform_change(event){
     
     var mesh = event.target.object;
-    console.log("bbox rotation z", mesh.rotation.z);
+    //console.log("bbox rotation z", mesh.rotation.z);
     update_subview_by_bbox(mesh);    
 }
 
@@ -648,25 +648,24 @@ function keydown( ev ) {
         case '1': 
             transform_control.setSpace( transform_control.space === "local" ? "world" : "local" );
             break;
-        case '2':
-            transform_control.setMode( "translate" );
-            transform_control.showY=true;
-            transform_control.showX=true;
-            transform_control.showz=true;
+        case 'v':
+            if (transform_control.mode=="scale"){
+                transform_control.setMode( "translate" );
+                transform_control.showY=true;
+                transform_control.showX=true;
+                transform_control.showz=true;
+            }else if (transform_control.mode=="translate"){
+                transform_control.setMode( "rotate" );
+                transform_control.showY=false;
+                transform_control.showX=false;
+                transform_control.showz=true;
+            }else if (transform_control.mode=="rotate"){
+                transform_control.setMode( "scale" );
+                transform_control.showY=true;
+                transform_control.showX=true;
+                transform_control.showz=true;
+            }
             break;
-        case '3': 
-            transform_control.setMode( "rotate" );
-            transform_control.showY=false;
-            transform_control.showX=false;
-            transform_control.showz=true;
-            break;
-        case '4': 
-            transform_control.setMode( "scale" );
-            transform_control.showY=true;
-            transform_control.showX=true;
-            transform_control.showz=true;
-            break;
-
         case 'B':    
         case 'b':
             {
@@ -683,6 +682,8 @@ function keydown( ev ) {
             mesh.position.z = pos.z;
             scene.add(mesh);
             sideview_mesh=mesh;
+            //unselect_bbox(mesh);
+            select_bbox(mesh);
             //update_subview_by_windowsize();
             }
             break;
@@ -1047,8 +1048,13 @@ function cube2( size ) {
 function update_box_info_text(mesh){
     var scale = mesh.scale;
     var pos = mesh.position;
+    var rotation = mesh.rotation;
 
-    document.getElementById("info").innerHTML = "w "+scale.x.toFixed(2) +" l "+scale.y.toFixed(2) + " h " + scale.z.toFixed(2) +
-                                                 " x "+pos.x.toFixed(2) +" y "+pos.y.toFixed(2) + " z " + pos.z.toFixed(2);
+    // document.getElementById("info").innerHTML = "w "+scale.x.toFixed(2) +" l "+scale.y.toFixed(2) + " h " + scale.z.toFixed(2) +
+    //                                              " x "+pos.x.toFixed(2) +" y "+pos.y.toFixed(2) + " z " + pos.z.toFixed(2);
+
+    document.getElementById("info").innerHTML = pos.x.toFixed(2) +" "+pos.y.toFixed(2) + " " + pos.z.toFixed(2) + " | "+
+                                                scale.x.toFixed(2) +" "+scale.y.toFixed(2) + " " + scale.z.toFixed(2) + " | " + 
+                                                (rotation.z*180/Math.PI).toFixed(2);
 }
 

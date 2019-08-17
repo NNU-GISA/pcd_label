@@ -3,3 +3,4 @@
 1. preset bus/car dimension
 1. remove bbox in bbox list when deleted.
 2. reverse the direction
+3. unselect when add new box

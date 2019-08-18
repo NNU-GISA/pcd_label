@@ -31,7 +31,7 @@ PCDLoader.prototype = {
 
 	constructor: PCDLoader,
 
-	load: function ( url, onLoad, onProgress, onError ) {
+	load: function ( url, pointTransform, onLoad, onProgress, onError ) {
 
 		var scope = this;
 
@@ -42,7 +42,7 @@ PCDLoader.prototype = {
 
 			try {
 
-				onLoad( scope.parse( data, url ) );
+				onLoad( scope.parse( data, url, pointTransform ) );
 
 			} catch ( e ) {
 
@@ -69,7 +69,7 @@ PCDLoader.prototype = {
 
 	},
 
-	parse: function ( data, url ) {
+	parse: function ( data, url, pointTransform ) {
 
 		function parseHeader( data ) {
 
@@ -207,10 +207,14 @@ PCDLoader.prototype = {
 				var line = lines[ i ].split( ' ' );
 
 				if ( offset.x !== undefined ) {
+					var x,y,z;
+					x = parseFloat( line[ offset.x ] );
+					y = parseFloat( line[ offset.y ] );
+					z = parseFloat( line[ offset.z ] );
 
-					position.push( parseFloat( line[ offset.x ] ) );
-					position.push( parseFloat( line[ offset.y ] ) );
-					position.push( parseFloat( line[ offset.z ] ) );
+					position.push( x );
+					position.push( y );
+					position.push( z );
 
 				}
 

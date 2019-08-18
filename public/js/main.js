@@ -278,27 +278,33 @@ function init() {
     document.body.appendChild( renderer.domElement );
     
     var loader = new PCDLoader();
-    loader.load( data.get_pcd_path(), function ( points ) {
-        //points.castShadow = true;
+    loader.load( data.get_pcd_path(), 
+        null,
+        function ( points ) {
+            //points.castShadow = true;
 
-        var arr = points.geometry.attributes.position.array;
-        var num = points.geometry.attributes.position.count;
-        var ni = points.geometry.attributes.position.itemSize;
+            var arr = points.geometry.attributes.position.array;
+            var num = points.geometry.attributes.position.count;
+            var ni = points.geometry.attributes.position.itemSize;
 
-        for (var i=0; i<num; i++){
-            var np = data.transform_point(data.file_info.transform_matrix, arr[i*ni+0], arr[i*ni+1], arr[i*ni+2]);
-            arr[i*ni+0]=np[0];
-            arr[i*ni+1]=np[1];
-            arr[i*ni+2]=np[2];
-        }
-        
+            for (var i=0; i<num; i++){
+                var np = data.transform_point(data.file_info.transform_matrix, arr[i*ni+0], arr[i*ni+1], arr[i*ni+2]);
+                arr[i*ni+0]=np[0];
+                arr[i*ni+1]=np[1];
+                arr[i*ni+2]=np[2];
+            }
+            
+            points.geometry.computeBoundingSphere();
+            
+            points.material.color.setHex( 0xffffff );
+            scene.add( points );
+            var center = points.geometry.boundingSphere.center;
+            //controls.target.set( center.x, center.y, center.z );
+            //controls.update();
+        },
 
-        points.material.color.setHex( 0xffffff );
-        scene.add( points );
-        var center = points.geometry.boundingSphere.center;
-        //controls.target.set( center.x, center.y, center.z );
-        //controls.update();
-    });
+
+    );
 
 
 
@@ -1098,16 +1104,17 @@ function keydown( ev ) {
 
 function remove_selected_box(){
     if (selected_box){
+        var targt_box = selected_box;
         unselect_bbox(null);
         unselect_bbox(null); //twice to safely unselect.
         //transform_control.detach();
 
 
-        scene.remove(selected_box);
-        selected_box.geometry.dispose();
-        selected_box.material.dispose();
+        scene.remove(targt_box);
+        targt_box.geometry.dispose();
+        targt_box.material.dispose();
         //selected_box.dispose();
-        data.bboxes = data.bboxes.filter(function(x){return x !=selected_box;});
+        data.bboxes = data.bboxes.filter(function(x){return x !=targt_box;});
         selected_box = null;
         sideview_mesh = null;
     }

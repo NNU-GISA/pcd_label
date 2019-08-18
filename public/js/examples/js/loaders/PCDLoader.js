@@ -20,7 +20,7 @@ THREE.PCDLoader.prototype = {
 
 	constructor: THREE.PCDLoader,
 
-	load: function ( url, onLoad, onProgress, onError ) {
+	load: function ( url, onPointTransform, onLoad, onProgress, onError) {
 
 		var scope = this;
 
@@ -31,7 +31,7 @@ THREE.PCDLoader.prototype = {
 
 			try {
 
-				onLoad( scope.parse( data, url ) );
+				onLoad( scope.parse( data, url, onPointTransform ) );
 
 			} catch ( e ) {
 
@@ -197,7 +197,12 @@ THREE.PCDLoader.prototype = {
 
 				if ( offset.x !== undefined ) {
 
-					position.push( parseFloat( line[ offset.x ] ) );
+					var x,y,z;
+					x = parseFloat( line[ offset.x ]);
+					y = parseFloat( line[ offset.y ]);
+					z = parseFloat( line[ offset.z ]);
+
+					position.push( x, y, z );
 					position.push( parseFloat( line[ offset.y ] ) );
 					position.push( parseFloat( line[ offset.z ] ) );
 

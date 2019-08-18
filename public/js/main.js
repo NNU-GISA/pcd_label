@@ -5,6 +5,7 @@ import { PCDLoader } from './examples/jsm/loaders/PCDLoader.js';
 import { GeometryUtils } from './examples/jsm/utils/GeometryUtils.js';
 //import {BBoxBufferGeometry } from './BBoxGeometry.js';
 import { OrbitControls } from './examples/jsm/controls/OrbitControls.js';
+import { OrthographicTrackballControls } from './examples/jsm/controls/OrthographicTrackballControls.js';
 import { TransformControls } from './examples/jsm/controls/TransformControls.js';
 import { ShadowMapViewer } from './examples/jsm/utils/ShadowMapViewer.js';
 import { GUI } from './examples/jsm/libs/dat.gui.module.js';
@@ -15,7 +16,7 @@ import {data} from './data.js'
 var container;
 //var stats;
 //var camera, 
-var controls, scene, renderer, transform_control, orbit;
+var controls, scene, renderer, transform_control;
 var mesh;
 var raycaster;
 var mouse, INTERSECTED;
@@ -94,6 +95,8 @@ render();
 function create_views(){
     if (true){
         var view = views[ 0 ];
+        
+        
         var camera = new THREE.PerspectiveCamera( 65, window.innerWidth / window.innerHeight, 1, 800 );
         camera.position.x = 0;
         camera.position.z = 50;
@@ -102,57 +105,97 @@ function create_views(){
         camera.lookAt( 0, 0, 0 );
         view.camera_perspective = camera;
 
-        
-        var width = window.innerWidth;
-        var height = window.innerHeight;
-        var asp = width/height;
-
-        var camera = new THREE.OrthographicCamera(-400*asp, 400*asp, 400, -400, -50, 50);       
-        camera.position.x = 0;
-        camera.position.z = 0;
-        camera.position.y = 0;
-        camera.up.set( 1, 0, 0);
-        camera.lookAt( 0, 0, -3 );
-        view.camera_orth = camera;
-
-        view.camera = view.camera_perspective;
-
         var orbit_perspective = new OrbitControls( view.camera_perspective, renderer.domElement );
         orbit_perspective.update();
         orbit_perspective.addEventListener( 'change', render );
-        orbit_perspective.enabled = true;
+        orbit_perspective.enabled = false;
 
         view.orbit_perspective = orbit_perspective;
 
 
-        var orbit_orth = new OrbitControls( view.camera_orth, renderer.domElement );
-        orbit_orth.update();
-        orbit_orth.addEventListener( 'change', render );
-        orbit_orth.enabled = false;
-        view.orbit_orth = orbit_orth;
-        view.orbit = orbit_perspective;
 
-        view.switch_camera= function(){
-            if (this.camera === this.camera_orth){
+
+
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+        var asp = width/height;
+
+        //camera = new THREE.OrthographicCamera(-800*asp, 800*asp, 800, -800, -800, 800);       
+        // camera.position.x = 0;
+        // camera.position.z = 0;
+        // camera.position.y = 0;
+        // camera.up.set( 1, 0, 0);
+        // camera.lookAt( 0, 0, -3 );
+
+        camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, -400, 400 );
+        camera.position.z = 100;
+        view.camera_orth = camera;
+        view.camera = view.camera_orth;
+
+
+        // var orbit_orth = new OrbitControls( view.camera_orth, renderer.domElement );
+        // orbit_orth.update();
+        // orbit_orth.addEventListener( 'change', render );
+        // orbit_orth.enabled = false;
+        // view.orbit_orth = orbit_orth;
+
+        var orbit_orth = new OrthographicTrackballControls( view.camera_orth, renderer.domElement );
+        orbit_orth.rotateSpeed = 1.0;
+        orbit_orth.zoomSpeed = 1.2;
+        orbit_orth.noZoom = false;
+        orbit_orth.noPan = false;
+        orbit_orth.noRotate = false;
+        orbit_orth.staticMoving = true;
+        
+        orbit_orth.dynamicDampingFactor = 0.3;
+        orbit_orth.keys = [ 65, 83, 68 ];
+        orbit_orth.addEventListener( 'change', render );
+        orbit_orth.enabled=true;
+        view.orbit_orth = orbit_orth;
+        view.orbit = view.orbit_orth;
+
+        view.switch_camera = function(birdseye)        
+        {
+            
+            if (!birdseye && (this.camera === this.camera_orth)){
                 this.camera = this.camera_perspective;
                 this.orbit_orth.enabled=false;
                 this.orbit_perspective.enabled=true;
-                view.orbit = orbit_perspective;
+                this.orbit = this.orbit_perspective;
             }
-            else{
+            else if (birdseye && (this.camera === this.camera_perspective))
+            {
                 this.camera = this.camera_orth;
                 this.orbit_orth.enabled=true;
                 this.orbit_perspective.enabled=false;
-                view.orbit = orbit_orth;
+                this.orbit = this.orbit_orth;
             }
-        }
+        };
 
         view.look_at = function(p){
             this.orbit.target.x=p.x;
             this.orbit.target.y=p.y;
             this.orbit.target.z=p.z;
             this.orbit.update();
-        }
+        };
+
+        view.onWindowResize = function(){
+            this.orbit_orth.handleResize();
+            this.camera_orth.left = window.innerWidth / - 2;
+            this.camera_orth.right = window.innerWidth / 2;
+            this.camera_orth.top = window.innerHeight / 2;
+            this.camera_orth.bottom = window.innerHeight / - 2;
+            this.camera_orth.updateProjectionMatrix();
+
+            
+            this.camera_perspective.aspect = window.innerWidth / window.innerHeight;
+            this.camera_perspective.updateProjectionMatrix();
+            
+        };
+
+        view.reset_birdseye = function(){
+            this.orbit_orth.reset();
+        };
     }
 
     if (true){
@@ -264,7 +307,7 @@ function init() {
     transform_control.addEventListener( 'objectChange', on_transform_change );
     
     transform_control.addEventListener( 'dragging-changed', function ( event ) {
-        orbit.enabled = ! event.value;
+        views[0].orbit.enabled = ! event.value;
     } );
 
     scene.add( new THREE.AxesHelper( 2 ) );
@@ -276,8 +319,8 @@ function init() {
     window.addEventListener( 'resize', onWindowResize, false );
     window.addEventListener( 'keydown', keydown );
 
-    document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-    document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+    renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
+    renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 }
@@ -460,24 +503,19 @@ function load_data_meta(gui_folder){
 }
 
 
-
-function swithCamera(camera){
-    if (camera == "birdseye"){
-        views[0].cam
-    }
-}
-
 function init_gui(){
     var gui = new GUI();
 
     var cfgFolder = gui.addFolder( 'View' );
 
-    params["switchcamera"] = function(){
-        views[0].switch_camera();
+    params["bird's eye view"] = false;
+    params["reset bird's eye view"] = function(){
+        views[0].reset_birdseye();
     };
     
 
-    cfgFolder.add( params, 'switchcamera');
+    cfgFolder.add( params, "bird's eye view");
+    cfgFolder.add( params, "reset bird's eye view");
 
     var fileFolder = gui.addFolder( 'File' );
     params['save'] = function () {
@@ -507,10 +545,7 @@ function init_gui(){
 
 
 
-function update_mainview(){
-    views[0].camera.aspect = window.innerWidth / window.innerHeight;
-    views[0].camera.updateProjectionMatrix();
-}
+
 
 function update_subview_by_windowsize(){
 
@@ -562,7 +597,7 @@ function update_subview_by_windowsize(){
         camera.near = exp_camera_clip/-2;
         camera.far = exp_camera_clip/2;
 
-        camera.aspect = view_width / view_height;
+        //camera.aspect = view_width / view_height;
         camera.updateProjectionMatrix();
         if (ii>0)
             view.cameraHelper.update();
@@ -602,6 +637,9 @@ function on_transform_change(event){
 
 
 function render(){
+
+    views[0].switch_camera(params["bird's eye view"]);
+    
     for ( var ii = 0; ii < views.length; ++ ii ) {
         var view = views[ ii ];
         var camera = view.camera;
@@ -796,12 +834,16 @@ function onWindowResize() {
 
     if ( windowWidth != window.innerWidth || windowHeight != window.innerHeight ) {
 
-        update_mainview();
+        //update_mainview();
+        views[0].onWindowResize();
+
         update_subview_by_windowsize();
 
         windowWidth = window.innerWidth;
         windowHeight = window.innerHeight;
         renderer.setSize( windowWidth, windowHeight );
+
+        
     }
     
 
@@ -1191,6 +1233,7 @@ function remove_all_boxes(){
 function animate() {
     requestAnimationFrame( animate );
     //controls.update();
+    views[0].orbit.update();
     render();
     //stats.update();
 }

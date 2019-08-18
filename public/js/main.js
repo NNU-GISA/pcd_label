@@ -34,13 +34,8 @@ var mouseX = 0, mouseY = 0;
 var windowWidth, windowHeight;
 var current_points = null;
 
+var params={};
 
-var params = {
-    uniform: true,
-    tension: 0.5,
-    centripetal: true,
-    chordal: true,
-};
 
 
 var views = [
@@ -95,25 +90,8 @@ init();
 animate();
 render();
 
-function init() {
-    document.body.addEventListener('keydown', event => {
-        if (event.ctrlKey && 'asdv'.indexOf(event.key) !== -1) {
-          event.preventDefault()
-        }
-    })
 
-
-    scene = new THREE.Scene();
-    //scene.background = new THREE.Color( 0x000033 );
-    // camera = new THREE.PerspectiveCamera( 65, window.innerWidth / window.innerHeight, 1, 800 );
-    // camera.position.x = 0;
-    // camera.position.z = 50;
-    // camera.position.y = 0;
-    // camera.up.set( 0, 0, 1);
-    // camera.lookAt( 1, 10, 0 );
-
-    //scene.add( new THREE.CameraHelper( camera ) );
-
+function create_views(){
     if (true){
         var view = views[ 0 ];
         var camera = new THREE.PerspectiveCamera( 65, window.innerWidth / window.innerHeight, 1, 800 );
@@ -122,21 +100,59 @@ function init() {
         camera.position.y = 0;
         camera.up.set( 0, 0, 1);
         camera.lookAt( 0, 0, 0 );
-        view.camera = camera;
+        view.camera_perspective = camera;
 
-        /*
+        
         var width = window.innerWidth;
         var height = window.innerHeight;
         var asp = width/height;
 
-        var camera = new THREE.OrthographicCamera(-400*asp,400*asp, 400, -400, -20, 20);       
+        var camera = new THREE.OrthographicCamera(-400*asp, 400*asp, 400, -400, -50, 50);       
         camera.position.x = 0;
         camera.position.z = 0;
         camera.position.y = 0;
         camera.up.set( 1, 0, 0);
         camera.lookAt( 0, 0, -3 );
-        view.camera = camera;
-        */
+        view.camera_orth = camera;
+
+        view.camera = view.camera_perspective;
+
+        var orbit_perspective = new OrbitControls( view.camera_perspective, renderer.domElement );
+        orbit_perspective.update();
+        orbit_perspective.addEventListener( 'change', render );
+        orbit_perspective.enabled = true;
+
+        view.orbit_perspective = orbit_perspective;
+
+
+        var orbit_orth = new OrbitControls( view.camera_orth, renderer.domElement );
+        orbit_orth.update();
+        orbit_orth.addEventListener( 'change', render );
+        orbit_orth.enabled = false;
+        view.orbit_orth = orbit_orth;
+        view.orbit = orbit_perspective;
+
+        view.switch_camera= function(){
+            if (this.camera === this.camera_orth){
+                this.camera = this.camera_perspective;
+                this.orbit_orth.enabled=false;
+                this.orbit_perspective.enabled=true;
+                view.orbit = orbit_perspective;
+            }
+            else{
+                this.camera = this.camera_orth;
+                this.orbit_orth.enabled=true;
+                this.orbit_perspective.enabled=false;
+                view.orbit = orbit_orth;
+            }
+        }
+
+        view.look_at = function(p){
+            this.orbit.target.x=p.x;
+            this.orbit.target.y=p.y;
+            this.orbit.target.z=p.z;
+            this.orbit.update();
+        }
     }
 
     if (true){
@@ -204,14 +220,18 @@ function init() {
         camera.lookAt( -3, 0, 0 );
         view.camera = camera;
     }
+}
 
-    
-    //camera = views[0].camera;
-   
 
-    // var camera2 = new THREE.PerspectiveCamera( 40, 1, 1, 1000 );
-    // camera2.position.copy( camera.position );
+function init() {
+    document.body.addEventListener('keydown', event => {
+        if (event.ctrlKey && 'asdv'.indexOf(event.key) !== -1) {
+          event.preventDefault()
+        }
+    })
 
+
+    scene = new THREE.Scene();
     mouse = new THREE.Vector2();
     raycaster = new THREE.Raycaster();
 
@@ -220,7 +240,6 @@ function init() {
     renderer.setSize( window.innerWidth, window.innerHeight );
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.BasicShadowMap;
-
 
     renderer.setClearColor( 0x000000, 0 );
     renderer.setViewport( 0, 0, window.innerWidth, window.innerHeight );
@@ -231,26 +250,12 @@ function init() {
     container = document.createElement( 'container' );
     
 
-     document.body.appendChild( container );
+    document.body.appendChild( container );
     container.appendChild( renderer.domElement );
-    
-    // controls = new TrackballControls( camera, renderer.domElement );
-    // controls.rotateSpeed = 2.0;
-    // controls.zoomSpeed = 5;
-    // controls.panSpeed = 2;
-    // controls.noZoom = false;
-    // controls.noPan = false;
-    // controls.staticMoving = true;
-    // controls.dynamicDampingFactor = 0.3;
-    // controls.minDistance = 3;
-    // controls.maxDistance = 3 * 100;
+
+    create_views();
 
     init_gui();
-
-
-    orbit = new OrbitControls( views[0].camera, renderer.domElement );
-    orbit.update();
-    orbit.addEventListener( 'change', render );
 
 
     transform_control = new TransformControls( views[0].camera, renderer.domElement );
@@ -262,31 +267,8 @@ function init() {
         orbit.enabled = ! event.value;
     } );
 
-   
-    // renderer.setClearColor( 0x222222, 1 );
-    // renderer.clearDepth(); // important!
-    // renderer.setScissorTest( true );
-    // renderer.setScissor( 20, 20, 300, 300 );
-    // renderer.setViewport( 20, 20, 300, 300 );
-    // camera2.position.copy( camera.position );
-    // camera2.quaternion.copy( camera.quaternion );
-    // // renderer will set this eventually
-    // //matLine.resolution.set( insetWidth, insetHeight ); // resolution of the inset viewport
-    // //renderer.render( scene, camera2 );
-                
-
-    document.body.appendChild( renderer.domElement );
-    
-
-    //load_points(scene);
-
     scene.add( new THREE.AxesHelper( 2 ) );
     scene.add( transform_control );
-
-
-    //stats = new Stats();
-    //container.appendChild( stats.dom );
-     
 
 
     onWindowResize();
@@ -357,6 +339,7 @@ function create_bboxs(annotations){
 }
 
 function load_all(){
+    remove_all();
     load_points(scene);
     load_annotation();
 }
@@ -447,6 +430,8 @@ function load_data_meta(gui_folder){
 
                 remove_all();
                 load_all();
+
+                update_frame_info(c.scene, f);
             }
 
             folder.add(thisscene, f);
@@ -474,11 +459,25 @@ function load_data_meta(gui_folder){
     xhr.send();
 }
 
+
+
+function swithCamera(camera){
+    if (camera == "birdseye"){
+        views[0].cam
+    }
+}
+
 function init_gui(){
     var gui = new GUI();
 
-    var cfgFolder = gui.addFolder( 'Config' );
+    var cfgFolder = gui.addFolder( 'View' );
 
+    params["switchcamera"] = function(){
+        views[0].switch_camera();
+    };
+    
+
+    cfgFolder.add( params, 'switchcamera');
 
     var fileFolder = gui.addFolder( 'File' );
     params['save'] = function () {
@@ -992,21 +991,8 @@ function keydown( ev ) {
                 }
                 console.log(box_navigate_index);
                 select_bbox(data.bboxes[box_navigate_index]);
-                //views[0].camera.position.x = data.bboxes[box_navigate_index].position.x;
-                //views[0].camera.position.y = data.bboxes[box_navigate_index].position.y;
-                //views[0].camera.lookAt(data.bboxes[box_navigate_index].position.x, data.bboxes[box_navigate_index].position.y, data.bboxes[box_navigate_index].position.z);
-                //views[0].camera.updateProjectionMatrix();
                 
-                // var lookat = get_mouse_location_in_world({x:0, y:0});
-                
-                // views[0].camera.position.x += data.bboxes[box_navigate_index].position.x - lookat.x;
-                // views[0].camera.position.y += data.bboxes[box_navigate_index].position.y - lookat.y;
-                // views[0].camera.updateProjectionMatrix();
-                var p = data.bboxes[box_navigate_index].position;
-                orbit.target.x=p.x;
-                orbit.target.y=p.y;
-                orbit.target.z=p.z;
-                orbit.update();
+                views[0].look_at(data.bboxes[box_navigate_index].position);
                 
                 
                 
@@ -1410,6 +1396,11 @@ function cube2( size ) {
     return gbody;
 }
 
+function update_frame_info(scene, frame){
+    document.getElementById("frame").innerHTML = scene+"/"+frame;
+
+}
+
 
 function update_box_info_text(mesh){
     var scale = mesh.scale;
@@ -1419,7 +1410,7 @@ function update_box_info_text(mesh){
     // document.getElementById("info").innerHTML = "w "+scale.x.toFixed(2) +" l "+scale.y.toFixed(2) + " h " + scale.z.toFixed(2) +
     //                                              " x "+pos.x.toFixed(2) +" y "+pos.y.toFixed(2) + " z " + pos.z.toFixed(2);
 
-    document.getElementById("info").innerHTML = pos.x.toFixed(2) +" "+pos.y.toFixed(2) + " " + pos.z.toFixed(2) + " | "+
+    document.getElementById("box").innerHTML = pos.x.toFixed(2) +" "+pos.y.toFixed(2) + " " + pos.z.toFixed(2) + " | "+
                                                 scale.x.toFixed(2) +" "+scale.y.toFixed(2) + " " + scale.z.toFixed(2) + " | " + 
                                                 (rotation.z*180/Math.PI).toFixed(2);
 }

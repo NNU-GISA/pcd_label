@@ -278,8 +278,21 @@ function init() {
     document.body.appendChild( renderer.domElement );
     
     var loader = new PCDLoader();
-    loader.load( 'static/pcd/test.pcd', function ( points ) {
+    loader.load( data.get_pcd_path(), function ( points ) {
         //points.castShadow = true;
+
+        var arr = points.geometry.attributes.position.array;
+        var num = points.geometry.attributes.position.count;
+        var ni = points.geometry.attributes.position.itemSize;
+
+        for (var i=0; i<num; i++){
+            var np = data.transform_point(data.file_info.transform_matrix, arr[i*ni+0], arr[i*ni+1], arr[i*ni+2]);
+            arr[i*ni+0]=np[0];
+            arr[i*ni+1]=np[1];
+            arr[i*ni+2]=np[2];
+        }
+        
+
         points.material.color.setHex( 0xffffff );
         scene.add( points );
         var center = points.geometry.boundingSphere.center;
@@ -374,18 +387,23 @@ function load_annotation(){
         if (this.readyState != 4) return;
     
         if (this.status == 200) {
-            var data = JSON.parse(this.responseText);
-            console.log(data);
+
+            var ret = data.anno_to_boxes(this.responseText);
+
+            //var boxes = JSON.parse(this.responseText);
+            //console.log(ret);
 
             remove_all_boxes();
 
-            create_bboxs(data);
+            create_bboxs(ret[0]);
+
+            //add_raw_boxes(ret[1]);
         }
     
         // end of state change: it can be after some time (async)
     };
     
-    xhr.open('GET', "/load"+"?frame="+data.file_info.frame, true);
+    xhr.open('GET', "/load"+"?frame="+data.get_anno_path(), true);
     xhr.send();
 
 }
@@ -750,7 +768,15 @@ function change_transform_control_view(){
     }
 }
 
-
+function add_raw_boxes(boxes){
+    boxes.forEach(function(b){
+        var geo = new THREE.BufferGeometry();
+        geo.addAttribute( 'position', new THREE.Float32BufferAttribute(b, 3 ) );
+        
+        var box = new THREE.LineSegments( geo, new THREE.LineBasicMaterial( { color: 0xff0000 } ) );    
+        scene.add(box);
+    });
+}
 
 function add_bbox(){
     //mesh = ev.key=='b'?new_bbox(): new_bbox_cube();

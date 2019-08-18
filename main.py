@@ -28,7 +28,7 @@ class Root(object):
 
     @cherrypy.expose    
     def load(self, frame):
-      with open(frame+".anno.txt","r") as f:
+      with open("./public/"+frame,"r") as f:
         y=f.read()
         return y
     

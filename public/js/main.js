@@ -32,7 +32,7 @@ var sideview_mesh=null;
 var views;
 var mouseX = 0, mouseY = 0;
 var windowWidth, windowHeight;
-
+var current_points = null;
 
 
 var params = {
@@ -368,23 +368,27 @@ function load_points(scene){
         function ( points ) {
             //points.castShadow = true;
 
-            var arr = points.geometry.attributes.position.array;
-            var num = points.geometry.attributes.position.count;
-            var ni = points.geometry.attributes.position.itemSize;
+            
 
             if (data.file_info.transform_matrix){
+
+                var arr = points.geometry.attributes.position.array;
+                var num = points.geometry.attributes.position.count;
+                var ni = points.geometry.attributes.position.itemSize;
+
                 for (var i=0; i<num; i++){
                     var np = data.transform_point(data.file_info.transform_matrix, arr[i*ni+0], arr[i*ni+1], arr[i*ni+2]);
                     arr[i*ni+0]=np[0];
                     arr[i*ni+1]=np[1];
                     arr[i*ni+2]=np[2];
                 }
+
+                points.geometry.computeBoundingSphere();
             }
-            
-            points.geometry.computeBoundingSphere();
 
             points.material.color.setHex( 0xffffff );
             scene.add( points );
+            current_points = points;
             //var center = points.geometry.boundingSphere.center;
             //controls.target.set( center.x, center.y, center.z );
             //controls.update();
@@ -433,7 +437,16 @@ function load_data_meta(gui_folder){
         var thisscene={};
         c.frames.forEach(function(f){
             thisscene[f] = function(){
-                console.log(c.scene, f, "clicked");
+                console.log("clicked", c);
+
+                data.file_info.scene = c.scene;
+                data.file_info.frame = f;
+                data.file_info.transform_matrix = c.point_transform_matrix;
+                data.file_info.annotation_format = c.boxtype;
+
+
+                remove_all();
+                load_all();
             }
 
             folder.add(thisscene, f);
@@ -480,7 +493,7 @@ function init_gui(){
     fileFolder.add( params, 'reload');
 
     params['clear'] = function () {
-        remove_all_boxes();
+        remove_all();
     };
     fileFolder.add( params, 'clear');
 
@@ -1161,6 +1174,21 @@ function remove_selected_box(){
         data.bboxes = data.bboxes.filter(function(x){return x !=targt_box;});
         selected_box = null;
         sideview_mesh = null;
+    }
+}
+
+function remove_all(){
+    remove_all_boxes();
+    remove_all_points();
+}
+
+
+function remove_all_points(){
+    if (current_points){
+        scene.remove(current_points);
+        current_points.geometry.dispose();
+        current_points.material.dispose();
+        current_points = null;
     }
 }
 

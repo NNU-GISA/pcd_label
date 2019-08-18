@@ -26,11 +26,17 @@ var data = {
     },
 
     get_pcd_path: function(){
-        return 'static/data/'+ this.file_info.scene + "/" + this.file_info.frame+".pcd";
+        return 'static/data/'+ this.file_info.scene + "/pcd/" + this.file_info.frame+".pcd";
     },
 
     get_anno_path: function(){
-        return 'data/'+this.file_info.scene + "/" + this.file_info.frame + (this.file_info.annotation_format=="xyz"?".bbox.txt":".bbox.json");
+        if (this.file_info.annotation_format=="psr"){
+            return 'data/'+this.file_info.scene + "/bbox.json/" + this.file_info.frame + ".bbox.json";
+        }
+        else{
+            return 'data/'+this.file_info.scene + "/bbox.xyz/" + this.file_info.frame + ".bbox.txt";
+        }
+        
     },
 
     anno_to_boxes: function(text){

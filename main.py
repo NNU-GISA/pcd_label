@@ -35,27 +35,56 @@ class Root(object):
     @cherrypy.expose    
     @cherrypy.tools.json_out()
     def datameta(self):
-      return [
-              {
-                "scene":"liuxian1",
-                "frames": [
-                  "000242","000441"
-                ],
-                "boxtype":"xyz",
-                "point_transform_matrix": [
-                  1, 0, 0, 
-                  0, 0, 1, 
-                  0, -1, 0,
-                ]
-              },
-              {
-                "scene":"liuxian2",
-                "frames": [
-                  "test"
-                ],
-                "boxtype":"psr",
-              },
-             ]
+      data = []
+
+      scenes = os.listdir("public/data")
+      print(scenes)
+
+      for s in scenes:
+        scene = {
+          "scene": s,
+          "frames": []
+        }
+
+        data.append(scene)
+
+        frames = os.listdir("public/data/"+s+"/pcd")
+        frames.sort()
+        for f in frames:
+          filename, fileext = os.path.splitext(f)
+          scene["frames"].append(filename)
+
+        if os.path.isdir("public/data/"+s+"/bbox.json"):
+          scene["boxtype"] = "psr"
+        else:
+          scene["boxtype"] = "xyz"
+          scene["point_transform_matrix"] = [
+                   1, 0,  0, 
+                   0, 0,  1, 
+                   0, -1, 0]
+      print(data)
+      return data
+      # return [
+      #         {
+      #           "scene":"liuxian1",
+      #           "frames": [
+      #             "000242","000441"
+      #           ],
+      #           "boxtype":"xyz",
+      #           "point_transform_matrix": [
+      #             1, 0, 0, 
+      #             0, 0, 1, 
+      #             0, -1, 0,
+      #           ]
+      #         },
+      #         {
+      #           "scene":"liuxian2",
+      #           "frames": [
+      #             "test"
+      #           ],
+      #           "boxtype":"psr",
+      #         },
+      #        ]
 
 if __name__ == '__main__':
   cherrypy.quickstart(Root(), '/', config="server.conf")

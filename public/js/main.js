@@ -277,36 +277,8 @@ function init() {
 
     document.body.appendChild( renderer.domElement );
     
-    var loader = new PCDLoader();
-    loader.load( data.get_pcd_path(), 
-        null,
-        function ( points ) {
-            //points.castShadow = true;
 
-            var arr = points.geometry.attributes.position.array;
-            var num = points.geometry.attributes.position.count;
-            var ni = points.geometry.attributes.position.itemSize;
-
-            for (var i=0; i<num; i++){
-                var np = data.transform_point(data.file_info.transform_matrix, arr[i*ni+0], arr[i*ni+1], arr[i*ni+2]);
-                arr[i*ni+0]=np[0];
-                arr[i*ni+1]=np[1];
-                arr[i*ni+2]=np[2];
-            }
-            
-            points.geometry.computeBoundingSphere();
-            
-            points.material.color.setHex( 0xffffff );
-            scene.add( points );
-            var center = points.geometry.boundingSphere.center;
-            //controls.target.set( center.x, center.y, center.z );
-            //controls.update();
-        },
-
-
-    );
-
-
+    //load_points(scene);
 
     scene.add( new THREE.AxesHelper( 2 ) );
     scene.add( transform_control );
@@ -327,6 +299,7 @@ function init() {
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 }
+
 
 function save_annotation(){
     var bbox_annotations=[];
@@ -383,7 +356,43 @@ function create_bboxs(annotations){
     });
 }
 
+function load_all(){
+    load_points(scene);
+    load_annotation();
+}
 
+function load_points(scene){
+    var loader = new PCDLoader();
+    loader.load( data.get_pcd_path(), 
+        null,
+        function ( points ) {
+            //points.castShadow = true;
+
+            var arr = points.geometry.attributes.position.array;
+            var num = points.geometry.attributes.position.count;
+            var ni = points.geometry.attributes.position.itemSize;
+
+            if (data.file_info.transform_matrix){
+                for (var i=0; i<num; i++){
+                    var np = data.transform_point(data.file_info.transform_matrix, arr[i*ni+0], arr[i*ni+1], arr[i*ni+2]);
+                    arr[i*ni+0]=np[0];
+                    arr[i*ni+1]=np[1];
+                    arr[i*ni+2]=np[2];
+                }
+            }
+            
+            points.geometry.computeBoundingSphere();
+
+            points.material.color.setHex( 0xffffff );
+            scene.add( points );
+            //var center = points.geometry.boundingSphere.center;
+            //controls.target.set( center.x, center.y, center.z );
+            //controls.update();
+        },
+
+
+    );
+}
 
 function load_annotation(){
     var xhr = new XMLHttpRequest();
@@ -401,7 +410,7 @@ function load_annotation(){
 
             remove_all_boxes();
 
-            create_bboxs(ret[0]);
+            create_bboxs(ret);
 
             //add_raw_boxes(ret[1]);
         }
@@ -414,38 +423,73 @@ function load_annotation(){
 
 }
 
+function load_data_meta(gui_folder){
+
+    function add_one_scene(c){
+        console.log("add scene", c);
+
+        var folder = gui_folder.addFolder(c.scene);
+
+        var thisscene={};
+        c.frames.forEach(function(f){
+            thisscene[f] = function(){
+                console.log(c.scene, f, "clicked");
+            }
+
+            folder.add(thisscene, f);
+        });
+
+    }
+
+    var xhr = new XMLHttpRequest();
+    // we defined the xhr
+    
+    xhr.onreadystatechange = function () {
+        if (this.readyState != 4) 
+            return;
+    
+        if (this.status == 200) {
+            var ret = JSON.parse(this.responseText);
+            //console.log(ret);
+            ret.forEach(function(c){
+                add_one_scene(c);
+            })
+        }
+    };
+    
+    xhr.open('GET', "/datameta", true);
+    xhr.send();
+}
 
 function init_gui(){
     var gui = new GUI();
-    gui.add( params, 'uniform' );
-    gui.add( params, 'tension', 0, 1 ).step( 0.01 ).onChange( function ( value ) {
-        splines.uniform.tension = value;
-        updateSplineOutline();
-    } );
-    gui.add( params, 'centripetal' );
-    gui.add( params, 'chordal' );
+
+    var cfgFolder = gui.addFolder( 'Config' );
 
 
-    var saveFolder = gui.addFolder( 'File' );
+    var fileFolder = gui.addFolder( 'File' );
     params['save'] = function () {
         save_annotation();
     };
-    saveFolder.add( params, 'save');
+    fileFolder.add( params, 'save');
 
     
-    params['load'] = function () {
-        load_annotation();
+    params['reload'] = function () {
+        load_all();
     };
-    saveFolder.add( params, 'load');
-
+    fileFolder.add( params, 'reload');
 
     params['clear'] = function () {
         remove_all_boxes();
     };
-    saveFolder.add( params, 'clear');
+    fileFolder.add( params, 'clear');
 
 
-    saveFolder.open();
+    fileFolder.open();
+
+    var dataFolder = gui.addFolder( 'Data' );
+    load_data_meta(dataFolder);
+
     gui.open();
 }
 
@@ -906,7 +950,7 @@ function switch_bbox_type(){
 }
 
 function keydown( ev ) {
-    var points = scene.getObjectByName( 'test.pcd' );
+    var points = scene.getObjectByName( 'pcd' );
     switch ( ev.key) {
         case '+':
             points.material.size *= 1.2;

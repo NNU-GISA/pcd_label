@@ -31,7 +31,31 @@ class Root(object):
       with open("./public/"+frame,"r") as f:
         y=f.read()
         return y
-    
+
+    @cherrypy.expose    
+    @cherrypy.tools.json_out()
+    def datameta(self):
+      return [
+              {
+                "scene":"liuxian1",
+                "frames": [
+                  "000242","000441"
+                ],
+                "boxtype":"xyz",
+                "point_transform_matrix": [
+                  1, 0, 0, 
+                  0, 0, 1, 
+                  0, -1, 0,
+                ]
+              },
+              {
+                "scene":"liuxian2",
+                "frames": [
+                  "test"
+                ],
+                "boxtype":"psr",
+              },
+             ]
 
 if __name__ == '__main__':
   cherrypy.quickstart(Root(), '/', config="server.conf")

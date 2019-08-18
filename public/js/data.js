@@ -4,13 +4,13 @@ var data = {
     bboxes: [],
 
     file_info: {
-        dir: "test",
-        scene: "scene_0",
-        frame: "000447",
-        transform_matrix: [1, 0, 0, 
+        dir: "",
+        scene: "liuxian2",
+        frame: "test",
+        transform_matrix: null, /* [1, 0, 0, 
                            0, 0, 1, 
-                           0, -1, 0],
-        annotation_format: "xyz", //xyz(24 number), csr(center, scale, rotation, 9 number)
+                           0, -1, 0], */
+        annotation_format: "psr", //xyz(24 number), csr(center, scale, rotation, 9 number)
     },
 
     transform_point: function(m, x,y, z){
@@ -26,14 +26,22 @@ var data = {
     },
 
     get_pcd_path: function(){
-        return 'static/pcd/'+data.file_info.frame+".pcd";
+        return 'static/data/'+ this.file_info.scene + "/" + this.file_info.frame+".pcd";
     },
 
     get_anno_path: function(){
-        return 'pcd/'+data.file_info.frame+".bbox.txt";
+        return 'data/'+this.file_info.scene + "/" + this.file_info.frame + (this.file_info.annotation_format=="xyz"?".bbox.txt":".bbox.json");
     },
 
     anno_to_boxes: function(text){
+        if (this.file_info.annotation_format == "psr")
+            return JSON.parse(text);
+        else
+            return this.xyz_to_psr(text);
+
+    },
+
+    xyz_to_psr: function(text){
         var _self = this;
 
         var points_array = text.split('\n').filter(function(x){return x;}).map(function(x){return x.split(' ').map(function(x){return parseFloat(x);})})
@@ -67,7 +75,7 @@ var data = {
             };
             
             /*
-            1. atan2(y,x)
+            1. atan2(y,x), not x,y
             2. point order in xy plane
                 0   1
                 3   2
@@ -82,7 +90,7 @@ var data = {
             }
         });
 
-        return [boxes_ann, boxes];
+        return boxes_ann; //, boxes];
     },
 };
 

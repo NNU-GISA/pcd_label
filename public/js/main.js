@@ -16,7 +16,7 @@ import {data} from './data.js'
 var container;
 //var stats;
 //var camera, 
-var scene, renderer, transform_control;
+var scene, renderer;
 var mesh;
 var raycaster;
 var mouse;
@@ -92,7 +92,6 @@ function create_views(){
     if (true){
         var view = views[ 0 ];
         
-        
         var camera = new THREE.PerspectiveCamera( 65, window.innerWidth / window.innerHeight, 1, 800 );
         camera.position.x = 0;
         camera.position.z = 50;
@@ -105,9 +104,20 @@ function create_views(){
         orbit_perspective.update();
         orbit_perspective.addEventListener( 'change', render );
         orbit_perspective.enabled = false;
-
         view.orbit_perspective = orbit_perspective;
 
+        var transform_control = new TransformControls(camera, renderer.domElement );
+        transform_control.setSpace("local");
+        transform_control.addEventListener( 'change', render );
+        transform_control.addEventListener( 'objectChange', on_transform_change );
+        
+        transform_control.addEventListener( 'dragging-changed', function ( event ) {
+            views[0].orbit_perspective.enabled = ! event.value;
+        } );
+        transform_control.visible = false;
+        //transform_control.enabled = false;
+        scene.add( transform_control );
+        view.transform_control_perspective = transform_control;
 
 
 
@@ -123,11 +133,17 @@ function create_views(){
         // camera.up.set( 1, 0, 0);
         // camera.lookAt( 0, 0, -3 );
 
-        camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, -400, 400 );
-        camera.position.z = 100;
-        view.camera_orth = camera;
-        view.camera = view.camera_orth;
+        //camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, -400, 400 );
+        
+        camera = new THREE.OrthographicCamera(-asp*200, asp*200, 200, -200, -200, 200 );
+        camera.position.z = 50;
 
+        // var cameraOrthoHelper = new THREE.CameraHelper( camera );
+        // cameraOrthoHelper.visible=true;
+        // scene.add( cameraOrthoHelper );
+
+        
+        view.camera_orth = camera;
 
         // var orbit_orth = new OrbitControls( view.camera_orth, renderer.domElement );
         // orbit_orth.update();
@@ -148,7 +164,29 @@ function create_views(){
         orbit_orth.addEventListener( 'change', render );
         orbit_orth.enabled=true;
         view.orbit_orth = orbit_orth;
+        
+        transform_control = new TransformControls(view.camera_orth, renderer.domElement );
+        transform_control.setSpace("local");
+        transform_control.addEventListener( 'change', render );
+        transform_control.addEventListener( 'objectChange', on_transform_change );
+        
+        
+        transform_control.addEventListener( 'dragging-changed', function ( event ) {
+            views[0].orbit_orth.enabled = ! event.value;
+        } );
+
+
+        transform_control.visible = false;
+        //transform_control.enabled = true;
+        scene.add( transform_control );
+        view.transform_control_orth = transform_control;
+
+
+
+        view.camera = view.camera_orth;
         view.orbit = view.orbit_orth;
+        view.transform_control = view.transform_control_orth;
+
 
         view.switch_camera = function(birdseye)        
         {
@@ -158,6 +196,16 @@ function create_views(){
                 this.orbit_orth.enabled=false;
                 this.orbit_perspective.enabled=true;
                 this.orbit = this.orbit_perspective;
+
+                
+                this.transform_control_perspective.detach();
+                this.transform_control_orth.detach();
+
+                this.transform_control_orth.enabled=false;
+                this.transform_control_perspective.enabled=true;
+                //this.transform_control_perspective.visible = false;
+                //this.transform_control_orth.visible = false;
+                this.transform_control = this.transform_control_perspective;
             }
             else if (birdseye && (this.camera === this.camera_perspective))
             {
@@ -165,7 +213,15 @@ function create_views(){
                 this.orbit_orth.enabled=true;
                 this.orbit_perspective.enabled=false;
                 this.orbit = this.orbit_orth;
+
+                this.transform_control_perspective.detach();
+                this.transform_control_orth.detach();
+                this.transform_control_orth.enabled=true;
+                this.transform_control_perspective.enabled=false;
+                this.transform_control = this.transform_control_orth;
             }
+
+            this.camera.updateProjectionMatrix();
         };
 
         view.look_at = function(p){
@@ -176,13 +232,18 @@ function create_views(){
         };
 
         view.onWindowResize = function(){
-            this.orbit_orth.handleResize();
-            this.camera_orth.left = window.innerWidth / - 2;
-            this.camera_orth.right = window.innerWidth / 2;
-            this.camera_orth.top = window.innerHeight / 2;
-            this.camera_orth.bottom = window.innerHeight / - 2;
+
+            
+
+            var asp = window.innerWidth/window.innerHeight;
+            this.camera_orth.left = -asp*200;
+            this.camera_orth.right = asp*200;
+            this.camera_orth.top = 200;
+            this.camera_orth.bottom = -200
             this.camera_orth.updateProjectionMatrix();
 
+            this.orbit_orth.handleResize();
+            this.orbit_orth.update();
             
             this.camera_perspective.aspect = window.innerWidth / window.innerHeight;
             this.camera_perspective.updateProjectionMatrix();
@@ -301,17 +362,8 @@ function init() {
     init_gui();
 
 
-    transform_control = new TransformControls( views[0].camera, renderer.domElement );
-    transform_control.setSpace("local");
-    transform_control.addEventListener( 'change', render );
-    transform_control.addEventListener( 'objectChange', on_transform_change );
-    
-    transform_control.addEventListener( 'dragging-changed', function ( event ) {
-        views[0].orbit.enabled = ! event.value;
-    } );
-
     scene.add( new THREE.AxesHelper( 2 ) );
-    scene.add( transform_control );
+    
 
 
     onWindowResize();
@@ -453,37 +505,60 @@ function play_current_scene(){
     }
 
     stop_play_flag = false;
-    var scene= data.file_info.scene;
-    var scene_meta = data.meta.find(function(x){return x.scene==scene;});
+    var scene_name= data.world.file_info.scene;
+    var scene_meta = data.meta.find(function(x){return x.scene==scene_name;});
     console.log(scene_meta);
-
     
+    data.reset_world_buffer();
+    preload_frame(0);
+    play_frame(0);
+
+    function preload_frame(frame_index){
+        if (frame_index < scene_meta.frames.length && !stop_play_flag)
+        {
+            var new_world = data.make_new_world(scene_name, 
+                scene_meta.frames[frame_index], 
+                scene_meta.point_transform_matrix, 
+                scene_meta.boxtype,
+                false,
+                function(world){
+                    data.put_world_into_buffer(world);  //put new world into buffer.
+
+                    // continue next frmae
+                    if (!stop_play_flag)
+                        preload_frame(frame_index+1);
+                });
+            
+        }
+        
+    };
+    
+
     function play_frame(frame_index){
         if (frame_index < scene_meta.frames.length && !stop_play_flag)
         {
-            data.file_info.set(scene, 
-                scene_meta.frames[frame_index], 
-                scene_meta.point_transform_matrix, 
-                scene_meta.boxtype);
-            //remove_all();
-            //preload_future_world();
-            load_all();        
+            setTimeout(
+                function(){
+                    //after timeout we activate it first
+                    //if (data.future_world_buffer.length > (frame_index + 1000) ||  data.future_world_buffer.length==scene_meta.frames.length)
+                    if (data.future_world_buffer.length > frame_index)
+                    {
+                        data.active_world(scene, data.future_world_buffer[frame_index], function(){//on load finished
+                            
+                            update_frame_info(scene_name, scene_meta.frames[frame_index]);
 
-            // install next frame loading function
-            on_future_world_loaded=function(){
-                update_frame_info(scene, scene_meta.frames[frame_index]);
-                setTimeout(function(){play_frame(frame_index+1);}, 80);
-            };
-            
+                            play_frame(frame_index+1);
+                        }); 
+                    }
+                    else{
+                        //not ready.
+                        console.log("wait buffer!", frame_index);
+                        play_frame(frame_index);
+                    }                                  
+                }, 
+                200);
         }
-    }
-
-    setTimeout(function(){play_frame(0);}, 0);
-
-    scene_meta.frames.forEach(function(f){
-        
-    })
-
+    };
 }
 
 function stop_play(){
@@ -495,7 +570,9 @@ function init_gui(){
 
     var cfgFolder = gui.addFolder( 'View' );
 
-    params["bird's eye view"] = false;
+    params["hide side views"] = false;
+    
+    params["bird's eye view"] = true;
     params["reset bird's eye view"] = function(){
         views[0].reset_birdseye();
     };
@@ -503,6 +580,7 @@ function init_gui(){
         views[0].rotate_birdseye();
     };
     
+    cfgFolder.add( params, "hide side views");
     cfgFolder.add( params, "bird's eye view");
     cfgFolder.add( params, "reset bird's eye view");
     cfgFolder.add( params, "rotate bird's eye view");
@@ -642,6 +720,11 @@ function render(){
     views[0].switch_camera(params["bird's eye view"]);
     
     for ( var ii = 0; ii < views.length; ++ ii ) {
+
+        if ((ii > 0) && params["hide side views"]){
+            break;
+        }
+
         var view = views[ ii ];
         var camera = view.camera;
         //view.updateCamera( camera, scene, mouseX, mouseY );
@@ -659,7 +742,7 @@ function render(){
         //camera.aspect = width / height;
         //camera.updateProjectionMatrix();
         renderer.render( scene, camera );
-    }
+    }   
 
 }
 
@@ -769,10 +852,10 @@ function handleClick() {
 function unselect_bbox(new_object){
 
     if (new_object==null){
-        if (transform_control.visible)
+        if (views[0].transform_control.visible)
         {
             //unselect first time
-            transform_control.detach();
+            views[0].transform_control.detach();
         }else{
             //unselect second time
             if (selected_box){
@@ -785,7 +868,7 @@ function unselect_bbox(new_object){
     }
     else{
         //unselect all
-        transform_control.detach();
+        views[0].transform_control.detach();
         if (selected_box){
             selected_box.material.color.r=0;
             selected_box.material.color.g=1;
@@ -813,12 +896,12 @@ function select_bbox(object){
     }
     else {
         //reselect the same box
-        if (transform_control.visible){
+        if (views[0].transform_control.visible){
 
         }
         else{
             //select me the second time
-            transform_control.attach( object );
+            views[0].transform_control.attach( object );
         }
     }
 
@@ -855,21 +938,21 @@ function onWindowResize() {
 }
 
 function change_transform_control_view(){
-    if (transform_control.mode=="scale"){
-        transform_control.setMode( "translate" );
-        transform_control.showY=true;
-        transform_control.showX=true;
-        transform_control.showz=true;
-    }else if (transform_control.mode=="translate"){
-        transform_control.setMode( "rotate" );
-        transform_control.showY=false;
-        transform_control.showX=false;
-        transform_control.showz=true;
-    }else if (transform_control.mode=="rotate"){
-        transform_control.setMode( "scale" );
-        transform_control.showY=true;
-        transform_control.showX=true;
-        transform_control.showz=true;
+    if (views[0].transform_control.mode=="scale"){
+        views[0].transform_control.setMode( "translate" );
+        views[0].transform_control.showY=true;
+        views[0].transform_control.showX=true;
+        views[0].transform_control.showz=true;
+    }else if (views[0].transform_control.mode=="translate"){
+        views[0].transform_control.setMode( "rotate" );
+        views[0].transform_control.showY=false;
+        views[0].transform_control.showX=false;
+        views[0].transform_control.showz=true;
+    }else if (views[0].transform_control.mode=="rotate"){
+        views[0].transform_control.setMode( "scale" );
+        views[0].transform_control.showY=true;
+        views[0].transform_control.showX=true;
+        views[0].transform_control.showz=true;
     }
 }
 
@@ -885,8 +968,9 @@ function add_raw_boxes(boxes){
 
 function add_bbox(){
     //mesh = ev.key=='b'?new_bbox(): new_bbox_cube();
-    mesh = new_bbox_cube();
+    //mesh = new_bbox_cube();
 
+    var mesh = data.world.new_bbox_cube();
     data.world.boxes.push(mesh);
 
     var pos = get_mouse_location_in_world(mouse);
@@ -1054,23 +1138,23 @@ function keydown( ev ) {
             break;
         case '+':
         case '=': // +, =, num+
-            transform_control.setSize( transform_control.size + 0.1 );
+            //transform_control.setSize( transform_control.size + 0.1 );
             break;
         case '-':
             //case 109: // -, _, num-
-            transform_control.setSize( Math.max( transform_control.size - 0.1, 0.1 ) );
+            //transform_control.setSize( Math.max( transform_control.size - 0.1, 0.1 ) );
             break;
         case 'z': // X
-            transform_control.showX = ! transform_control.showX;
+            views[0].transform_control.showX = ! views[0].transform_control.showX;
             break;
         case 'x': // Y
-            transform_control.showY = ! transform_control.showY;
+            views[0].transform_control.showY = ! views[0].transform_control.showY;
             break;
         case 'c': // Z
-            transform_control.showZ = ! transform_control.showZ;
+            views[0].transform_control.showZ = ! views[0].transform_control.showZ;
             break;            
         case ' ': // Spacebar
-            transform_control.enabled = ! transform_control.enabled;
+            views[0].transform_control.enabled = ! views[0].transform_control.enabled;
             break;
             
         case '5':            
@@ -1233,10 +1317,11 @@ function remove_all_boxes(){
 
 function animate() {
     requestAnimationFrame( animate );
-    //controls.update();
-    views[0].orbit.update();
+    
+    views[0].orbit_orth.update();
+    
     render();
-    //stats.update();
+    
 }
 
 function new_bbox(){

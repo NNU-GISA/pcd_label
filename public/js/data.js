@@ -4,7 +4,9 @@ import { GeometryUtils } from './examples/jsm/utils/GeometryUtils.js';
 
 var data = {
     
-    make_new_world: function(scene_name, frame, transform_matrix, annotation_format, auto_load){
+    make_new_world: function(scene_name, frame, transform_matrix, annotation_format, auto_load, on_preload_finished){
+        
+
         var world = {
             file_info: {
                 dir: "",
@@ -110,7 +112,18 @@ var data = {
             complete: function(){return this.points && this.boxes;},
             reset: function(){this.points=null; this.boxes=[];},
 
-            preload: function(){
+            create_time: 0,
+            points_load_time:0,
+            boxes_load_time:0,
+            finish_time: 0,
+
+            on_preload_finished: null,
+            preload: function(on_preload_finished){
+                
+                this.create_time = new Date().getTime();
+                console.log(this.create_time, scene_name, frame, "start");
+
+                this.on_preload_finished = on_preload_finished;
                 this.load_points();
                 this.load_annotation();
             },
@@ -144,6 +157,13 @@ var data = {
                         points.material.color.setHex( 0xffffff );
 
                         _self.points = points;
+                        _self.points_load_time = new Date().getTime();
+                        console.log(_self.points_load_time, _self.file_info.scene, _self.file_info.frame, "loaded pionts ", _self.points_load_time - _self.create_time, "ms");
+
+                        if (_self.complete()){
+                            if (_self.on_preload_finished)
+                                _self.on_preload_finished(_self);
+                        }
 
                         if (_self.active){
                             _self.go();
@@ -153,8 +173,6 @@ var data = {
                         //controls.target.set( center.x, center.y, center.z );
                         //controls.update();
                     },
-
-
                 );
             },
 
@@ -173,6 +191,14 @@ var data = {
                         //console.log(ret);
 
                         _self.boxes = create_bboxs(ret);  //create in future world
+                        
+                        _self.boxes_load_time = new Date().getTime();
+                        console.log(_self.boxes_load_time, _self.file_info.scene, _self.file_info.frame, "loaded boxes ", _self.boxes_load_time - _self.create_time, "ms");
+
+                        if (_self.complete()){
+                            if (_self.on_preload_finished)
+                                _self.on_preload_finished(_self);
+                        }
 
                         if (_self.active){
                             _self.go();
@@ -238,6 +264,8 @@ var data = {
                     })
 
                     if (this.on_finished){
+                        _self.finish_time = new Date().getTime();
+                        console.log(_self.finish_time, scene_name, frame, "loaded in ", _self.finish_time - _self.create_time, "ms");
                         this.on_finished();
                     }
                     
@@ -326,7 +354,7 @@ var data = {
         };
 
         world.file_info.set(scene_name, frame, transform_matrix, annotation_format);
-        world.preload();
+        world.preload(on_preload_finished);
 
         if (auto_load){
             world.go();
@@ -338,7 +366,15 @@ var data = {
     
     world: null,
 
-    
+    future_world_buffer: [],
+    put_world_into_buffer: function(world){
+        this.future_world_buffer.push(world);
+    },
+
+    reset_world_buffer: function(){
+        this.future_world_buffer=[];
+    },
+
     active_world: function(scene, world, on_finished){
         var old_world = this.world;
 

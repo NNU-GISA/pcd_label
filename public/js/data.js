@@ -19,7 +19,7 @@ var data = {
     // },
 
 
-    make_new_world: function(scene_name, frame, transform_matrix, annotation_format, auto_load, on_preload_finished){
+    make_new_world: function(scene_name, frame_index, frame, transform_matrix, annotation_format, auto_load, on_preload_finished, on_finished){
         
 
         var world = {
@@ -27,13 +27,15 @@ var data = {
                 dir: "",
                 scene: "",
                 frame: "",
+                frame_index: 0,
                 transform_matrix: null,
                 annotation_format: "psr", //xyz(24 number), csr(center, scale, rotation, 9 number)
         
         
-                set: function(scene, frame, transform_matrix, annotation_format){
+                set: function(scene, frame_index, frame, transform_matrix, annotation_format){
                     this.scene = scene;
                     this.frame = frame;
+                    this.frame_index = frame_index;
                     this.transform_matrix = transform_matrix;
                     this.annotation_format = annotation_format;
                 },
@@ -342,7 +344,7 @@ var data = {
                 return box;
             },
 
-            destroy: function(scene){
+            destroy: function(){
                 var _self= this;
 
                 remove_all_boxes();
@@ -350,7 +352,7 @@ var data = {
 
                 function remove_all_points(){
                     if (_self.points){
-                        scene.remove(_self.points);
+                        _self.scene.remove(_self.points);
                         _self.points.geometry.dispose();
                         _self.points.material.dispose();
                         _self.points = null;
@@ -359,7 +361,7 @@ var data = {
 
                 function remove_all_boxes(){
                     _self.boxes.forEach(function(b){
-                        scene.remove(b);
+                        _self.scene.remove(b);
                         b.geometry.dispose();
                         b.material.dispose();
                     });
@@ -370,12 +372,14 @@ var data = {
             },
 
             reload: function(){
+                this.destroy();
                 this.preload();
             },
         };
 
-        world.file_info.set(scene_name, frame, transform_matrix, annotation_format);
+        world.file_info.set(scene_name, frame_index, frame, transform_matrix, annotation_format);
         world.preload(on_preload_finished);
+        world.on_finished = on_finished;
 
         if (auto_load){
             world.go();
@@ -396,18 +400,22 @@ var data = {
         this.future_world_buffer=[];
     },
 
-    active_world: function(scene, world, on_finished){
+    activate_world: function(scene, world, on_finished){
         var old_world = this.world;
 
         this.world = world;
         this.world.activate(scene, 
             function(){
                 if (old_world)
-                    old_world.destroy(scene);
+                    old_world.destroy();
             },
             on_finished);
     },
 
+
+
+
+    meta: null,  //meta data
 };
 
 export {data};

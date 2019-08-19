@@ -229,10 +229,12 @@ function create_views(){
         };
 
         view.look_at = function(p){
-            this.orbit.target.x=p.x;
-            this.orbit.target.y=p.y;
-            this.orbit.target.z=p.z;
-            this.orbit.update();
+            if (this.orbit === this.orbit_perspective){
+                this.orbit.target.x=p.x;
+                this.orbit.target.y=p.y;
+                this.orbit.target.z=p.z;
+                this.orbit.update();
+            }
         };
 
         view.onWindowResize = function(){
@@ -415,6 +417,10 @@ function save_annotation(){
     var b = JSON.stringify(bbox_annotations);
     console.log(b);
     xhr.send(b);
+
+    // unmark changed flag
+    //document.getElementById("frame").innerHTML = data.world.file_info.scene+"/"+data.world.file_info.frame;
+    unmark_changed_flag();
 }
 
 
@@ -428,7 +434,9 @@ function load_data_meta(gui_folder){
         var folder = gui_folder.addFolder(c.scene);
 
         var thisscene={};
+
         c.frames.forEach(function(f){
+            //var f = c.frames[frame_index];
             thisscene[f] = function(){
                 console.log("clicked", c);
 
@@ -437,9 +445,10 @@ function load_data_meta(gui_folder){
                 //load_all();
 
                 //update_frame_info(c.scene, f);
+                var frame_index = c.frames.findIndex(function(x){return x==f;});
+                var world = data.make_new_world(c.scene, frame_index, f, c.point_transform_matrix, c.boxtype);                
 
-                var world = data.make_new_world(c.scene, f, c.point_transform_matrix, c.boxtype);
-                data.active_world(scene, world, function(){
+                data.activate_world(scene, world, function(){
                     //on worl loading finished
                     update_frame_info(c.scene, f);
                 });
@@ -499,6 +508,7 @@ function play_current_scene(){
         if (frame_index < scene_meta.frames.length && !stop_play_flag)
         {
             var new_world = data.make_new_world(scene_name, 
+                frame_index,
                 scene_meta.frames[frame_index], 
                 scene_meta.point_transform_matrix, 
                 scene_meta.boxtype,
@@ -525,8 +535,8 @@ function play_current_scene(){
                     //if (data.future_world_buffer.length > (frame_index + 1000) ||  data.future_world_buffer.length==scene_meta.frames.length)
                     if (data.future_world_buffer.length > frame_index)
                     {
-                        data.active_world(scene, data.future_world_buffer[frame_index], function(){//on load finished
-                            save_annotation();
+                        data.activate_world(scene, data.future_world_buffer[frame_index], function(){//on load finished
+                            
                             update_frame_info(scene_name, scene_meta.frames[frame_index]);
 
                             play_frame(frame_index+1);
@@ -568,14 +578,15 @@ function init_gui(){
     cfgFolder.add( params, "rotate bird's eye view");
 
 
-    params["play"] = function(){
-        play_current_scene();
-    }
-    params["stop"] = function(){
-        stop_play();
-    }
+    params["play"] = play_current_scene;
+    params["stop"] = stop_play;
+    params["previous frame"] = previous_frame;
+    params["next frame"] = next_frame;
+
     cfgFolder.add( params, "play");
     cfgFolder.add( params, "stop");
+    cfgFolder.add( params, "previous frame");
+    cfgFolder.add( params, "next frame");
 
 
     var fileFolder = gui.addFolder( 'File' );
@@ -689,11 +700,25 @@ function update_subview_by_bbox(mesh){
     update_box_info_text(sideview_mesh);
 }
 
+
+function unmark_changed_flag(){
+
+    var s = document.getElementById("frame").innerHTML
+    document.getElementById("frame").innerHTML = s.split("*")[0];
+}
+
+function mark_changed_flag(){
+    var s = document.getElementById("frame").innerHTML
+    if (! s.endsWith("*"))
+        document.getElementById("frame").innerHTML += "*"
+}
+
 function on_transform_change(event){
     
     var mesh = event.target.object;
     //console.log("bbox rotation z", mesh.rotation.z);
-    update_subview_by_bbox(mesh);    
+    update_subview_by_bbox(mesh);  
+    mark_changed_flag();  
 }
 
 
@@ -969,9 +994,9 @@ function add_bbox(){
 
 // axix, xyz, action: scale, move, direction, up/down
 function transform_bbox(command){
-    if (!select_bbox)
+    if (!selected_box)
         return;
-
+    
     switch (command){
         case 'x_move_up':
             selected_box.position.x += 0.05*Math.cos(selected_box.rotation.z);
@@ -1040,6 +1065,7 @@ function transform_bbox(command){
     }
 
     update_subview_by_bbox(selected_box);
+    mark_changed_flag();
 }
 
 
@@ -1067,7 +1093,6 @@ function switch_bbox_type(){
             selected_box.scale.z=1.5;
             break;
     }
-    
 }
 
 function keydown( ev ) {
@@ -1105,16 +1130,25 @@ function keydown( ev ) {
                 
             }
             break;
+        case '3':
+            previous_frame();
+            break;
+        case '4':
+            next_frame();
+            break;
+
         case 'v':
             change_transform_control_view();
             break;
         case 'N':    
         case 'n':
             add_bbox();
+            mark_changed_flag();
             break;        
         case 'B':
         case 'b':
             switch_bbox_type();
+            mark_changed_flag();
             break;
         case '+':
         case '=': // +, =, num+
@@ -1171,7 +1205,10 @@ function keydown( ev ) {
             break;
             
         case 's':
-            if (selected_box){
+            if (ev.ctrlKey){
+                save_annotation();
+            }
+            else if (selected_box){
                 if (!mouse_right_down){
                     transform_bbox("y_move_down");
                 }else{
@@ -1180,7 +1217,10 @@ function keydown( ev ) {
             }
             break;
         case 'S':
-            if (selected_box){
+            if (ev.ctrlKey){
+                save_annotation();
+            }
+            else if (selected_box){
                 transform_bbox("y_scale_down");
             }            
             break;
@@ -1247,9 +1287,65 @@ function keydown( ev ) {
         
         case 'Delete':
             remove_selected_box();
+            mark_changed_flag();
             break;
     
     }
+}
+
+
+function previous_frame(){
+
+    if (!data.meta)
+        return;
+
+    var scene_meta = data.meta.find(function(x){
+        return x.scene == data.world.file_info.scene;
+    });
+
+    var num_frames = scene_meta.frames.length;
+
+    var frame_index = (data.world.file_info.frame_index-1 + num_frames) % num_frames;
+
+    var world = data.make_new_world(
+                scene_meta.scene, 
+                frame_index,
+                scene_meta.frames[frame_index], 
+                scene_meta.point_transform_matrix, 
+                scene_meta.boxtype,
+                false);
+
+    data.activate_world(scene, world, function(){
+        update_frame_info(scene_meta.scene, scene_meta.frames[frame_index]);
+    });
+
+}
+
+
+function next_frame(){
+
+    if (!data.meta)
+        return;
+        
+        var scene_meta = data.meta.find(function(x){
+            return x.scene == data.world.file_info.scene;
+        });
+    
+        var num_frames = scene_meta.frames.length;
+    
+        var frame_index = (data.world.file_info.frame_index +1) % num_frames;
+    
+        var world = data.make_new_world(
+                    scene_meta.scene, 
+                    frame_index,
+                    scene_meta.frames[frame_index], 
+                    scene_meta.point_transform_matrix, 
+                    scene_meta.boxtype,
+                    false);
+    
+        data.activate_world(scene, world, function(){
+            update_frame_info(scene_meta.scene, scene_meta.frames[frame_index]);
+        });
 }
 
 function remove_selected_box(){

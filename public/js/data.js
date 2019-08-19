@@ -4,6 +4,21 @@ import { GeometryUtils } from './examples/jsm/utils/GeometryUtils.js';
 
 var data = {
     
+    // point_size: 1.5,
+
+    // increase_point_size: function(){
+    //     this.point_size*= 1.2;
+    //     if (this.world)
+    //         this.world.points.material.size = this.point_size;
+    // },
+    
+    // decrease_point_size: function(){
+    //     this.point_size/=1.2;
+    //     if (this.world)
+    //         this.world.points.material.size = this.point_size;
+    // },
+
+
     make_new_world: function(scene_name, frame, transform_matrix, annotation_format, auto_load, on_preload_finished){
         
 
@@ -128,7 +143,7 @@ var data = {
                 this.load_annotation();
             },
 
-
+            
             load_points: function(){
                 var loader = new PCDLoader();
 
@@ -155,7 +170,7 @@ var data = {
                         }
 
                         points.material.color.setHex( 0xffffff );
-
+                        
                         _self.points = points;
                         _self.points_load_time = new Date().getTime();
                         console.log(_self.points_load_time, _self.file_info.scene, _self.file_info.frame, "loaded pionts ", _self.points_load_time - _self.create_time, "ms");
@@ -250,6 +265,8 @@ var data = {
             
             go: function(){
                 if (this.complete()){
+
+                    //this.points.material.size = data.point_size;
                     
                     if (this.destroy_old_world){
                         this.destroy_old_world();
@@ -350,6 +367,10 @@ var data = {
                     _self.boxes = [];
                 }
 
+            },
+
+            reload: function(){
+                this.preload();
             },
         };
 

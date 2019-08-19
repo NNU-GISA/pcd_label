@@ -17,11 +17,11 @@ class Root(object):
       return tmpl.render()
     
     @cherrypy.expose
-    def save(self, frame):
+    def save(self, scene, frame):
       cl = cherrypy.request.headers['Content-Length']
       rawbody = cherrypy.request.body.read(int(cl))
       print(rawbody)
-      with open(frame+".anno.txt",'w') as f:
+      with open("./public/data/"+scene +"/bbox.json/"+frame+".bbox.json",'w') as f:
         f.write(rawbody)
       
       return "ok"
@@ -54,14 +54,23 @@ class Root(object):
           filename, fileext = os.path.splitext(f)
           scene["frames"].append(filename)
 
-        if os.path.isdir("public/data/"+s+"/bbox.json"):
+        point_transform_matrix=[]
+
+        if os.path.isfile("public/data/"+s+"/point_transform.txt"):
+          with open("public/data/"+s+"/point_transform.txt")  as f:
+            point_transform_matrix=f.read()
+            point_transform_matrix = point_transform_matrix.split(",")
+
+        if not os.path.isdir("public/data/"+s+"/bbox.xyz"):
           scene["boxtype"] = "psr"
+          if point_transform_matrix:
+            scene["point_transform_matrix"] = point_transform_matrix
         else:
           scene["boxtype"] = "xyz"
-          scene["point_transform_matrix"] = [
-                   1, 0,  0, 
-                   0, 0,  1, 
-                   0, -1, 0]
+          if point_transform_matrix:
+            scene["point_transform_matrix"] = point_transform_matrix
+          
+
       print(data)
       return data
       # return [

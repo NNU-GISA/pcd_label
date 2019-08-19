@@ -100,6 +100,10 @@ function create_views(){
         camera.lookAt( 0, 0, 0 );
         view.camera_perspective = camera;
 
+        //var cameraOrthoHelper = new THREE.CameraHelper( camera );
+        //cameraOrthoHelper.visible=true;
+        //scene.add( cameraOrthoHelper );
+
         var orbit_perspective = new OrbitControls( view.camera_perspective, renderer.domElement );
         orbit_perspective.update();
         orbit_perspective.addEventListener( 'change', render );
@@ -406,39 +410,13 @@ function save_annotation(){
     });
 
     var xhr = new XMLHttpRequest();
-    xhr.open("POST", "/save" +"?frame="+data.file_info.frame, true);
+    xhr.open("POST", "/save" +"?scene="+data.world.file_info.scene+"&frame="+data.world.file_info.frame, true);
     xhr.setRequestHeader('Content-Type', 'application/json');
     var b = JSON.stringify(bbox_annotations);
     console.log(b);
     xhr.send(b);
 }
 
-
-function load_all(){
-    //remove_all();
-    load_points();
-    load_annotation();
-}
-
-
-var on_future_world_loaded;
-
-function go_future_world(){
-    // remove previous points.
-    remove_all_points();
-    scene.add( data.future_world.points );
-    
-    remove_all_boxes();
-    data.future_world.boxes.forEach(function(b){
-        scene.add(b);
-    })
-
-    data.go_future_world();
-
-    if (on_future_world_loaded){
-        on_future_world_loaded();
-    }
-}
 
 
 
@@ -496,11 +474,15 @@ function load_data_meta(gui_folder){
 
 
 
-var stop_play_flag=false;
+var stop_play_flag=true;
 function play_current_scene(){
     
     if (!data.meta){
         console.log("no meta data! cannot play");
+        return;
+    }
+
+    if (stop_play_flag== false){
         return;
     }
 
@@ -544,7 +526,7 @@ function play_current_scene(){
                     if (data.future_world_buffer.length > frame_index)
                     {
                         data.active_world(scene, data.future_world_buffer[frame_index], function(){//on load finished
-                            
+                            save_annotation();
                             update_frame_info(scene_name, scene_meta.frames[frame_index]);
 
                             play_frame(frame_index+1);
@@ -604,7 +586,7 @@ function init_gui(){
 
     
     params['reload'] = function () {
-        load_all();
+        data.world.reload();
     };
     fileFolder.add( params, 'reload');
 
@@ -1089,15 +1071,13 @@ function switch_bbox_type(){
 }
 
 function keydown( ev ) {
-    var points = scene.getObjectByName( 'pcd' );
+    var points = data.world.points;
     switch ( ev.key) {
         case '+':
-            points.material.size *= 1.2;
-            points.material.needsUpdate = true;
+            //data.increase_point_size();
             break;
         case '-':
-            points.material.size /= 1.2;
-            points.material.needsUpdate = true;
+            //data.decrease_point_size();
             break;
         case '1': 
         case '2':

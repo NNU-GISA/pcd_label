@@ -361,24 +361,6 @@ function save_annotation(){
     xhr.send(b);
 }
 
-function create_bboxs(annotations){
-    annotations.forEach(function(b){
-        mesh = new_bbox_cube();
-        mesh.position.x = b.position.x;
-        mesh.position.y = b.position.y;
-        mesh.position.z = b.position.z;
-
-        mesh.scale.x = b.scale.x;
-        mesh.scale.y = b.scale.y;
-        mesh.scale.z = b.scale.z;
-
-        mesh.rotation.x = b.rotation.x;
-        mesh.rotation.y = b.rotation.y;
-        mesh.rotation.z = b.rotation.z;
-
-        data.future_world.boxes.push(mesh);        
-    });
-}
 
 function load_all(){
     //remove_all();
@@ -407,76 +389,6 @@ function go_future_world(){
 }
 
 
-function load_points(){
-    var loader = new PCDLoader();
-    loader.load( data.get_pcd_path(), 
-        null,
-        function ( points ) {
-            //points.castShadow = true;            
-
-            if (data.file_info.transform_matrix){
-
-                var arr = points.geometry.attributes.position.array;
-                var num = points.geometry.attributes.position.count;
-                var ni = points.geometry.attributes.position.itemSize;
-
-                for (var i=0; i<num; i++){
-                    var np = data.transform_point(data.file_info.transform_matrix, arr[i*ni+0], arr[i*ni+1], arr[i*ni+2]);
-                    arr[i*ni+0]=np[0];
-                    arr[i*ni+1]=np[1];
-                    arr[i*ni+2]=np[2];
-                }
-
-                points.geometry.computeBoundingSphere();
-            }
-
-            points.material.color.setHex( 0xffffff );
-            
-            data.future_world.points = points;
-
-            if (data.future_world.complete()){
-                go_future_world();
-            }
-            
-            
-            //var center = points.geometry.boundingSphere.center;
-            //controls.target.set( center.x, center.y, center.z );
-            //controls.update();
-        },
-
-
-    );
-}
-
-function load_annotation(){
-    var xhr = new XMLHttpRequest();
-    // we defined the xhr
-    
-    xhr.onreadystatechange = function () {
-        if (this.readyState != 4) return;
-    
-        if (this.status == 200) {
-
-            var ret = data.anno_to_boxes(this.responseText);
-
-            //var boxes = JSON.parse(this.responseText);
-            //console.log(ret);
-
-            create_bboxs(ret);  //create in future world
-
-            if (data.future_world.complete()){
-                go_future_world();
-            }
-            //add_raw_boxes(ret[1]);            
-        }
-    
-        // end of state change: it can be after some time (async)
-    };
-    
-    xhr.open('GET', "/load"+"?frame="+data.get_anno_path(), true);
-    xhr.send();
-
-}
 
 function load_data_meta(gui_folder){
 
@@ -490,11 +402,17 @@ function load_data_meta(gui_folder){
             thisscene[f] = function(){
                 console.log("clicked", c);
 
-                data.set_current_frame_info(c.scene, f, c.point_transform_matrix, c.boxtype);
+                //data.file_info.set(c.scene, f, c.point_transform_matrix, c.boxtype);
                 //remove_all();  //remove before new data loaded.
-                load_all();
+                //load_all();
 
-                update_frame_info(c.scene, f);
+                //update_frame_info(c.scene, f);
+
+                var world = data.make_new_world(c.scene, f, c.point_transform_matrix, c.boxtype);
+                data.active_world(scene, world, function(){
+                    //on worl loading finished
+                    update_frame_info(c.scene, f);
+                });
             }
 
             folder.add(thisscene, f);
@@ -543,7 +461,7 @@ function play_current_scene(){
     function play_frame(frame_index){
         if (frame_index < scene_meta.frames.length && !stop_play_flag)
         {
-            data.set_current_frame_info(scene, 
+            data.file_info.set(scene, 
                 scene_meta.frames[frame_index], 
                 scene_meta.point_transform_matrix, 
                 scene_meta.boxtype);
@@ -1369,58 +1287,6 @@ function new_bbox_group(){
 }
 
 
-function new_bbox_cube(){
-
-    var h = 0.5;
-    
-    var body = [
-        //top
-        -h,h,h,  h,h,h,
-        h,h,h,   h,-h,h,
-        h,-h,h,  -h,-h,h,
-        -h,-h,h, -h, h, h, 
-
-        //botom
-        -h,h,-h,  h,h,-h,
-        h,h,-h,   h,-h,-h,
-        h,-h,-h,  -h,-h,-h,
-        -h,-h,-h, -h, h, -h, 
-
-        // vertical lines
-        -h,h,h, -h,h,-h,
-        h,h,h,   h,h,-h,
-        h,-h,h,  h,-h,-h,
-        -h,-h,h, -h,-h,-h,
-
-        //direction
-        0, 0, h+0.1, 0, h, h+0.1,
-        -h,h/2,h+0.1, 0, h, h+0.1,
-        h,h/2,h+0.1, 0, h, h+0.1,
-
-        //side direction
-        // h, h/2, h,  h, h, 0,
-        // h, h/2, -h,  h, h, 0,
-        // h, 0, 0,  h, h, 0,
-        
-    ];
-    
-
-    var bbox = new THREE.BufferGeometry();
-    bbox.addAttribute( 'position', new THREE.Float32BufferAttribute(body, 3 ) );
-    
-    var box = new THREE.LineSegments( bbox, new THREE.LineBasicMaterial( { color: 0x00ff00 } ) );    
-    
-    box.scale.x=1.8;
-    box.scale.y=4.5;
-    box.scale.z=1.5;
-    box.name="bbox";
-    box.obj_type="car";
-    box.obj_id="1";
-
-    box.computeLineDistances();
-
-    return box;
-}
 
 
 

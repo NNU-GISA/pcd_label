@@ -8,3 +8,4 @@
 5. add orthognal camera
 6. fix camera when selecting box by 1/2
 7. detach transform control before changing world.
+8. lock one box

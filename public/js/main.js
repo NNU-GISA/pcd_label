@@ -871,6 +871,7 @@ function unselect_bbox(new_object){
                 selected_box.material.color.b=0;
             }
             selected_box = null;
+            update_box_info_text(null);
         }
     }
     else{
@@ -882,6 +883,8 @@ function unselect_bbox(new_object){
             selected_box.material.color.b=0;
         }
         selected_box = null;
+        update_box_info_text(null);
+
     }
 
 }
@@ -1556,15 +1559,20 @@ function update_frame_info(scene, frame){
 
 
 function update_box_info_text(mesh){
-    var scale = mesh.scale;
-    var pos = mesh.position;
-    var rotation = mesh.rotation;
 
-    // document.getElementById("info").innerHTML = "w "+scale.x.toFixed(2) +" l "+scale.y.toFixed(2) + " h " + scale.z.toFixed(2) +
-    //                                              " x "+pos.x.toFixed(2) +" y "+pos.y.toFixed(2) + " z " + pos.z.toFixed(2);
+    if (mesh){
+        var scale = mesh.scale;
+        var pos = mesh.position;
+        var rotation = mesh.rotation;
 
-    document.getElementById("box").innerHTML = pos.x.toFixed(2) +" "+pos.y.toFixed(2) + " " + pos.z.toFixed(2) + " | "+
-                                                scale.x.toFixed(2) +" "+scale.y.toFixed(2) + " " + scale.z.toFixed(2) + " | " + 
-                                                (rotation.z*180/Math.PI).toFixed(2);
+        // document.getElementById("info").innerHTML = "w "+scale.x.toFixed(2) +" l "+scale.y.toFixed(2) + " h " + scale.z.toFixed(2) +
+        //                                              " x "+pos.x.toFixed(2) +" y "+pos.y.toFixed(2) + " z " + pos.z.toFixed(2);
+
+        document.getElementById("box").innerHTML = pos.x.toFixed(2) +" "+pos.y.toFixed(2) + " " + pos.z.toFixed(2) + " | "+
+                                                    scale.x.toFixed(2) +" "+scale.y.toFixed(2) + " " + scale.z.toFixed(2) + " | " + 
+                                                    (rotation.z*180/Math.PI).toFixed(2);
+    } else {
+        document.getElementById("box").innerHTML = '';
+    }
 }
 

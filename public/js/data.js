@@ -124,10 +124,10 @@ var data = {
             }, //end of file_info
 
             points: null,
-            boxes: [],
+            boxes: null,
 
             complete: function(){return this.points && this.boxes;},
-            reset: function(){this.points=null; this.boxes=[];},
+            reset: function(){this.points=null; this.boxes=null;},
 
             create_time: 0,
             points_load_time:0,
@@ -202,13 +202,16 @@ var data = {
                 
                     if (this.status == 200) {
 
-                        var ret = _self.file_info.anno_to_boxes(this.responseText);
+                        if (this.responseText.length == 0){
+                            _self.boxes = []; // no file
+                        }else {
+                            var ret = _self.file_info.anno_to_boxes(this.responseText);
 
-                        //var boxes = JSON.parse(this.responseText);
-                        //console.log(ret);
+                            //var boxes = JSON.parse(this.responseText);
+                            //console.log(ret);
 
-                        _self.boxes = create_bboxs(ret);  //create in future world
-                        
+                            _self.boxes = create_bboxs(ret);  //create in future world
+                        }
                         _self.boxes_load_time = new Date().getTime();
                         console.log(_self.boxes_load_time, _self.file_info.scene, _self.file_info.frame, "loaded boxes ", _self.boxes_load_time - _self.create_time, "ms");
 

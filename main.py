@@ -28,9 +28,12 @@ class Root(object):
 
     @cherrypy.expose    
     def load(self, frame):
-      with open("./public/"+frame,"r") as f:
-        y=f.read()
-        return y
+      if (os.path.isfile("./public/"+frame)):
+        with open("./public/"+frame,"r") as f:
+          y=f.read()
+          return y
+      else:
+        return ""
 
     @cherrypy.expose    
     @cherrypy.tools.json_out()

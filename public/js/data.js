@@ -274,6 +274,12 @@ var data = {
                         this.destroy_old_world();
                     }
 
+                    if (this.destroyed){
+                        console.log("go after destroyed.");
+                        this.destroy();
+                        return;
+                    }
+
                     this.scene.add( this.points );
     
                     
@@ -344,9 +350,10 @@ var data = {
                 return box;
             },
 
+            destroyed: false,
             destroy: function(){
                 var _self= this;
-
+                this.destroyed = true;
                 remove_all_boxes();
                 remove_all_points();
 
@@ -356,6 +363,9 @@ var data = {
                         _self.points.geometry.dispose();
                         _self.points.material.dispose();
                         _self.points = null;
+                    }
+                    else{
+                        console.error("destroy empty world!")
                     }
                 }
 

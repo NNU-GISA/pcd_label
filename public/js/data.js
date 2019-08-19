@@ -1,16 +1,42 @@
 
 
 var data = {
-    bboxes: [],
+    
 
-    file_info: {
-        dir: "",
-        scene: "liuxian2",
-        frame: "test",
-        transform_matrix: null, /* [1, 0, 0, 
-                           0, 0, 1, 
-                           0, -1, 0], */
-        annotation_format: "psr", //xyz(24 number), csr(center, scale, rotation, 9 number)
+    file_info: {},
+    // {
+    //     dir: "",
+    //     scene: "liuxian2",
+    //     frame: "test",
+    //     transform_matrix: null, /* [1, 0, 0, 
+    //                        0, 0, 1, 
+    //                        0, -1, 0], */
+    //     annotation_format: "psr", //xyz(24 number), csr(center, scale, rotation, 9 number)
+    // },
+
+    world: {
+        points: null,
+        boxes: [],
+    },
+    future_world: {
+        points: null,
+        boxes: [],
+        
+        complete: function(){return this.points && this.boxes;},
+        reset: function(){this.points=null; this.boxes=[];},
+    },
+    
+    go_future_world: function(){
+        this.world.points = this.future_world.points;
+        this.world.boxes = this.future_world.boxes;
+        this.future_world.reset();
+    },
+
+    set_current_frame_info: function(scene, frame, transform_matrix, annotation_format){
+        this.file_info.scene = scene;
+        this.file_info.frame = frame;
+        this.file_info.transform_matrix = transform_matrix;
+        this.file_info.annotation_format = annotation_format;
     },
 
     transform_point: function(m, x,y, z){

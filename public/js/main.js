@@ -16,13 +16,12 @@ import {data} from './data.js'
 var container;
 //var stats;
 //var camera, 
-var controls, scene, renderer, transform_control;
+var scene, renderer, transform_control;
 var mesh;
 var raycaster;
-var mouse, INTERSECTED;
+var mouse;
 var onDownPosition = new THREE.Vector2();
 var onUpPosition = new THREE.Vector2();
-var mouseX = 0, mouseY = 0;
 var windowWidth, windowHeight;
 
 var selected_box;
@@ -31,12 +30,9 @@ var box_navigate_index=0;
 var sideview_mesh=null;
 
 var views;
-var mouseX = 0, mouseY = 0;
 var windowWidth, windowHeight;
-var current_points = null;
 
 var params={};
-
 
 
 var views = [
@@ -332,8 +328,8 @@ function init() {
 
 function save_annotation(){
     var bbox_annotations=[];
-    console.log(data.bboxes.length, "boxes");
-    data.bboxes.forEach(function(b){
+    console.log(data.world.boxes.length, "boxes");
+    data.world.boxes.forEach(function(b){
         var b = {
             position:{
                 x: b.position.x,
@@ -380,25 +376,43 @@ function create_bboxs(annotations){
         mesh.rotation.y = b.rotation.y;
         mesh.rotation.z = b.rotation.z;
 
-        data.bboxes.push(mesh);
-        scene.add(mesh);        
+        data.future_world.boxes.push(mesh);        
     });
 }
 
 function load_all(){
-    remove_all();
-    load_points(scene);
+    //remove_all();
+    load_points();
     load_annotation();
 }
 
-function load_points(scene){
+
+var on_future_world_loaded;
+
+function go_future_world(){
+    // remove previous points.
+    remove_all_points();
+    scene.add( data.future_world.points );
+    
+    remove_all_boxes();
+    data.future_world.boxes.forEach(function(b){
+        scene.add(b);
+    })
+
+    data.go_future_world();
+
+    if (on_future_world_loaded){
+        on_future_world_loaded();
+    }
+}
+
+
+function load_points(){
     var loader = new PCDLoader();
     loader.load( data.get_pcd_path(), 
         null,
         function ( points ) {
-            //points.castShadow = true;
-
-            
+            //points.castShadow = true;            
 
             if (data.file_info.transform_matrix){
 
@@ -417,8 +431,14 @@ function load_points(scene){
             }
 
             points.material.color.setHex( 0xffffff );
-            scene.add( points );
-            current_points = points;
+            
+            data.future_world.points = points;
+
+            if (data.future_world.complete()){
+                go_future_world();
+            }
+            
+            
             //var center = points.geometry.boundingSphere.center;
             //controls.target.set( center.x, center.y, center.z );
             //controls.update();
@@ -442,11 +462,12 @@ function load_annotation(){
             //var boxes = JSON.parse(this.responseText);
             //console.log(ret);
 
-            remove_all_boxes();
+            create_bboxs(ret);  //create in future world
 
-            create_bboxs(ret);
-
-            //add_raw_boxes(ret[1]);
+            if (data.future_world.complete()){
+                go_future_world();
+            }
+            //add_raw_boxes(ret[1]);            
         }
     
         // end of state change: it can be after some time (async)
@@ -469,13 +490,8 @@ function load_data_meta(gui_folder){
             thisscene[f] = function(){
                 console.log("clicked", c);
 
-                data.file_info.scene = c.scene;
-                data.file_info.frame = f;
-                data.file_info.transform_matrix = c.point_transform_matrix;
-                data.file_info.annotation_format = c.boxtype;
-
-
-                remove_all();
+                data.set_current_frame_info(c.scene, f, c.point_transform_matrix, c.boxtype);
+                //remove_all();  //remove before new data loaded.
                 load_all();
 
                 update_frame_info(c.scene, f);
@@ -496,6 +512,8 @@ function load_data_meta(gui_folder){
         if (this.status == 200) {
             var ret = JSON.parse(this.responseText);
             //console.log(ret);
+
+            data.meta = ret;
             ret.forEach(function(c){
                 add_one_scene(c);
             })
@@ -506,6 +524,53 @@ function load_data_meta(gui_folder){
     xhr.send();
 }
 
+
+
+var stop_play_flag=false;
+function play_current_scene(){
+    
+    if (!data.meta){
+        console.log("no meta data! cannot play");
+        return;
+    }
+
+    stop_play_flag = false;
+    var scene= data.file_info.scene;
+    var scene_meta = data.meta.find(function(x){return x.scene==scene;});
+    console.log(scene_meta);
+
+    
+    function play_frame(frame_index){
+        if (frame_index < scene_meta.frames.length && !stop_play_flag)
+        {
+            data.set_current_frame_info(scene, 
+                scene_meta.frames[frame_index], 
+                scene_meta.point_transform_matrix, 
+                scene_meta.boxtype);
+            //remove_all();
+            //preload_future_world();
+            load_all();        
+
+            // install next frame loading function
+            on_future_world_loaded=function(){
+                update_frame_info(scene, scene_meta.frames[frame_index]);
+                setTimeout(function(){play_frame(frame_index+1);}, 80);
+            };
+            
+        }
+    }
+
+    setTimeout(function(){play_frame(0);}, 0);
+
+    scene_meta.frames.forEach(function(f){
+        
+    })
+
+}
+
+function stop_play(){
+    stop_play_flag = true;
+}
 
 function init_gui(){
     var gui = new GUI();
@@ -524,15 +589,16 @@ function init_gui(){
     cfgFolder.add( params, "reset bird's eye view");
     cfgFolder.add( params, "rotate bird's eye view");
 
+
     params["play"] = function(){
         play_current_scene();
     }
-    cfgFolder.add( params, "play");
     params["stop"] = function(){
         stop_play();
     }
     cfgFolder.add( params, "play");
     cfgFolder.add( params, "stop");
+
 
     var fileFolder = gui.addFolder( 'File' );
     params['save'] = function () {
@@ -755,7 +821,7 @@ function handleClick() {
 
     if ( onDownPosition.distanceTo( onUpPosition ) === 0 ) {
 
-        var intersects = getIntersects( onUpPosition, data.bboxes );
+        var intersects = getIntersects( onUpPosition, data.world.boxes );
 
         if ( intersects.length > 0 ) {
 
@@ -903,7 +969,7 @@ function add_bbox(){
     //mesh = ev.key=='b'?new_bbox(): new_bbox_cube();
     mesh = new_bbox_cube();
 
-    data.bboxes.push(mesh);
+    data.world.boxes.push(mesh);
 
     var pos = get_mouse_location_in_world(mouse);
 
@@ -1037,21 +1103,21 @@ function keydown( ev ) {
                 //transform_control.setSpace( transform_control.space === "local" ? "world" : "local" );
 
                 //select current index
-                if (data.bboxes[box_navigate_index]!= selected_box){
+                if (data.world.boxes[box_navigate_index]!= selected_box){
 
                 }
                 else {
                     if (ev.key== '1')
                         box_navigate_index += 1;
                     else 
-                        box_navigate_index += (data.bboxes.length-1);
+                        box_navigate_index += (data.world.boxes.length-1);
                     
-                    box_navigate_index %= data.bboxes.length;
+                    box_navigate_index %= data.world.boxes.length;
                 }
                 console.log(box_navigate_index);
-                select_bbox(data.bboxes[box_navigate_index]);
+                select_bbox(data.world.boxes[box_navigate_index]);
                 
-                views[0].look_at(data.bboxes[box_navigate_index].position);
+                views[0].look_at(data.world.boxes[box_navigate_index].position);
                 
                 
                 
@@ -1216,7 +1282,7 @@ function remove_selected_box(){
         targt_box.geometry.dispose();
         targt_box.material.dispose();
         //selected_box.dispose();
-        data.bboxes = data.bboxes.filter(function(x){return x !=targt_box;});
+        data.world.boxes = data.world.boxes.filter(function(x){return x !=targt_box;});
         selected_box = null;
         sideview_mesh = null;
     }
@@ -1229,22 +1295,22 @@ function remove_all(){
 
 
 function remove_all_points(){
-    if (current_points){
-        scene.remove(current_points);
-        current_points.geometry.dispose();
-        current_points.material.dispose();
-        current_points = null;
+    if (data.world.points){
+        scene.remove(data.world.points);
+        data.world.points.geometry.dispose();
+        data.world.points.material.dispose();
+        data.world.points = null;
     }
 }
 
 function remove_all_boxes(){
-    data.bboxes.forEach(function(b){
+    data.world.boxes.forEach(function(b){
         scene.remove(b);
         b.geometry.dispose();
         b.material.dispose();
     });
 
-    data.bboxes = [];
+    data.world.boxes = [];
 }
 
 function animate() {

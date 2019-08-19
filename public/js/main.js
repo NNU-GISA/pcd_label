@@ -196,6 +196,10 @@ function create_views(){
         view.reset_birdseye = function(){
             this.orbit_orth.reset();
         };
+        view.rotate_birdseye = function(){
+            this.camera_orth.up.set( 1, 0, 0);
+            this.orbit_orth.update();
+        }
     }
 
     if (true){
@@ -512,10 +516,23 @@ function init_gui(){
     params["reset bird's eye view"] = function(){
         views[0].reset_birdseye();
     };
+    params["rotate bird's eye view"] = function(){
+        views[0].rotate_birdseye();
+    };
     
-
     cfgFolder.add( params, "bird's eye view");
     cfgFolder.add( params, "reset bird's eye view");
+    cfgFolder.add( params, "rotate bird's eye view");
+
+    params["play"] = function(){
+        play_current_scene();
+    }
+    cfgFolder.add( params, "play");
+    params["stop"] = function(){
+        stop_play();
+    }
+    cfgFolder.add( params, "play");
+    cfgFolder.add( params, "stop");
 
     var fileFolder = gui.addFolder( 'File' );
     params['save'] = function () {

@@ -1427,133 +1427,6 @@ function new_bbox(){
 
 
 
-function new_bbox_group(){
-    var bbox = cube( 5 );
-    var body = new THREE.LineSegments( bbox.body, new THREE.LineBasicMaterial( { color: 0xffffff } ) );    
-    var head = new THREE.LineSegments( bbox.head, new THREE.LineBasicMaterial( { color: 0x00ff00 } ) );    
-    
-    
-    var group = new THREE.Group();
-    
-    group.add(body);
-    group.add(head);
-
-    group.userData={object: null};
-    group.raycast = function( raycaster, intersects ){
-        
-        var temp_intersects=[];
-        body.raycast(raycaster, temp_intersects);
-        head.raycast(raycaster, temp_intersects);
-
-        if (temp_intersects.length>0)
-            intersects.push(group);
-    };
-
-    return group;
-}
-
-
-
-
-
-function cube( size ) {
-    var h = size * 0.5;
-    
-    var body = [
-        
-        - h, h, - h,
-        h, h, - h,
-        h, h, - h,
-        h, - h, - h,
-        h, - h, - h,
-        - h, - h, - h,
-        
-        
-        - h, h, h,
-        h, h, h,
-        h, h, h,
-        h, - h, h,
-        h, - h, h,
-        - h, - h, h,
-
-        
-        
-        h, h, - h,
-        h, h, h,
-        h, - h, - h,
-        h, - h, h];
-    
-    var head=[
-        - h, - h, - h, 
-        - h, h, - h,
-        - h, - h, - h,
-        - h, - h, h,
-        - h, - h, h,
-        - h, h, h,
-
-        - h, h, - h,
-        - h, h, h,
-        
-    ];
-    
-
-    var gbody = new THREE.BufferGeometry();
-    gbody.addAttribute( 'position', new THREE.Float32BufferAttribute(body, 3 ) );
-    var ghead = new THREE.BufferGeometry();
-    ghead.addAttribute( 'position', new THREE.Float32BufferAttribute(head, 3 ) );
-
-    return {body: gbody, head: ghead};
-}
-
-
-
-function cube2( size ) {
-    var h = size * 0.5;
-    
-    var body = [
-        
-        - h, h, - h,
-        h, h, - h,
-        h, h, - h,
-        h, - h, - h,
-        h, - h, - h,
-        - h, - h, - h,
-        
-        
-        - h, h, h,
-        h, h, h,
-        h, h, h,
-        h, - h, h,
-        h, - h, h,
-        - h, - h, h,
-
-        
-        
-        h, h, - h,
-        h, h, h,
-        h, - h, - h,
-        h, - h, h
-    
-        - h, - h, - h, 
-        - h, h, - h,
-
-        - h, - h, - h,
-        - h, - h, h,
-        
-        - h, - h, h,
-        - h, h, h,
-
-        - h, h, - h,
-        - h, h, h,
-        
-    ];
-    
-
-    var gbody = new THREE.BufferGeometry();
-    gbody.addAttribute( 'position', new THREE.Float32BufferAttribute(body, 3 ) );
-    return gbody;
-}
-
 function update_frame_info(scene, frame){
     document.getElementById("frame").innerHTML = scene+"/"+frame;
 
@@ -1568,7 +1441,9 @@ function update_frame_info(scene, frame){
     
 }
 
-function matmul(m, x, vl){  //vl is vector length
+// matrix (m*n), matrix(n*l), vl=n 
+function matmul(m, x, vl)  //vl is vector length
+{
     var ret=[];
     for (var vi =0; vi < x.length/vl; vi++){  //vector index
         for (var r = 0; r<m.length/vl; r++){  //row of matrix
@@ -1582,7 +1457,8 @@ function matmul(m, x, vl){  //vl is vector length
     return ret;
 }
 
-
+// box(position, scale, rotation) to box corner corrdinates.
+// return 8 points, represented as (x,y,z,1)
 function psr_to_xyz(p,s,r){
     var trans_matrix=[
         Math.cos(r.z), -Math.sin(r.z), 0, p.x,
@@ -1615,13 +1491,17 @@ function psr_to_xyz(p,s,r){
     // ];
 }
 
-function vector4to3(w){
-    return [
-        w[0],w[1],w[2],  w[4], w[5], w[6],
-        w[8],w[9],w[10],  w[12], w[13], w[14],
-        w[16],w[17],w[18],  w[20], w[21], w[22],
-        w[24],w[25],w[26],  w[28], w[29], w[30],
-    ];
+
+function vector4to3(v)
+{
+    var ret=[];
+    for (var i=0; i<v.length; i++){
+        if ((i+1)% 4 != 0){
+            ret.push(v[i]);
+        }
+    }
+
+    return ret;
 }
 
 function vector3_nomalize(m){
@@ -1629,6 +1509,55 @@ function vector3_nomalize(m){
     for (var i=0; i<m.length/3; i++){
         ret.push(m[i*3+0]/m[i*3+2]);
         ret.push(m[i*3+1]/m[i*3+2]);
+    }
+
+    return ret;
+}
+
+function crop_image(imgWidth, imgHeight, clientWidth, clientHeight, corners)
+{
+    var maxx=0, maxy=0, minx=imgWidth, miny=imgHeight;
+
+    for (var i = 0; i < corners.length/2; i++){
+        var x = corners[i*2];
+        var y = corners[i*2+1];
+
+        if (x>maxx) maxx=x;
+        else if (x<minx) minx=x;
+
+        if (y>maxy) maxy=y;
+        else if (y<miny) miny=y;        
+    }
+
+    var targetWidth= (maxx-minx)*1.5;
+    var targetHeight= (maxy-miny)*1.5;
+
+    if (targetWidth/targetHeight > clientWidth/clientHeight){
+        //increate height
+        targetHeight = targetWidth*clientHeight/clientWidth;        
+    }
+    else{
+        targetWidth = targetHeight*clientWidth/clientHeight;
+    }
+
+    var centerx = (maxx+minx)/2;
+    var centery = (maxy+miny)/2;
+
+    return [
+        centerx - targetWidth/2,
+        centery - targetHeight/2,
+        targetWidth,
+        targetHeight
+    ];
+}
+
+function vectorsub(vs, v){
+    var ret = [];
+    var vl = v.length;
+
+    for (var i = 0; i<vs.length/vl; i++){
+        for (var j=0; j<vl; j++)
+            ret[i*vl+j] = vs[i*vl+j]-v[j];
     }
 
     return ret;
@@ -1656,9 +1585,13 @@ function update_box_info_text(mesh){
 
                 var img = document.getElementById("camera");
                 if (img){
+
+                    clear_canvas();
+
+
                     var box3d = psr_to_xyz(pos, scale, rotation);
 
-
+                    // project corners to image plane
                     var imgpos = matmul(scene_meta.calib.extrinsic, box3d, 4);
                     var imgpos3 = vector4to3(imgpos);
                     var imgpos2 = matmul(scene_meta.calib.intrinsic, imgpos3, 3);
@@ -1666,17 +1599,21 @@ function update_box_info_text(mesh){
 
                     console.log(imgfinal);
                     
-
                     var c = document.getElementById("canvas");
                     var ctx = c.getContext("2d");
                     
+                    // note: 320*180 should be adjustable
+                    var crop_area = crop_image(img.naturalWidth, img.naturalHeight, 320, 180, imgfinal);
 
-                    var box2d_heigth = mesh.scale.z;
+                    ctx.drawImage(img, crop_area[0], crop_area[1],crop_area[2], crop_area[3], 0, 0, 320, 180);// ctx.canvas.clientHeight);
+                    //ctx.drawImage(img, 0,0,img.naturalWidth, img.naturalHeight, 0, 0, 320, 180);// ctx.canvas.clientHeight);
+                    var imgfinal = vectorsub(imgfinal, [crop_area[0],crop_area[1]]);
 
-                    ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, 0, 0, 320, 180);// ctx.canvas.clientHeight);
+                    ctx.lineWidth = 0.5;
                     ctx.strokeStyle="#00ff00";
                     ctx.beginPath();
-                    var trans_ratio = 180/img.naturalHeight;
+
+                    var trans_ratio = 180/crop_area[3];
 
                     ctx.moveTo(imgfinal[3*2]*trans_ratio,imgfinal[3*2+1]*trans_ratio);
 

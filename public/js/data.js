@@ -19,8 +19,14 @@ var data = {
     // },
 
 
-    make_new_world: function(scene_name, frame_index, frame, transform_matrix, annotation_format, auto_load, on_preload_finished, on_finished){
+    make_new_world: function(scene_name, frame, auto_load, on_preload_finished, on_finished){
         
+
+        var scene_meta = this.get_meta_by_scene_name(scene_name);
+        var transform_matrix = scene_meta.point_transform_matrix;
+        var annotation_format = scene_meta.boxtype;
+        var frame_index = scene_meta.frames.findIndex(function(x){return x==frame;});
+
 
         var world = {
             file_info: {
@@ -429,6 +435,19 @@ var data = {
 
 
     meta: null,  //meta data
+
+    get_meta_by_scene_name: function(scene_name){
+
+        var scene_meta = data.meta.find(function(x){
+            return x.scene == scene_name;
+        });
+
+        return scene_meta;
+    },
+
+    get_current_world_scene_meta(){
+        return this.get_meta_by_scene_name(this.world.file_info.scene);
+    }
 };
 
 export {data};

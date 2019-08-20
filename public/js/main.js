@@ -445,8 +445,7 @@ function load_data_meta(gui_folder){
                 //load_all();
 
                 //update_frame_info(c.scene, f);
-                var frame_index = c.frames.findIndex(function(x){return x==f;});
-                var world = data.make_new_world(c.scene, frame_index, f, c.point_transform_matrix, c.boxtype);                
+                var world = data.make_new_world(c.scene, f);                
 
                 data.activate_world(scene, world, function(){
                     //on worl loading finished
@@ -507,11 +506,8 @@ function play_current_scene(){
     function preload_frame(frame_index){
         if (frame_index < scene_meta.frames.length && !stop_play_flag)
         {
-            var new_world = data.make_new_world(scene_name, 
-                frame_index,
+            var new_world = data.make_new_world(scene_name,                 
                 scene_meta.frames[frame_index], 
-                scene_meta.point_transform_matrix, 
-                scene_meta.boxtype,
                 false,
                 function(world){
                     data.put_world_into_buffer(world);  //put new world into buffer.
@@ -1322,10 +1318,7 @@ function previous_frame(){
 
     var world = data.make_new_world(
                 scene_meta.scene, 
-                frame_index,
                 scene_meta.frames[frame_index], 
-                scene_meta.point_transform_matrix, 
-                scene_meta.boxtype,
                 false);
 
     data.activate_world(scene, world, function(){
@@ -1334,31 +1327,29 @@ function previous_frame(){
 
 }
 
+function load_frame(scene_name, frame){
+
+}
 
 function next_frame(){
 
     if (!data.meta)
         return;
         
-        var scene_meta = data.meta.find(function(x){
-            return x.scene == data.world.file_info.scene;
-        });
-    
-        var num_frames = scene_meta.frames.length;
-    
-        var frame_index = (data.world.file_info.frame_index +1) % num_frames;
-    
-        var world = data.make_new_world(
-                    scene_meta.scene, 
-                    frame_index,
-                    scene_meta.frames[frame_index], 
-                    scene_meta.point_transform_matrix, 
-                    scene_meta.boxtype,
-                    false);
-    
-        data.activate_world(scene, world, function(){
-            update_frame_info(scene_meta.scene, scene_meta.frames[frame_index]);
-        });
+    var scene_meta = data.get_current_world_scene_meta();
+
+    var num_frames = scene_meta.frames.length;
+
+    var frame_index = (data.world.file_info.frame_index +1) % num_frames;
+
+    var world = data.make_new_world(
+                scene_meta.scene, 
+                scene_meta.frames[frame_index], 
+                false);
+
+    data.activate_world(scene, world, function(){
+        update_frame_info(scene_meta.scene, scene_meta.frames[frame_index]);
+    });
 }
 
 function remove_selected_box(){

@@ -1563,6 +1563,8 @@ function update_frame_info(scene, frame){
     } else{
         document.getElementById("image").innerHTML = '<img id="camera" src="/static/data/'+data.world.file_info.scene+'/image/'+ data.world.file_info.frame+'.jpg" alt="img">';
     }
+
+
     
 }
 
@@ -1593,11 +1595,12 @@ function psr_to_xyz(p,s,r){
     var y=s.y/2;
     var z=s.z/2;
     var local_coord = [
-        -x, y, -z, 1,   x, y, -z, 1,
-        x, -y, -z, 1, -x, -y, -z, 1,
+        -x, y, -z, 1,   x, y, -z, 1,  //front-left-bottom, front-right-bottom
+        x, y, z, 1,    -x, y, z, 1,  //front-right-top,   front-left-top
 
-        -x, y, z, 1,  x, y, z, 1,
-        x, -y, z, 1,  -x, -y, z, 1,
+        -x, -y, -z, 1,   x, -y, -z, 1,  
+        x, -y, z, 1,   -x, -y, z, 1,        
+        
     ];
 
     var world_coord = matmul(trans_matrix, local_coord, 4);
@@ -1671,7 +1674,7 @@ function update_box_info_text(mesh){
                     var box2d_heigth = mesh.scale.z;
 
                     ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, 0, 0, 320, 180);// ctx.canvas.clientHeight);
-                    ctx.strokeStyle="#ffff00";
+                    ctx.strokeStyle="#00ff00";
                     ctx.beginPath();
                     var trans_ratio = 180/img.naturalHeight;
 
@@ -1682,6 +1685,10 @@ function update_box_info_text(mesh){
                         ctx.lineTo(imgfinal[i*2+0]*trans_ratio, imgfinal[i*2+1]*trans_ratio);
                     }                
 
+                    ctx.stroke();
+
+                    ctx.strokeStyle="#ff00ff";
+                    ctx.beginPath();
 
                     ctx.moveTo(imgfinal[7*2]*trans_ratio,imgfinal[7*2+1]*trans_ratio);
 
@@ -1701,13 +1708,21 @@ function update_box_info_text(mesh){
 
 
                     ctx.stroke();
-                    ctx.endPath();
+                    
                 }
             }
         }
 
     } else {
         document.getElementById("box").innerHTML = '';
+
+        clear_canvas();
     }
 }
 
+function clear_canvas(){
+    var c = document.getElementById("canvas");
+    var ctx = c.getContext("2d");
+                
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}

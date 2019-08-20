@@ -1104,6 +1104,8 @@ function switch_bbox_type(){
             selected_box.scale.z=1.5;
             break;
     }
+
+    update_subview_by_windowsize();
 }
 
 function keydown( ev ) {

@@ -48,9 +48,9 @@ var views = [
     },
     {
         left: 0,
-        bottom: 0.6,
+        bottom: 0.7,
         width: 0.2,
-        height: 0.4,
+        height: 0.3,
         background: new THREE.Color( 0.1, 0.1, 0.2 ),
         eye: [ 0, 1800, 0 ],
         up: [ 0, 0, 1 ],
@@ -58,9 +58,9 @@ var views = [
     },
     {
         left: 0,
-        bottom: 0.3,
+        bottom: 0.5,
         width: 0.2,
-        height: 0.3,
+        height: 0.2,
         background: new THREE.Color( 0.1, 0.2, 0.1 ),
         eye: [ 1400, 800, 1400 ],
         up: [ 0, 1, 0 ],
@@ -69,9 +69,9 @@ var views = [
 
     {
         left: 0,
-        bottom: 0,
+        bottom: 0.3,
         width: 0.2,
-        height: 0.3,
+        height: 0.2,
         background: new THREE.Color( 0.2, 0.1, 0.1 ),
         eye: [ 1400, 800, 1400 ],
         up: [ 0, 1, 0 ],
@@ -563,8 +563,8 @@ function init_gui(){
     var cfgFolder = gui.addFolder( 'View' );
 
     params["hide side views"] = false;    
-    params["bird's eye view"] = true;
-    params["hide image"] = true;
+    params["bird's eye view"] = false;
+    params["hide image"] = false;
 
     params["reset bird's eye view"] = function(){
         views[0].reset_birdseye();
@@ -573,7 +573,10 @@ function init_gui(){
         views[0].rotate_birdseye();
     };
     
+    params["side view width"] = 0.2;
+
     cfgFolder.add( params, "hide side views");
+    cfgFolder.add( params, "side view width");
     cfgFolder.add( params, "bird's eye view");
     cfgFolder.add( params, "hide image");
     cfgFolder.add( params, "reset bird's eye view");
@@ -619,12 +622,13 @@ function init_gui(){
 
 
 
-
-
 function update_subview_by_windowsize(){
 
     if (sideview_mesh === null)
         return;
+
+    //update cfg
+    
 
     // side views
     var exp_camera_width, exp_camera_height, exp_camera_clip;
@@ -632,6 +636,8 @@ function update_subview_by_windowsize(){
     for ( var ii = 1; ii < views.length; ++ ii ) {
         var view = views[ ii ];
         var camera = view.camera;
+
+        view.width = params["side view width"];
 
         var view_width = Math.floor( window.innerWidth * view.width );
         var view_height = Math.floor( window.innerHeight * view.height );

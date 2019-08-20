@@ -64,15 +64,25 @@ class Root(object):
             point_transform_matrix=f.read()
             point_transform_matrix = point_transform_matrix.split(",")
 
+        calib={}
+        if os.path.isfile("public/data/"+s+"/calib.txt"):
+          with open("public/data/"+s+"/calib.txt")  as f:
+            lines = f.readlines()
+            calib["extrinsic"] = lines[0].strip().split(",")
+            calib["intrinsic"] = lines[1].strip().split(",")            
+
         if not os.path.isdir("public/data/"+s+"/bbox.xyz"):
           scene["boxtype"] = "psr"
           if point_transform_matrix:
             scene["point_transform_matrix"] = point_transform_matrix
+          if calib:
+            scene["calib"] = calib
         else:
           scene["boxtype"] = "xyz"
           if point_transform_matrix:
             scene["point_transform_matrix"] = point_transform_matrix
-          
+          if calib:
+            scene["calib"] = calib
 
       print(data)
       return data

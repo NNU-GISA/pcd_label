@@ -9,3 +9,7 @@
 6. fix camera when selecting box by 1/2
 7. detach transform control before changing world.
 8. lock one box
+9. when pcd file doesnot exist
+10. when pcd file format not recognizable
+11. title text
+12. title icon

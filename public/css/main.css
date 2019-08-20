@@ -30,7 +30,7 @@ canvas {
 	position: absolute;
 	top: 0px;
 	color: #ffff00;
-	width: 100%;
+	width: 20%;
 	padding: 10px;
 	box-sizing: border-box;
 	text-align: left;
@@ -40,6 +40,48 @@ canvas {
 	user-select: none;
 	pointer-events: none;
 	z-index: 1; /* TODO Solve this in HTML */
+}
+
+
+#image {
+	position: absolute;
+	top: 0px;
+	left: 20%;
+	color: #ffff00;
+	width: 30%;
+	height: 30%;
+	padding: 10px;
+	box-sizing: border-box;
+	text-align: left;
+	align-content: left;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	pointer-events: none;
+	z-index: 1; /* TODO Solve this in HTML */
+}
+#canvas {
+	position: absolute;
+	top: 0px;
+	left: 50%;
+	color: #ffff00;
+	width: 30%;
+	height: 30%;
+	padding: 10px;
+	box-sizing: border-box;
+	text-align: left;
+	align-content: left;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	pointer-events: none;
+	z-index: 1; /* TODO Solve this in HTML */
+}
+#camera {
+	width:100%;
+	height:100%;
 }
 
 .dg.ac {

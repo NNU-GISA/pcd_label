@@ -1555,7 +1555,52 @@ function cube2( size ) {
 function update_frame_info(scene, frame){
     document.getElementById("frame").innerHTML = scene+"/"+frame;
 
+    document.getElementById("image").innerHTML = '<img id="camera" src="/static/data/'+data.world.file_info.scene+'/image/'+ data.world.file_info.frame+'.jpg" alt="img">';
 }
+
+function matmul(m, x){
+    var ret=[];
+    var vl = x.length;
+    for (var r = 0; r<m.length/vl; r++){
+        ret[r] = 0;
+        for (var i = 0; i<vl; i++){
+            ret[r] += m[r*vl+i]*x[i];
+        }
+    }
+
+    return ret;
+}
+
+
+function psr_to_xyz(p,s,r){
+    var trans_matrix=[
+        Math.cos(r.z), -Math.sin(r.z), 0, p.x,
+        Math.sin(r.z), Math.cos(r.z),  0, p.y,
+        0,             0,              1, p.z,
+        0,             0,              0, 1,
+    ];
+
+    var x=s.x/2;
+    var y=s.y/2;
+    var z=s.z/2;
+    local_coord = [
+        -x, y, -z, 1,   x, y, -z, 1,
+        x, -y, -z, 1, -x, -y, -z, 1,
+
+        -x, y, z, 1,  x, y, z, 1,
+        x, -y, z, 1,  -x, -y, z, 1,
+    ];
+
+    var world_coord = matmul(trans_matrix, local_coord);
+    var w = world_coord;
+    return [
+        w[0],w[1],w[2],  w[4], w[5], w[6],
+        w[8],w[9],w[10],  w[12], w[13], w[14],
+        w[16],w[17],w[18],  w[20], w[21], w[22],
+        w[24],w[25],w[26],  w[28], w[29], w[30],
+    ];
+}
+
 
 
 function update_box_info_text(mesh){
@@ -1571,6 +1616,32 @@ function update_box_info_text(mesh){
         document.getElementById("box").innerHTML = pos.x.toFixed(2) +" "+pos.y.toFixed(2) + " " + pos.z.toFixed(2) + " | "+
                                                     scale.x.toFixed(2) +" "+scale.y.toFixed(2) + " " + scale.z.toFixed(2) + " | " + 
                                                     (rotation.z*180/Math.PI).toFixed(2);
+
+        if (true){
+
+            var imgpos = matmul(data.meta[1].calib.extrinsic, [pos.x, pos.y, pos.z, 1]);
+            var imgpos_2 = matmul(data.meta[1].calib.intrinsic, [imgpos[0], imgpos[1], imgpos[2]]);
+            console.log(imgpos_2);
+            var box2d = {
+                    x: Math.round(imgpos_2[0]/imgpos_2[2]),
+                    y: Math.round(imgpos_2[1]/imgpos_2[2]),
+            };
+
+            var c = document.getElementById("canvas");
+            var ctx = c.getContext("2d");
+            var img = document.getElementById("camera");
+
+            var box2d_heigth = mesh.scale.z;
+
+            ctx.drawImage(img, box2d.x-120, box2d.y-box2d_heigth, 240, 2*box2d_heigth, 0, 0, 240,320);// ctx.canvas.clientHeight);
+            
+            ctx.beginPath();
+            ctx.moveTo(box2d.x, box2d.y);
+            ctx.lineTo(50, 150);
+            ctx.lineTo(60, 50);
+            ctx.stroke();
+        }
+
     } else {
         document.getElementById("box").innerHTML = '';
     }

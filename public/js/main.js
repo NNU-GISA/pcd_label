@@ -562,9 +562,10 @@ function init_gui(){
 
     var cfgFolder = gui.addFolder( 'View' );
 
-    params["hide side views"] = false;
-    
+    params["hide side views"] = false;    
     params["bird's eye view"] = true;
+    params["hide image"] = true;
+
     params["reset bird's eye view"] = function(){
         views[0].reset_birdseye();
     };
@@ -574,6 +575,7 @@ function init_gui(){
     
     cfgFolder.add( params, "hide side views");
     cfgFolder.add( params, "bird's eye view");
+    cfgFolder.add( params, "hide image");
     cfgFolder.add( params, "reset bird's eye view");
     cfgFolder.add( params, "rotate bird's eye view");
 
@@ -1555,16 +1557,23 @@ function cube2( size ) {
 function update_frame_info(scene, frame){
     document.getElementById("frame").innerHTML = scene+"/"+frame;
 
-    document.getElementById("image").innerHTML = '<img id="camera" src="/static/data/'+data.world.file_info.scene+'/image/'+ data.world.file_info.frame+'.jpg" alt="img">';
+    if (params["hide image"]){
+        document.getElementById("image").innerHTML = '';
+        //document.getElementById("image").innerHTML = '<img id="camera" display="none" src="/static/data/'+data.world.file_info.scene+'/image/'+ data.world.file_info.frame+'.jpg" alt="img">';
+    } else{
+        document.getElementById("image").innerHTML = '<img id="camera" src="/static/data/'+data.world.file_info.scene+'/image/'+ data.world.file_info.frame+'.jpg" alt="img">';
+    }
+    
 }
 
-function matmul(m, x){
+function matmul(m, x, vl){  //vl is vector length
     var ret=[];
-    var vl = x.length;
-    for (var r = 0; r<m.length/vl; r++){
-        ret[r] = 0;
-        for (var i = 0; i<vl; i++){
-            ret[r] += m[r*vl+i]*x[i];
+    for (var vi =0; vi < x.length/vl; vi++){  //vector index
+        for (var r = 0; r<m.length/vl; r++){  //row of matrix
+            ret[vi*vl+r] = 0;
+            for (var i = 0; i<vl; i++){
+                ret[vi*vl+r] += m[r*vl+i]*x[vi*vl+i];
+            }
         }
     }
 
@@ -1583,7 +1592,7 @@ function psr_to_xyz(p,s,r){
     var x=s.x/2;
     var y=s.y/2;
     var z=s.z/2;
-    local_coord = [
+    var local_coord = [
         -x, y, -z, 1,   x, y, -z, 1,
         x, -y, -z, 1, -x, -y, -z, 1,
 
@@ -1591,8 +1600,19 @@ function psr_to_xyz(p,s,r){
         x, -y, z, 1,  -x, -y, z, 1,
     ];
 
-    var world_coord = matmul(trans_matrix, local_coord);
+    var world_coord = matmul(trans_matrix, local_coord, 4);
     var w = world_coord;
+    return w;
+    
+    // return [
+    //     w[0],w[1],w[2],  w[4], w[5], w[6],
+    //     w[8],w[9],w[10],  w[12], w[13], w[14],
+    //     w[16],w[17],w[18],  w[20], w[21], w[22],
+    //     w[24],w[25],w[26],  w[28], w[29], w[30],
+    // ];
+}
+
+function vector4to3(w){
     return [
         w[0],w[1],w[2],  w[4], w[5], w[6],
         w[8],w[9],w[10],  w[12], w[13], w[14],
@@ -1601,7 +1621,15 @@ function psr_to_xyz(p,s,r){
     ];
 }
 
+function vector3_nomalize(m){
+    var ret=[];
+    for (var i=0; i<m.length/3; i++){
+        ret.push(m[i*3+0]/m[i*3+2]);
+        ret.push(m[i*3+1]/m[i*3+2]);
+    }
 
+    return ret;
+}
 
 function update_box_info_text(mesh){
 
@@ -1619,27 +1647,63 @@ function update_box_info_text(mesh){
 
         if (true){
 
-            var imgpos = matmul(data.meta[1].calib.extrinsic, [pos.x, pos.y, pos.z, 1]);
-            var imgpos_2 = matmul(data.meta[1].calib.intrinsic, [imgpos[0], imgpos[1], imgpos[2]]);
-            console.log(imgpos_2);
-            var box2d = {
-                    x: Math.round(imgpos_2[0]/imgpos_2[2]),
-                    y: Math.round(imgpos_2[1]/imgpos_2[2]),
-            };
+            var scene_meta = data.meta.find(function(x){return x.scene==data.world.file_info.scene;});
 
-            var c = document.getElementById("canvas");
-            var ctx = c.getContext("2d");
-            var img = document.getElementById("camera");
+            if (scene_meta.calib){
 
-            var box2d_heigth = mesh.scale.z;
+                var img = document.getElementById("camera");
+                if (img){
+                    var box3d = psr_to_xyz(pos, scale, rotation);
 
-            ctx.drawImage(img, box2d.x-120, box2d.y-box2d_heigth, 240, 2*box2d_heigth, 0, 0, 240,320);// ctx.canvas.clientHeight);
-            
-            ctx.beginPath();
-            ctx.moveTo(box2d.x, box2d.y);
-            ctx.lineTo(50, 150);
-            ctx.lineTo(60, 50);
-            ctx.stroke();
+
+                    var imgpos = matmul(scene_meta.calib.extrinsic, box3d, 4);
+                    var imgpos3 = vector4to3(imgpos);
+                    var imgpos2 = matmul(scene_meta.calib.intrinsic, imgpos3, 3);
+                    var imgfinal = vector3_nomalize(imgpos2);
+
+                    console.log(imgfinal);
+                    
+
+                    var c = document.getElementById("canvas");
+                    var ctx = c.getContext("2d");
+                    
+
+                    var box2d_heigth = mesh.scale.z;
+
+                    ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, 0, 0, 320, 180);// ctx.canvas.clientHeight);
+                    ctx.strokeStyle="#ffff00";
+                    ctx.beginPath();
+                    var trans_ratio = 180/img.naturalHeight;
+
+                    ctx.moveTo(imgfinal[3*2]*trans_ratio,imgfinal[3*2+1]*trans_ratio);
+
+                    for (var i=0; i < imgfinal.length/2/2; i++)
+                    {
+                        ctx.lineTo(imgfinal[i*2+0]*trans_ratio, imgfinal[i*2+1]*trans_ratio);
+                    }                
+
+
+                    ctx.moveTo(imgfinal[7*2]*trans_ratio,imgfinal[7*2+1]*trans_ratio);
+
+                    for (var i=4; i < imgfinal.length/2; i++)
+                    {
+                        ctx.lineTo(imgfinal[i*2+0]*trans_ratio, imgfinal[i*2+1]*trans_ratio);
+                    }
+                    
+                    ctx.moveTo(imgfinal[0*2]*trans_ratio,imgfinal[0*2+1]*trans_ratio);
+                    ctx.lineTo(imgfinal[4*2+0]*trans_ratio, imgfinal[4*2+1]*trans_ratio);
+                    ctx.moveTo(imgfinal[1*2]*trans_ratio,imgfinal[1*2+1]*trans_ratio);
+                    ctx.lineTo(imgfinal[5*2+0]*trans_ratio, imgfinal[5*2+1]*trans_ratio);
+                    ctx.moveTo(imgfinal[2*2]*trans_ratio,imgfinal[2*2+1]*trans_ratio);
+                    ctx.lineTo(imgfinal[6*2+0]*trans_ratio, imgfinal[6*2+1]*trans_ratio);
+                    ctx.moveTo(imgfinal[3*2]*trans_ratio,imgfinal[3*2+1]*trans_ratio);
+                    ctx.lineTo(imgfinal[7*2+0]*trans_ratio, imgfinal[7*2+1]*trans_ratio);
+
+
+                    ctx.stroke();
+                    ctx.endPath();
+                }
+            }
         }
 
     } else {

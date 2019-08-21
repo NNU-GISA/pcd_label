@@ -263,6 +263,9 @@ function create_views(){
             this.camera_orth.up.set( 1, 0, 0);
             this.orbit_orth.update();
         }
+        view.detach_control = function(){
+            this.transform_control.detach();
+        }
     }
 
     if (true){
@@ -445,13 +448,7 @@ function load_data_meta(gui_folder){
                 //load_all();
 
                 //update_frame_info(c.scene, f);
-                var world = data.make_new_world(c.scene, f);                
-
-                data.activate_world(scene, world, function(){
-                    //on worl loading finished
-                    render();
-                    update_frame_info(c.scene, f);
-                });
+                load_world(c.scene, f);
             }
 
             folder.add(thisscene, f);
@@ -496,26 +493,35 @@ function play_current_scene(){
     }
 
     stop_play_flag = false;
-    var scene_name= data.world.file_info.scene;
-    var scene_meta = data.meta.find(function(x){return x.scene==scene_name;});
-    console.log(scene_meta);
+
+    var scene_meta = data.get_current_world_scene_meta();
+
+    var scene_name= scene_meta.scene;
     
     data.reset_world_buffer();
-    preload_frame(0);
-    play_frame(0);
 
-    function preload_frame(frame_index){
-        if (frame_index < scene_meta.frames.length && !stop_play_flag)
+    //var start_frame_index = scene_meta.frames.findIndex(function(x){return x == data.world.file_info.frame;})
+
+    preload_frame(scene_meta, data.world.file_info.frame);
+    play_frame(scene_meta, data.world.file_info.frame);
+
+
+    function preload_frame(meta, frame){
+        //if (frame_index < scene_meta.frames.length && !stop_play_flag)
         {
-            var new_world = data.make_new_world(scene_name,                 
-                scene_meta.frames[frame_index], 
+            var new_world = data.make_new_world(meta.scene,
+                frame, 
                 false,
                 function(world){
                     data.put_world_into_buffer(world);  //put new world into buffer.
 
                     // continue next frmae
-                    if (!stop_play_flag)
-                        preload_frame(frame_index+1);
+                    if (!stop_play_flag){
+                        var frame_index = meta.frames.findIndex(function(x){return x == frame;});
+                        if (frame_index+1 < meta.frames.length){
+                            preload_frame(meta, meta.frames[frame_index+1]);
+                        }
+                    }
                 });
             
         }
@@ -523,29 +529,42 @@ function play_current_scene(){
     };
     
 
-    function play_frame(frame_index){
-        if (frame_index < scene_meta.frames.length && !stop_play_flag)
+    function play_frame(scene_meta, frame){
+        if (!stop_play_flag)
         {
-            setTimeout(
-                function(){
-                    //after timeout we activate it first
-                    //if (data.future_world_buffer.length > (frame_index + 1000) ||  data.future_world_buffer.length==scene_meta.frames.length)
-                    if (data.future_world_buffer.length > frame_index)
-                    {
-                        data.activate_world(scene, data.future_world_buffer[frame_index], function(){//on load finished
-                            render();
-                            update_frame_info(scene_name, scene_meta.frames[frame_index]);
+            var world = data.future_world_buffer.find(function(w){return w.file_info.frame == frame; });
+            
+            var next_frame = frame;
 
-                            play_frame(frame_index+1);
-                        }); 
-                    }
-                    else{
-                        //not ready.
-                        console.log("wait buffer!", frame_index);
-                        play_frame(frame_index);
-                    }                                  
+            if (world)  //found
+            {
+                data.activate_world(scene,  //this is webgl scene
+                    world, 
+                    function(){//on load finished
+                        views[0].detach_control();
+                        render();
+                        update_frame_info(scene_meta.scene, frame);
+                });
+           
+                var frame_index = scene_meta.frames.findIndex(function(x){return x == frame;});
+                if (frame_index+1 < scene_meta.frames.length)
+                {
+                    next_frame = scene_meta.frames[frame_index+1];
+                } 
+                else{
+                    stop_play_flag = true;
+                }
+            }
+            else{
+                //not ready.
+                console.log("wait buffer!", frame);   
+            } 
+            
+            setTimeout(
+                function(){                    
+                    play_frame(scene_meta, next_frame);
                 }, 
-                50);
+                100);
         }
     };
 }
@@ -1329,20 +1348,23 @@ function previous_frame(){
 
     var frame_index = (data.world.file_info.frame_index-1 + num_frames) % num_frames;
 
-    var world = data.make_new_world(
-                scene_meta.scene, 
-                scene_meta.frames[frame_index], 
-                false);
+    load_world(scene_meta.scene, scene_meta.frames[frame_index]);
 
-    data.activate_world(scene, world, function(){
-        render();
-        update_frame_info(scene_meta.scene, scene_meta.frames[frame_index]);
-    });
+    
 
 }
 
-function load_frame(scene_name, frame){
+function load_world(scene_name, frame){
+    var world = data.make_new_world(
+        scene_name, 
+        frame, 
+        false);
 
+    data.activate_world(scene, world, function(){
+        views[0].detach_control();
+        render();
+        update_frame_info(scene_name, frame);
+    });
 }
 
 function next_frame(){
@@ -1356,15 +1378,7 @@ function next_frame(){
 
     var frame_index = (data.world.file_info.frame_index +1) % num_frames;
 
-    var world = data.make_new_world(
-                scene_meta.scene, 
-                scene_meta.frames[frame_index], 
-                false);
-
-    data.activate_world(scene, world, function(){
-        render();
-        update_frame_info(scene_meta.scene, scene_meta.frames[frame_index]);
-    });
+    load_world(scene_meta.scene, scene_meta.frames[frame_index]);
 }
 
 function remove_selected_box(){

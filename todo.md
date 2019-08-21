@@ -13,3 +13,4 @@
 10. when pcd file format not recognizable
 11. title text
 12. title icon
+.  open new frame when playing

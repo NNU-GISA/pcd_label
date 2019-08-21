@@ -1,8 +1,8 @@
 
 
-import * as THREE from './build/three.module.js';
-import Stats from './examples/jsm/libs/stats.module.js';
-import { OrthographicTrackballControls } from './examples/jsm/controls/OrthographicTrackballControls.js';
+import * as THREE from './lib/three.module.js';
+//import Stats from './lib/stats.module.js';
+import { OrthographicTrackballControls } from './lib/OrthographicTrackballControls.js';
 var camera, controls, scene, renderer, stats;
 init();
 animate();
@@ -53,8 +53,8 @@ function init() {
 
 
 
-    stats = new Stats();
-    document.body.appendChild( stats.dom );
+    //stats = new Stats();
+    //document.body.appendChild( stats.dom );
     //
     window.addEventListener( 'resize', onWindowResize, false );
     //
@@ -73,7 +73,7 @@ function onWindowResize() {
 function animate() {
     requestAnimationFrame( animate );
     controls.update();
-    stats.update();
+    //stats.update();
 }
 function render() {
     renderer.render( scene, camera );

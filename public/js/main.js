@@ -449,6 +449,7 @@ function load_data_meta(gui_folder){
 
                 data.activate_world(scene, world, function(){
                     //on worl loading finished
+                    render();
                     update_frame_info(c.scene, f);
                 });
             }
@@ -532,7 +533,7 @@ function play_current_scene(){
                     if (data.future_world_buffer.length > frame_index)
                     {
                         data.activate_world(scene, data.future_world_buffer[frame_index], function(){//on load finished
-                            
+                            render();
                             update_frame_info(scene_name, scene_meta.frames[frame_index]);
 
                             play_frame(frame_index+1);
@@ -544,7 +545,7 @@ function play_current_scene(){
                         play_frame(frame_index);
                     }                                  
                 }, 
-                200);
+                100);
         }
     };
 }
@@ -984,19 +985,17 @@ function add_bbox(){
     //mesh = ev.key=='b'?new_bbox(): new_bbox_cube();
     //mesh = new_bbox_cube();
 
-    var mesh = data.world.new_bbox_cube();
-    data.world.boxes.push(mesh);
-
+    // todo: move to data.world
     var pos = get_mouse_location_in_world(mouse);
 
-    mesh.position.x = pos.x;
-    mesh.position.y = pos.y;
-    mesh.position.z = pos.z;
-    scene.add(mesh);
-    sideview_mesh=mesh;
-    //unselect_bbox(mesh);
-    select_bbox(mesh);
-    //update_subview_by_windowsize();
+    var box = data.world.add_box(pos.x, pos.y, pos.z);
+
+    scene.add(box);
+
+    sideview_mesh=box;
+    
+    select_bbox(box);
+    
 }
 
 // axix, xyz, action: scale, move, direction, up/down
@@ -1322,6 +1321,7 @@ function previous_frame(){
                 false);
 
     data.activate_world(scene, world, function(){
+        render();
         update_frame_info(scene_meta.scene, scene_meta.frames[frame_index]);
     });
 
@@ -1348,6 +1348,7 @@ function next_frame(){
                 false);
 
     data.activate_world(scene, world, function(){
+        render();
         update_frame_info(scene_meta.scene, scene_meta.frames[frame_index]);
     });
 }
@@ -1400,30 +1401,9 @@ function animate() {
     
     views[0].orbit_orth.update();
     
-    render();
+    //render();
     
 }
-
-function new_bbox(){
-    var geometry = new THREE.BoxBufferGeometry(1, 1, 1);    
-    var material = new THREE.MeshBasicMaterial({
-    color: 0x00ff00,
-    opacity: 0.4,
-    wireframe: true,
-    transparent: true});// { map: texture, transparent: true } );
-
-    mesh = new THREE.Mesh( geometry, material );
-    mesh.scale.x=1.8;
-    mesh.scale.y=4.5;
-    mesh.scale.z=1.5;
-    
-    mesh.type = "car";
-
-    return mesh;
-}
-
-
-
 
 
 function update_frame_info(scene, frame){
@@ -1435,10 +1415,9 @@ function update_frame_info(scene, frame){
     } else{
         document.getElementById("image").innerHTML = '<img id="camera" src="/static/data/'+data.world.file_info.scene+'/image/'+ data.world.file_info.frame+'.jpg" alt="img">';
     }
-
-
-    
 }
+
+
 
 // matrix (m*n), matrix(n*l), vl=n 
 function matmul(m, x, vl)  //vl is vector length
@@ -1481,13 +1460,6 @@ function psr_to_xyz(p,s,r){
     var world_coord = matmul(trans_matrix, local_coord, 4);
     var w = world_coord;
     return w;
-    
-    // return [
-    //     w[0],w[1],w[2],  w[4], w[5], w[6],
-    //     w[8],w[9],w[10],  w[12], w[13], w[14],
-    //     w[16],w[17],w[18],  w[20], w[21], w[22],
-    //     w[24],w[25],w[26],  w[28], w[29], w[30],
-    // ];
 }
 
 

@@ -134,6 +134,7 @@ var data = {
             points: null,
             boxes: null,
 
+
             complete: function(){return this.points && this.boxes;},
             reset: function(){this.points=null; this.boxes=null;},
 
@@ -171,7 +172,7 @@ var data = {
                             var num = position.length;
                             var ni = 3;
 
-                            for (var i=0; i<num; i++){
+                            for (var i=0; i<num/ni; i++){
                                 var np = _self.file_info.transform_point(_self.file_info.transform_matrix, arr[i*ni+0], arr[i*ni+1], arr[i*ni+2]);
                                 arr[i*ni+0]=np[0];
                                 arr[i*ni+1]=np[1];
@@ -333,6 +334,17 @@ var data = {
                     
                 }
             },
+
+            add_box: function(x,y,z){
+
+                var mesh = this.new_bbox_cube();
+                mesh.position.x = x;
+                mesh.position.y = y;
+                mesh.position.z = z;
+
+                this.boxes.push(mesh);
+            },
+
 
             new_bbox_cube: function(){
 

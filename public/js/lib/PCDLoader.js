@@ -9,14 +9,9 @@
  */
 
 import {
-	BufferGeometry,
 	DefaultLoadingManager,
-	FileLoader,
-	Float32BufferAttribute,
-	LoaderUtils,
-	Points,
-	PointsMaterial,
-	VertexColors
+	FileLoader,	
+	LoaderUtils,	
 } from "./three.module.js";
 
 var PCDLoader = function ( manager ) {
@@ -31,7 +26,7 @@ PCDLoader.prototype = {
 
 	constructor: PCDLoader,
 
-	load: function ( url, pointTransform, onLoad, onProgress, onError ) {
+	load: function ( url, onLoad, onProgress, onError ) {
 
 		var scope = this;
 
@@ -41,9 +36,7 @@ PCDLoader.prototype = {
 		loader.load( url, function ( data ) {
 
 			try {
-
-				onLoad( scope.parse( data, url, pointTransform ) );
-
+				onLoad( scope.parse( data, url) );
 			} catch ( e ) {
 
 				if ( onError ) {
@@ -69,7 +62,7 @@ PCDLoader.prototype = {
 
 	},
 
-	parse: function ( data, url, pointTransform ) {
+	parse: function ( data, url) {
 
 		function parseHeader( data ) {
 
@@ -284,40 +277,12 @@ PCDLoader.prototype = {
 
 		}
 
-		// build geometry
-
-		var geometry = new BufferGeometry();
-
-		if ( position.length > 0 ) geometry.addAttribute( 'position', new Float32BufferAttribute( position, 3 ) );
-		if ( normal.length > 0 ) geometry.addAttribute( 'normal', new Float32BufferAttribute( normal, 3 ) );
-		if ( color.length > 0 ) geometry.addAttribute( 'color', new Float32BufferAttribute( color, 3 ) );
-
-		geometry.computeBoundingSphere();
-
-		// build material
-
-		var material = new PointsMaterial( { size: 0.005 } );
-
-		if ( color.length > 0 ) {
-
-			material.vertexColors = VertexColors;
-
-		} else {
-
-			material.color.setHex( Math.random() * 0xffffff );
-
-		}
-
-		// build mesh
-
-		var mesh = new Points( geometry, material );
-		var name = url.split( '' ).reverse().join( '' );
-		name = /([^\/]*)/.exec( name );
-		name = name[ 1 ].split( '' ).reverse().join( '' );
-		mesh.name = name;
-
-		return mesh;
-
+		return {
+			position: position,
+			color: color,
+			normal: normal,
+		};
+		
 	}
 
 };

@@ -1,3 +1,5 @@
+
+
 import * as THREE from './lib/three.module.js';
 import { PCDLoader } from './lib/PCDLoader.js';
 //import { GeometryUtils } from './examples/jsm/utils/GeometryUtils.js';
@@ -157,15 +159,17 @@ var data = {
 
                 var _self = this;
                 loader.load( this.file_info.get_pcd_path(), 
-                    null,
-                    function ( points ) {
-                        //points.castShadow = true;            
+                    function ( pcd ) {
+                        var position = pcd.position;
+                        var color = pcd.color;
+                        var normal = pcd.normal;
+
 
                         if (_self.file_info.transform_matrix){
 
-                            var arr = points.geometry.attributes.position.array;
-                            var num = points.geometry.attributes.position.count;
-                            var ni = points.geometry.attributes.position.itemSize;
+                            var arr = position;
+                            var num = position.length;
+                            var ni = 3;
 
                             for (var i=0; i<num; i++){
                                 var np = _self.file_info.transform_point(_self.file_info.transform_matrix, arr[i*ni+0], arr[i*ni+1], arr[i*ni+2]);
@@ -174,12 +178,36 @@ var data = {
                                 arr[i*ni+2]=np[2];
                             }
 
-                            points.geometry.computeBoundingSphere();
+                            //points.geometry.computeBoundingSphere();
                         }
 
-                        points.material.color.setHex( 0xffffff );
+
+                        // build geometry
+                        var geometry = new THREE.BufferGeometry();
+                        if ( position.length > 0 ) geometry.addAttribute( 'position', new THREE.Float32BufferAttribute( position, 3 ) );
+                        if ( normal.length > 0 ) geometry.addAttribute( 'normal', new THREE.Float32BufferAttribute( normal, 3 ) );
+                        if ( color.length > 0 ) geometry.addAttribute( 'color', new THREE.Float32BufferAttribute( color, 3 ) );
+
+                        geometry.computeBoundingSphere();
+                        // build material
+
+                        var material = new THREE.PointsMaterial( { size: 0.005 } );
+
+                        if ( color.length > 0 ) {
+                            material.vertexColors = VertexColors;
+                        } else {
+                            material.color.setHex(0xffffff );
+                        }
+
+                        // build mesh
+
+                        var mesh = new THREE.Points( geometry, material );                        
+                        mesh.name = "pcd";
+
+                        //return mesh;
+
                         
-                        _self.points = points;
+                        _self.points = mesh;
                         _self.points_load_time = new Date().getTime();
                         console.log(_self.points_load_time, _self.file_info.scene, _self.file_info.frame, "loaded pionts ", _self.points_load_time - _self.create_time, "ms");
 

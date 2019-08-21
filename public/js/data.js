@@ -406,7 +406,8 @@ var data = {
                 this.destroyed = true;
                 remove_all_boxes();
                 remove_all_points();
-
+                console.log(this.file_info.scene, this.file_info.frame, "destroyed");
+                
                 function remove_all_points(){
                     if (_self.points){
                         _self.scene.remove(_self.points);
@@ -436,10 +437,6 @@ var data = {
 
             },
 
-            reload: function(){
-                this.destroy();
-                this.preload();
-            },
         };
 
         world.file_info.set(scene_name, frame_index, frame, transform_matrix, annotation_format);
@@ -461,7 +458,7 @@ var data = {
     activate_world: function(scene, world, on_finished){
         var old_world = this.world;
         var _self= this;
-        _self.world = world;  // swich when everything is ready. otherwise data.world is half-baked, cuasing mysterious problems.
+        _self.world = world;  // swich when everything is ready. otherwise data.world is half-baked, causing mysterious problems.
 
         world.activate(scene, 
             function(){

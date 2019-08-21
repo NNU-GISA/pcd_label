@@ -617,7 +617,8 @@ function init_gui(){
 
     
     params['reload'] = function () {
-        data.world.reload();
+        load_world(data.world.file_info.scene, data.world.file_info.frame);
+        
     };
     fileFolder.add( params, 'reload');
 
@@ -1402,29 +1403,10 @@ function remove_selected_box(){
 }
 
 function remove_all(){
-    remove_all_boxes();
-    remove_all_points();
+    data.world.destroy();
+    render();
 }
 
-
-function remove_all_points(){
-    if (data.world.points){
-        scene.remove(data.world.points);
-        data.world.points.geometry.dispose();
-        data.world.points.material.dispose();
-        data.world.points = null;
-    }
-}
-
-function remove_all_boxes(){
-    data.world.boxes.forEach(function(b){
-        scene.remove(b);
-        b.geometry.dispose();
-        b.material.dispose();
-    });
-
-    data.world.boxes = [];
-}
 
 function animate() {
     requestAnimationFrame( animate );

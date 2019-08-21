@@ -13,4 +13,5 @@
 10. when pcd file format not recognizable
 11. title text
 12. title icon
-.  open new frame when playing
+12.  open new frame when playing
+13.  handle when loading pcd failed.

@@ -703,6 +703,8 @@ function update_subview_by_bbox(mesh){
     }
 
     update_box_info_text(sideview_mesh);
+
+    render();
 }
 
 
@@ -1070,8 +1072,8 @@ function transform_bbox(command){
 
     }
 
-    render();
     update_subview_by_bbox(selected_box);
+    
     mark_changed_flag();
 }
 

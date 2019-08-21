@@ -545,7 +545,7 @@ function play_current_scene(){
                         play_frame(frame_index);
                     }                                  
                 }, 
-                100);
+                50);
         }
     };
 }
@@ -1070,6 +1070,7 @@ function transform_bbox(command){
 
     }
 
+    render();
     update_subview_by_bbox(selected_box);
     mark_changed_flag();
 }

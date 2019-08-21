@@ -343,6 +343,7 @@ var data = {
                 mesh.position.z = z;
 
                 this.boxes.push(mesh);
+                return mesh;
             },
 
 

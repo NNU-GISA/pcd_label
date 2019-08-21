@@ -679,6 +679,8 @@ function update_subview_by_windowsize(){
         if (ii>0)
             view.cameraHelper.update();
     }
+
+    render();
 }
 
 function update_subview_by_bbox(mesh){
@@ -834,8 +836,14 @@ function getIntersects( point, objects ) {
 
 function handleClick() {
 
+    
     if ( onDownPosition.distanceTo( onUpPosition ) === 0 ) {
 
+        if (!data.world || !data.world.boxes){
+            return;
+        }
+    
+    
         var intersects = getIntersects( onUpPosition, data.world.boxes );
 
         if ( intersects.length > 0 ) {
@@ -947,6 +955,7 @@ function onWindowResize() {
         
     }
     
+    render();
 
     //controls.handleResize();
 
@@ -1371,6 +1380,8 @@ function remove_selected_box(){
         data.world.boxes = data.world.boxes.filter(function(x){return x !=targt_box;});
         selected_box = null;
         sideview_mesh = null;
+
+        render();
     }
 }
 
@@ -1571,23 +1582,23 @@ function update_box_info_text(mesh){
                     var imgpos2 = matmul(scene_meta.calib.intrinsic, imgpos3, 3);
                     var imgfinal = vector3_nomalize(imgpos2);
 
-                    console.log(imgfinal);
+                    //console.log(imgfinal);
                     
                     var c = document.getElementById("canvas");
                     var ctx = c.getContext("2d");
                     
-                    // note: 320*180 should be adjustable
-                    var crop_area = crop_image(img.naturalWidth, img.naturalHeight, 320, 180, imgfinal);
+                    // note: 320*240 should be adjustable
+                    var crop_area = crop_image(img.naturalWidth, img.naturalHeight, 320, 240, imgfinal);
 
-                    ctx.drawImage(img, crop_area[0], crop_area[1],crop_area[2], crop_area[3], 0, 0, 320, 180);// ctx.canvas.clientHeight);
+                    ctx.drawImage(img, crop_area[0], crop_area[1],crop_area[2], crop_area[3], 0, 0, 320, 240);// ctx.canvas.clientHeight);
                     //ctx.drawImage(img, 0,0,img.naturalWidth, img.naturalHeight, 0, 0, 320, 180);// ctx.canvas.clientHeight);
                     var imgfinal = vectorsub(imgfinal, [crop_area[0],crop_area[1]]);
 
-                    ctx.lineWidth = 0.5;
+                    //ctx.lineWidth = 0.5;
                     ctx.strokeStyle="#00ff00";
                     ctx.beginPath();
 
-                    var trans_ratio = 180/crop_area[3];
+                    var trans_ratio = 240/crop_area[3];
 
                     ctx.moveTo(imgfinal[3*2]*trans_ratio,imgfinal[3*2+1]*trans_ratio);
 

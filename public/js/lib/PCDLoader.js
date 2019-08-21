@@ -159,7 +159,7 @@ PCDLoader.prototype = {
 				} else {
 
 					PCDheader.offset[ PCDheader.fields[ i ] ] = sizeSum;
-					sizeSum += PCDheader.size[ i ];
+					sizeSum += PCDheader.size[ i ] * PCDheader.count[ i ];
 
 				}
 

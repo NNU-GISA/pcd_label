@@ -1,14 +1,14 @@
-import * as THREE from './build/three.module.js';
+import * as THREE from './lib/three.module.js';
 //import Stats from './build/stats.module.js';
 //import { TrackballControls } from './TrackballControls.js';
-import { PCDLoader } from './examples/jsm/loaders/PCDLoader.js';
-import { GeometryUtils } from './examples/jsm/utils/GeometryUtils.js';
+//import { PCDLoader } from './lib/PCDLoader.js';
+//import { GeometryUtils } from './examples/jsm/utils/GeometryUtils.js';
 //import {BBoxBufferGeometry } from './BBoxGeometry.js';
-import { OrbitControls } from './examples/jsm/controls/OrbitControls.js';
-import { OrthographicTrackballControls } from './examples/jsm/controls/OrthographicTrackballControls.js';
-import { TransformControls } from './examples/jsm/controls/TransformControls.js';
-import { ShadowMapViewer } from './examples/jsm/utils/ShadowMapViewer.js';
-import { GUI } from './examples/jsm/libs/dat.gui.module.js';
+import { OrbitControls } from './lib/OrbitControls.js';
+import { OrthographicTrackballControls } from './lib/OrthographicTrackballControls.js';
+import { TransformControls } from './lib/TransformControls.js';
+//import { ShadowMapViewer } from './examples/jsm/utils/ShadowMapViewer.js';
+import { GUI } from './lib/dat.gui.module.js';
 
 import {data} from './data.js'
 

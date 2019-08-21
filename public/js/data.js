@@ -1,6 +1,6 @@
-import * as THREE from './build/three.module.js';
-import { PCDLoader } from './examples/jsm/loaders/PCDLoader.js';
-import { GeometryUtils } from './examples/jsm/utils/GeometryUtils.js';
+import * as THREE from './lib/three.module.js';
+import { PCDLoader } from './lib/PCDLoader.js';
+//import { GeometryUtils } from './examples/jsm/utils/GeometryUtils.js';
 
 var data = {
     

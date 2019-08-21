@@ -707,7 +707,7 @@ function update_subview_by_bbox(mesh){
 
     sideview_mesh = mesh;
 
-    update_subview_by_windowsize();
+    //
 
     views[1].camera.rotation.z= r.z;
     views[2].camera.rotation.y= Math.PI-r.z;
@@ -717,14 +717,13 @@ function update_subview_by_bbox(mesh){
         views[i].camera.position.x= p.x;
         views[i].camera.position.y= p.y;
         views[i].camera.position.z= p.z;
-        views[i].cameraHelper.update();
         views[i].camera.updateProjectionMatrix();
-        
+        views[i].cameraHelper.update();        
     }
 
     update_box_info_text(sideview_mesh);
 
-    render();
+    update_subview_by_windowsize();  // render() is called inside this func
 }
 
 

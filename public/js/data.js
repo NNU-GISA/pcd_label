@@ -21,7 +21,7 @@ var data = {
     // },
 
 
-    make_new_world: function(scene_name, frame, auto_load, on_preload_finished, on_finished){
+    make_new_world: function(scene_name, frame, on_preload_finished){
         
 
         var scene_meta = this.get_meta_by_scene_name(scene_name);
@@ -420,13 +420,18 @@ var data = {
                 }
 
                 function remove_all_boxes(){
-                    _self.boxes.forEach(function(b){
-                        _self.scene.remove(b);
-                        b.geometry.dispose();
-                        b.material.dispose();
-                    });
+                    if (_self.boxes){
+                        _self.boxes.forEach(function(b){
+                            _self.scene.remove(b);
+                            b.geometry.dispose();
+                            b.material.dispose();
+                        });
 
-                    _self.boxes = [];
+                        _self.boxes = [];
+                    }
+                    else{
+                        console.error("destroy empty world!")
+                    }
                 }
 
             },
@@ -439,13 +444,6 @@ var data = {
 
         world.file_info.set(scene_name, frame_index, frame, transform_matrix, annotation_format);
         world.preload(on_preload_finished);
-        world.on_finished = on_finished;
-
-        if (auto_load){
-            world.go();
-            this.world = world;            
-        }
-
         return world;
     },
     
@@ -462,10 +460,12 @@ var data = {
 
     activate_world: function(scene, world, on_finished){
         var old_world = this.world;
+        var _self= this;
+        _self.world = world;  // swich when everything is ready. otherwise data.world is half-baked, cuasing mysterious problems.
 
-        this.world = world;
-        this.world.activate(scene, 
+        world.activate(scene, 
             function(){
+                
                 if (old_world)
                     old_world.destroy();
             },

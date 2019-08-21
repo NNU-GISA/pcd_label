@@ -511,7 +511,6 @@ function play_current_scene(){
         {
             var new_world = data.make_new_world(meta.scene,
                 frame, 
-                false,
                 function(world){
                     data.put_world_into_buffer(world);  //put new world into buffer.
 
@@ -692,11 +691,11 @@ function update_subview_by_windowsize(){
 
         camera.near = exp_camera_clip/-2;
         camera.far = exp_camera_clip/2;
-
+        view.cameraHelper.update();
         //camera.aspect = view_width / view_height;
         camera.updateProjectionMatrix();
-        if (ii>0)
-            view.cameraHelper.update();
+        
+        
     }
 
     render();
@@ -711,16 +710,16 @@ function update_subview_by_bbox(mesh){
     update_subview_by_windowsize();
 
     views[1].camera.rotation.z= r.z;
-    views[2].camera.rotation.y= -r.z;
+    views[2].camera.rotation.y= Math.PI-r.z;
     views[3].camera.rotation.y= Math.PI/2 + r.z;
 
     for (var i=1; i<views.length; ++i){
         views[i].camera.position.x= p.x;
         views[i].camera.position.y= p.y;
         views[i].camera.position.z= p.z;
-
-        views[i].camera.updateProjectionMatrix();
         views[i].cameraHelper.update();
+        views[i].camera.updateProjectionMatrix();
+        
     }
 
     update_box_info_text(sideview_mesh);
@@ -1216,6 +1215,7 @@ function keydown( ev ) {
         case '6':
         case '7':
             views[ev.key-'4'].cameraHelper.visible = !views[ev.key-'4'].cameraHelper.visible;
+            render();
             break;
 
         case 'a':
@@ -1357,14 +1357,15 @@ function previous_frame(){
 function load_world(scene_name, frame){
     var world = data.make_new_world(
         scene_name, 
-        frame, 
-        false);
-
-    data.activate_world(scene, world, function(){
-        views[0].detach_control();
-        render();
-        update_frame_info(scene_name, frame);
-    });
+        frame);
+    data.activate_world(scene, 
+        world, 
+        function(){
+            views[0].detach_control();
+            render();
+            update_frame_info(scene_name, frame);
+        }
+    );
 }
 
 function next_frame(){
@@ -1443,7 +1444,7 @@ function update_frame_info(scene, frame){
         document.getElementById("image").innerHTML = '';
         //document.getElementById("image").innerHTML = '<img id="camera" display="none" src="/static/data/'+data.world.file_info.scene+'/image/'+ data.world.file_info.frame+'.jpg" alt="img">';
     } else{
-        document.getElementById("image").innerHTML = '<img id="camera" src="/static/data/'+data.world.file_info.scene+'/image/'+ data.world.file_info.frame+'.jpg" alt="img">';
+        document.getElementById("image").innerHTML = '<img id="camera" src="/static/data/'+scene+'/image/'+ frame+'.jpg" alt="img">';
     }
 }
 

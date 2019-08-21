@@ -746,8 +746,8 @@ function render(){
         //view.updateCamera( camera, scene, mouseX, mouseY );
         var left = Math.floor( window.innerWidth * view.left );
         var bottom = Math.floor( window.innerHeight * view.bottom );
-        var width = Math.floor( window.innerWidth * view.width );
-        var height = Math.floor( window.innerHeight * view.height );
+        var width = Math.ceil( window.innerWidth * view.width );
+        var height = Math.ceil( window.innerHeight * view.height );
         renderer.setViewport( left, bottom, width, height );
         renderer.setScissor( left, bottom, width, height );
         renderer.setClearColor(view.background );
@@ -864,7 +864,7 @@ function handleClick() {
                 unselect_bbox(null);
         }
 
-        render();
+        //render();
 
     }
 
@@ -902,6 +902,8 @@ function unselect_bbox(new_object){
 
     }
 
+    render();
+
 }
 
 function select_bbox(object){
@@ -917,7 +919,7 @@ function select_bbox(object){
         selected_box.material.color.g=0;
         selected_box.material.color.b=1;
 
-        update_subview_by_bbox(object);  
+          
     }
     else {
         //reselect the same box
@@ -930,7 +932,7 @@ function select_bbox(object){
         }
     }
 
-    
+    update_subview_by_bbox(object);
     
 }
 

@@ -30,12 +30,6 @@ var windowWidth, windowHeight;
 var params={};
 
 
-
-
-
-var dirLight, spotLight;
-var dirLightShadowMapViewer, spotLightShadowMapViewer;
-
 init();
 animate();
 render();
@@ -221,18 +215,35 @@ function load_data_meta(gui_folder){
 
 
 var stop_play_flag=true;
-function play_current_scene_with_buffer(){
+var pause_play_flag=false;
+
+function pause_resume_play(){
+    pause_play_flag=!pause_play_flag;
+
+    if (!pause_play_flag && !stop_play_flag){
+        play_current_scene_with_buffer(true);
+    }
+}
+
+
+function stop_play(){
+    stop_play_flag=true;
+    pause_play_flag=false;
+}
+
+function play_current_scene_with_buffer(resume){
     
     if (!data.meta){
         console.log("no meta data! cannot play");
         return;
     }
 
-    if (stop_play_flag== false){
+    if (stop_play_flag== false && !resume){
         return;
     }
 
     stop_play_flag = false;
+    pause_play_flag = false;
 
     var scene_meta = data.get_current_world_scene_meta();
 
@@ -255,7 +266,7 @@ function play_current_scene_with_buffer(){
                     data.put_world_into_buffer(world);  //put new world into buffer.
 
                     // continue next frmae
-                    if (!stop_play_flag){
+                    if (!stop_play_flag && !pause_play_flag){
                         var frame_index = meta.frames.findIndex(function(x){return x == frame;});
                         if (frame_index+1 < meta.frames.length){
                             preload_frame(meta, meta.frames[frame_index+1]);
@@ -269,7 +280,7 @@ function play_current_scene_with_buffer(){
     
 
     function play_frame(scene_meta, frame){
-        if (!stop_play_flag)
+        if (!stop_play_flag && !pause_play_flag)
         {
             var world = data.future_world_buffer.find(function(w){return w.file_info.frame == frame; });
             
@@ -292,6 +303,7 @@ function play_current_scene_with_buffer(){
                 } 
                 else{
                     stop_play_flag = true;
+                    pause_play_flag = false;
                 }
             }
             else{
@@ -353,10 +365,6 @@ function play_current_scene_without_buffer(){
     };
 }
 
-
-function stop_play(){
-    stop_play_flag = true;
-}
 
 function init_gui(){
     var gui = new GUI();
@@ -963,7 +971,8 @@ function keydown( ev ) {
             views[0].transform_control.showZ = ! views[0].transform_control.showZ;
             break;            
         case ' ': // Spacebar
-            views[0].transform_control.enabled = ! views[0].transform_control.enabled;
+            //views[0].transform_control.enabled = ! views[0].transform_control.enabled;
+            pause_resume_play();
             break;
             
         case '5':            
@@ -1037,10 +1046,15 @@ function keydown( ev ) {
 
         case 'd':
             if (selected_box){
-                if (!mouse_right_down)
+                if (mouse_right_down){
+                    transform_bbox("z_scale_down");                    
+                }
+                else if (ev.ctrlKey){
+                    remove_selected_box();
+                    mark_changed_flag();
+                }else{
                     transform_bbox("z_move_down");
-                else
-                    transform_bbox("z_scale_down");
+                }
                 
             }
             break;

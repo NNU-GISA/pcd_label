@@ -133,9 +133,13 @@ var data = {
 
             points: null,
             boxes: null,
+            image: null,
+            image_loaded: false,
 
+            complete: function(){
+                return this.points && this.boxes && this.image_loaded;
+            },
 
-            complete: function(){return this.points && this.boxes;},
             reset: function(){this.points=null; this.boxes=null;},
 
             create_time: 0,
@@ -152,8 +156,26 @@ var data = {
                 this.on_preload_finished = on_preload_finished;
                 this.load_points();
                 this.load_annotation();
+
+                this.image = new Image();
+                
+                var _self = this;
+                this.image.onload= function(){ _self.on_image_loaded();};
+                this.image.src = '/static/data/'+scene_name+'/image/'+ frame+'.jpg';
             },
 
+            on_image_loaded: function(){
+                this.image_loaded = true;
+
+                if (this.complete()){
+                    if (this.on_preload_finished)
+                    this.on_preload_finished(this);
+                }
+
+                if (this.active){
+                    this.go();
+                }  
+            },
             
             load_points: function(){
                 var loader = new PCDLoader();
@@ -403,6 +425,11 @@ var data = {
             destroyed: false,
             destroy: function(){
                 var _self= this;
+
+                if (this.destroyed){
+                    console.log("destroy destroyed world!");
+                }
+
                 this.destroyed = true;
                 remove_all_boxes();
                 remove_all_points();
@@ -440,11 +467,15 @@ var data = {
 
             },
 
-        };
+        };  // end of world
 
         world.file_info.set(scene_name, frame_index, frame, transform_matrix, annotation_format);
-        world.preload(on_preload_finished);
+
+
+        world.preload(on_preload_finished);  
+
         return world;
+
     },
     
     world: null,
@@ -459,7 +490,7 @@ var data = {
     },
 
     activate_world: function(scene, world, on_finished){
-        var old_world = this.world;
+        var old_world = this.world;   // current world, should we get current world later?
         var _self= this;
         _self.world = world;  // swich when everything is ready. otherwise data.world is half-baked, causing mysterious problems.
 

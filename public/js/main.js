@@ -1186,7 +1186,7 @@ function switch_bbox_type(){
 }
 
 function keydown( ev ) {
-    var points = data.world.points;
+    
     switch ( ev.key) {
         case '+':
             //data.increase_point_size();
@@ -1405,13 +1405,22 @@ function previous_frame(){
 }
 
 function load_world(scene_name, frame){
+
+    //stop if current world is not ready!
+    if (data.world && !data.world.complete()){
+        console.log("current world is still loading.");
+        return;
+    }
+
     var world = data.make_new_world(
         scene_name, 
         frame);
     data.activate_world(scene, 
         world, 
         function(){
-            views[0].detach_control();
+            //views[0].detach_control();
+            unselect_bbox(null);
+            unselect_bbox(null);
             render();
             update_frame_info(scene_name, frame);
         }

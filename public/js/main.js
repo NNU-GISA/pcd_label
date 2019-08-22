@@ -367,11 +367,16 @@ function init_gui(){
     params["bird's eye view"] = false;
     params["hide image"] = false;
 
-    params["reset bird's eye view"] = function(){
+    params["reset"]
+    params["reset main view"] = function(){
+        views[0].reset_camera();
         views[0].reset_birdseye();
+        //render();
     };
+
     params["rotate bird's eye view"] = function(){
         views[0].rotate_birdseye();
+        render();
     };
     
     params["side view width"] = 0.2;
@@ -380,7 +385,7 @@ function init_gui(){
     cfgFolder.add( params, "side view width");
     cfgFolder.add( params, "bird's eye view");
     cfgFolder.add( params, "hide image");
-    cfgFolder.add( params, "reset bird's eye view");
+    cfgFolder.add( params, "reset main view");
     cfgFolder.add( params, "rotate bird's eye view");
 
 

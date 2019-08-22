@@ -185,6 +185,18 @@ function create_main_view(scene, dom, render, on_box_changed){
         this.camera.updateProjectionMatrix();
     };
 
+    view.reset_camera = function(){
+        var camera = this.camera_perspective;
+        camera.position.x = 0;
+        camera.position.z = 50;
+        camera.position.y = 0;
+        camera.up.set( 0, 0, 1);
+        camera.lookAt( 0, 0, 0 );
+        camera.updateProjectionMatrix();
+
+        this.orbit_perspective.reset();   // this func will call render()
+    };
+
     view.look_at = function(p){
         if (this.orbit === this.orbit_perspective){
             this.orbit.target.x=p.x;
@@ -214,7 +226,7 @@ function create_main_view(scene, dom, render, on_box_changed){
     };
 
     view.reset_birdseye = function(){
-        this.orbit_orth.reset();
+        this.orbit_orth.reset(); // 
     };
     view.rotate_birdseye = function(){
         this.camera_orth.up.set( 1, 0, 0);

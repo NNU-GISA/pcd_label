@@ -45,12 +45,13 @@ canvas {
 
 
 #image {
+	display: none;
 	position: absolute;
 	top: 0px;
 	left: 20%;
 	color: #ffff00;
 	width: 30%;
-	height: 30%;
+	height: auto;
 	padding: 0px;
 	box-sizing: border-box;
 	text-align: left;

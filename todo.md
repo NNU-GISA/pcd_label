@@ -15,3 +15,4 @@
 12. title icon
 12.  open new frame when playing
 13.  handle when loading pcd failed.
+14.  gui, add onchange function

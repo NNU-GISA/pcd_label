@@ -161,9 +161,23 @@ var data = {
                 
                 var _self = this;
                 this.image.onload= function(){ _self.on_image_loaded();};
+                this.image.onerror=function(){ _self.on_image_error();}
                 this.image.src = '/static/data/'+scene_name+'/image/'+ frame+'.jpg';
             },
 
+            on_image_error: function(){
+                this.image_loaded = true;
+
+                if (this.complete()){
+                    if (this.on_preload_finished)
+                    this.on_preload_finished(this);
+                }
+
+                if (this.active){
+                    this.go();
+                }  
+                
+            },
             on_image_loaded: function(){
                 this.image_loaded = true;
 

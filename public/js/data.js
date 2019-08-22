@@ -408,6 +408,9 @@ var data = {
                 remove_all_points();
                 console.log(this.file_info.scene, this.file_info.frame, "destroyed");
                 
+                // remove me from buffer
+                
+
                 function remove_all_points(){
                     if (_self.points){
                         _self.scene.remove(_self.points);

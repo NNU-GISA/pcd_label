@@ -515,7 +515,7 @@ function load_data_meta(gui_folder){
 
 
 var stop_play_flag=true;
-function play_current_scene(){
+function play_current_scene_with_buffer(){
     
     if (!data.meta){
         console.log("no meta data! cannot play");
@@ -602,6 +602,52 @@ function play_current_scene(){
     };
 }
 
+
+
+function play_current_scene_without_buffer(){
+    
+    if (!data.meta){
+        console.log("no meta data! cannot play");
+        return;
+    }
+
+    if (stop_play_flag== false){
+        return;
+    }
+
+    stop_play_flag = false;
+
+    var scene_meta = data.get_current_world_scene_meta();
+    var scene_name= scene_meta.scene;
+    
+    play_frame(scene_meta, data.world.file_info.frame);
+
+
+    function play_frame(scene_meta, frame){
+        load_world(scene_name, frame);
+
+
+        if (!stop_play_flag)
+        {   
+            var frame_index = scene_meta.frames.findIndex(function(x){return x == frame;});
+            if (frame_index+1 < scene_meta.frames.length)
+            {
+                next_frame = scene_meta.frames[frame_index+1];
+                setTimeout(
+                    function(){    
+                        play_frame(scene_meta, next_frame);                       
+                    }, 
+                    100);                   
+            } 
+            else{
+                stop_play_flag = true;
+            } 
+        
+        }
+    };
+}
+
+
 function stop_play(){
     stop_play_flag = true;
 }
@@ -632,7 +678,7 @@ function init_gui(){
     cfgFolder.add( params, "rotate bird's eye view");
 
 
-    params["play"] = play_current_scene;
+    params["play"] = play_current_scene_with_buffer;
     params["stop"] = stop_play;
     params["previous frame"] = previous_frame;
     params["next frame"] = next_frame;

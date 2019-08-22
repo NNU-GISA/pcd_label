@@ -14,22 +14,20 @@ import {data} from './data.js'
 
 
 var container;
-//var stats;
-//var camera, 
+
 var scene, renderer;
-var mesh;
+
 var raycaster;
 var mouse;
 var onDownPosition = new THREE.Vector2();
 var onUpPosition = new THREE.Vector2();
-var windowWidth, windowHeight;
 
 var selected_box;
 var box_navigate_index=0;
 
 var sideview_mesh=null;
 
-var views;
+
 var windowWidth, windowHeight;
 
 var params={};
@@ -42,9 +40,6 @@ var views = [
         width: 1.0,
         height: 1.0,
         background: new THREE.Color( 0.0, 0.0, 0.0 ),
-        eye: [ 0, 0, 50 ],
-        up: [ 0, 0, 1 ],
-        fov: 65,
     },
     {
         left: 0,
@@ -52,9 +47,6 @@ var views = [
         width: 0.2,
         height: 0.3,
         background: new THREE.Color( 0.1, 0.1, 0.2 ),
-        eye: [ 0, 1800, 0 ],
-        up: [ 0, 0, 1 ],
-        fov: 45
     },
     {
         left: 0,
@@ -62,9 +54,6 @@ var views = [
         width: 0.2,
         height: 0.2,
         background: new THREE.Color( 0.1, 0.2, 0.1 ),
-        eye: [ 1400, 800, 1400 ],
-        up: [ 0, 1, 0 ],
-        fov: 60
     },
 
     {
@@ -73,9 +62,6 @@ var views = [
         width: 0.2,
         height: 0.2,
         background: new THREE.Color( 0.2, 0.1, 0.1 ),
-        eye: [ 1400, 800, 1400 ],
-        up: [ 0, 1, 0 ],
-        fov: 60
     }
 ];
 
@@ -88,10 +74,105 @@ animate();
 render();
 
 
+
+function init() {
+    document.body.addEventListener('keydown', event => {
+        if (event.ctrlKey && 'asdv'.indexOf(event.key) !== -1) {
+          event.preventDefault()
+        }
+    })
+
+
+    scene = new THREE.Scene();
+    mouse = new THREE.Vector2();
+    raycaster = new THREE.Raycaster();
+
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.BasicShadowMap;
+
+    renderer.setClearColor( 0x000000, 0 );
+    renderer.setViewport( 0, 0, window.innerWidth, window.innerHeight );
+    // renderer will set this eventually
+    //matLine.resolution.set( window.innerWidth, window.innerHeight ); // resolution of the viewport
+    
+
+    container = document.createElement( 'container' );
+    
+
+    document.body.appendChild( container );
+    container.appendChild( renderer.domElement );
+
+    create_views();
+
+    init_gui();
+
+
+    scene.add( new THREE.AxesHelper( 2 ) );
+    
+
+
+    onWindowResize();
+
+    window.addEventListener( 'resize', onWindowResize, false );
+    window.addEventListener( 'keydown', keydown );
+
+    renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
+    renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
+    //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+    //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+}
+
+function animate() {
+    requestAnimationFrame( animate );
+    views[0].orbit_orth.update();
+}
+
+
+
+function render(){
+
+    views[0].switch_camera(params["bird's eye view"]);
+    
+    for ( var ii = 0; ii < views.length; ++ ii ) {
+
+        if ((ii > 0) && params["hide side views"]){
+            break;
+        }
+
+        var view = views[ ii ];
+        var camera = view.camera;
+        //view.updateCamera( camera, scene, mouseX, mouseY );
+        var left = Math.floor( window.innerWidth * view.left );
+        var bottom = Math.floor( window.innerHeight * view.bottom );
+        var width = Math.ceil( window.innerWidth * view.width );
+        var height = Math.ceil( window.innerHeight * view.height );
+        renderer.setViewport( left, bottom, width, height );
+        renderer.setScissor( left, bottom, width, height );
+        renderer.setClearColor(view.background );
+        renderer.setScissorTest( true );
+
+        renderer.render( scene, camera );
+    }   
+
+}
+
+
+
 function create_views(){
-    if (true){
-        var view = views[ 0 ];
-        
+    
+    create_main_view(scene);
+    create_top_view(scene);
+    create_rear_view(scene);
+    create_side_view(scene);   
+    
+    // no code after this line
+    
+    function create_main_view(scene){
+        var view =views[0];
+            
         var camera = new THREE.PerspectiveCamera( 65, window.innerWidth / window.innerHeight, 1, 800 );
         camera.position.x = 0;
         camera.position.z = 50;
@@ -266,9 +347,12 @@ function create_views(){
         view.detach_control = function(){
             this.transform_control.detach();
         }
+
+        return view;
     }
 
-    if (true){
+
+    function create_top_view(){
         var view = views[ 1];
         //var camera = new THREE.PerspectiveCamera( 65, window.innerWidth / window.innerHeight, 1, 800 );
         var width = window.innerWidth;
@@ -290,29 +374,29 @@ function create_views(){
         view.camera = camera;
     }
 
-    if (true){
+    function create_rear_view(){
         var view = views[ 2];
-        //var camera = new THREE.PerspectiveCamera( 65, window.innerWidth / window.innerHeight, 1, 800 );
-        var width = window.innerWidth;
-        var height = window.innerHeight;
-        var asp = width/height;
+            //var camera = new THREE.PerspectiveCamera( 65, window.innerWidth / window.innerHeight, 1, 800 );
+            var width = window.innerWidth;
+            var height = window.innerHeight;
+            var asp = width/height;
 
-        var camera = new THREE.OrthographicCamera( -3*asp, 3*asp, 3, -3, -3, 3 );
+            var camera = new THREE.OrthographicCamera( -3*asp, 3*asp, 3, -3, -3, 3 );
 
-        var cameraOrthoHelper = new THREE.CameraHelper( camera );
-        cameraOrthoHelper.visible=false;
-        scene.add( cameraOrthoHelper );
-        view["cameraHelper"] = cameraOrthoHelper;
-                
-        camera.position.x = 0;
-        camera.position.z = 0;
-        camera.position.y = 0;
-        camera.up.set( 0, 0, 1);
-        camera.lookAt( 0, -3, 0 );
-        view.camera = camera;
+            var cameraOrthoHelper = new THREE.CameraHelper( camera );
+            cameraOrthoHelper.visible=false;
+            scene.add( cameraOrthoHelper );
+            view["cameraHelper"] = cameraOrthoHelper;
+                    
+            camera.position.x = 0;
+            camera.position.z = 0;
+            camera.position.y = 0;
+            camera.up.set( 0, 0, 1);
+            camera.lookAt( 0, -3, 0 );
+            view.camera = camera;
     }
 
-    if (true){
+    function create_side_view(){
         var view = views[ 3];
         //var camera = new THREE.PerspectiveCamera( 65, window.innerWidth / window.innerHeight, 1, 800 );
         var width = window.innerWidth;
@@ -335,56 +419,6 @@ function create_views(){
     }
 }
 
-
-function init() {
-    document.body.addEventListener('keydown', event => {
-        if (event.ctrlKey && 'asdv'.indexOf(event.key) !== -1) {
-          event.preventDefault()
-        }
-    })
-
-
-    scene = new THREE.Scene();
-    mouse = new THREE.Vector2();
-    raycaster = new THREE.Raycaster();
-
-    renderer = new THREE.WebGLRenderer( { antialias: true } );
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize( window.innerWidth, window.innerHeight );
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.BasicShadowMap;
-
-    renderer.setClearColor( 0x000000, 0 );
-    renderer.setViewport( 0, 0, window.innerWidth, window.innerHeight );
-    // renderer will set this eventually
-    //matLine.resolution.set( window.innerWidth, window.innerHeight ); // resolution of the viewport
-    
-
-    container = document.createElement( 'container' );
-    
-
-    document.body.appendChild( container );
-    container.appendChild( renderer.domElement );
-
-    create_views();
-
-    init_gui();
-
-
-    scene.add( new THREE.AxesHelper( 2 ) );
-    
-
-
-    onWindowResize();
-
-    window.addEventListener( 'resize', onWindowResize, false );
-    window.addEventListener( 'keydown', keydown );
-
-    renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
-    renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
-    //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-    //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-}
 
 
 function save_annotation(){
@@ -692,9 +726,10 @@ function update_subview_by_windowsize(){
 
         camera.near = exp_camera_clip/-2;
         camera.far = exp_camera_clip/2;
-        view.cameraHelper.update();
+        
         //camera.aspect = view_width / view_height;
         camera.updateProjectionMatrix();
+        view.cameraHelper.update();
         
         
     }
@@ -722,7 +757,7 @@ function update_subview_by_bbox(mesh){
         views[i].cameraHelper.update();        
     }
 
-    update_box_info_text(sideview_mesh);
+    on_box_changed(sideview_mesh);
 
     update_subview_by_windowsize();  // render() is called inside this func
 }
@@ -748,37 +783,6 @@ function on_transform_change(event){
     mark_changed_flag();  
 }
 
-
-function render(){
-
-    views[0].switch_camera(params["bird's eye view"]);
-    
-    for ( var ii = 0; ii < views.length; ++ ii ) {
-
-        if ((ii > 0) && params["hide side views"]){
-            break;
-        }
-
-        var view = views[ ii ];
-        var camera = view.camera;
-        //view.updateCamera( camera, scene, mouseX, mouseY );
-        var left = Math.floor( window.innerWidth * view.left );
-        var bottom = Math.floor( window.innerHeight * view.bottom );
-        var width = Math.ceil( window.innerWidth * view.width );
-        var height = Math.ceil( window.innerHeight * view.height );
-        renderer.setViewport( left, bottom, width, height );
-        renderer.setScissor( left, bottom, width, height );
-        renderer.setClearColor(view.background );
-        renderer.setScissorTest( true );
-        
-        //renderer.clearColor(0x000000,1); // clear color buffer
-
-        //camera.aspect = width / height;
-        //camera.updateProjectionMatrix();
-        renderer.render( scene, camera );
-    }   
-
-}
 
 
 
@@ -904,7 +908,7 @@ function unselect_bbox(new_object){
                 selected_box.material.color.b=0;
             }
             selected_box = null;
-            update_box_info_text(null);
+            on_box_changed(null);
         }
     }
     else{
@@ -916,7 +920,7 @@ function unselect_bbox(new_object){
             selected_box.material.color.b=0;
         }
         selected_box = null;
-        update_box_info_text(null);
+        on_box_changed(null);
 
     }
 
@@ -1408,14 +1412,7 @@ function remove_all(){
 }
 
 
-function animate() {
-    requestAnimationFrame( animate );
-    
-    views[0].orbit_orth.update();
-    
-    //render();
-    
-}
+
 
 
 function update_frame_info(scene, frame){
@@ -1428,6 +1425,127 @@ function update_frame_info(scene, frame){
         document.getElementById("image").innerHTML = '<img id="camera" src="/static/data/'+scene+'/image/'+ frame+'.jpg" alt="img">';
     }
 }
+
+
+
+function on_box_changed(box){
+
+    if (box){
+        
+        update_box_info(box);
+        update_image_box_projection(box)
+
+    } else {
+        clear_box_info();
+        clear_image_box_projection();
+    }
+}
+
+function clear_box_info(){
+    document.getElementById("box").innerHTML = '';
+
+}
+
+function update_box_info(box){
+    var scale = box.scale;
+    var pos = box.position;
+    var rotation = box.rotation;
+
+    // document.getElementById("info").innerHTML = "w "+scale.x.toFixed(2) +" l "+scale.y.toFixed(2) + " h " + scale.z.toFixed(2) +
+    //                                              " x "+pos.x.toFixed(2) +" y "+pos.y.toFixed(2) + " z " + pos.z.toFixed(2);
+
+    document.getElementById("box").innerHTML = pos.x.toFixed(2) +" "+pos.y.toFixed(2) + " " + pos.z.toFixed(2) + " | "+
+                                                scale.x.toFixed(2) +" "+scale.y.toFixed(2) + " " + scale.z.toFixed(2) + " | " + 
+                                                (rotation.z*180/Math.PI).toFixed(2);
+}
+
+function clear_image_box_projection(){
+    clear_canvas();
+
+    function clear_canvas(){
+        var c = document.getElementById("canvas");
+        var ctx = c.getContext("2d");
+                    
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+}
+
+function update_image_box_projection(box){
+    var scene_meta = data.meta.find(function(x){return x.scene==data.world.file_info.scene;});
+
+    if (scene_meta.calib){
+
+        var scale = box.scale;
+        var pos = box.position;
+        var rotation = box.rotation;
+
+        var img = document.getElementById("camera");
+        if (img){
+
+            clear_image_box_projection();
+
+
+            var box3d = psr_to_xyz(pos, scale, rotation);
+
+            // project corners to image plane
+            var imgpos = matmul(scene_meta.calib.extrinsic, box3d, 4);
+            var imgpos3 = vector4to3(imgpos);
+            var imgpos2 = matmul(scene_meta.calib.intrinsic, imgpos3, 3);
+            var imgfinal = vector3_nomalize(imgpos2);
+
+            //console.log(imgfinal);
+            
+            var c = document.getElementById("canvas");
+            var ctx = c.getContext("2d");
+            
+            // note: 320*240 should be adjustable
+            var crop_area = crop_image(img.naturalWidth, img.naturalHeight, 320, 240, imgfinal);
+
+            ctx.drawImage(img, crop_area[0], crop_area[1],crop_area[2], crop_area[3], 0, 0, 320, 240);// ctx.canvas.clientHeight);
+            //ctx.drawImage(img, 0,0,img.naturalWidth, img.naturalHeight, 0, 0, 320, 180);// ctx.canvas.clientHeight);
+            var imgfinal = vectorsub(imgfinal, [crop_area[0],crop_area[1]]);
+
+            //ctx.lineWidth = 0.5;
+            ctx.strokeStyle="#00ff00";
+            ctx.beginPath();
+
+            var trans_ratio = 240/crop_area[3];
+
+            ctx.moveTo(imgfinal[3*2]*trans_ratio,imgfinal[3*2+1]*trans_ratio);
+
+            for (var i=0; i < imgfinal.length/2/2; i++)
+            {
+                ctx.lineTo(imgfinal[i*2+0]*trans_ratio, imgfinal[i*2+1]*trans_ratio);
+            }                
+
+            ctx.stroke();
+
+            ctx.strokeStyle="#ff00ff";
+            ctx.beginPath();
+
+            ctx.moveTo(imgfinal[7*2]*trans_ratio,imgfinal[7*2+1]*trans_ratio);
+
+            for (var i=4; i < imgfinal.length/2; i++)
+            {
+                ctx.lineTo(imgfinal[i*2+0]*trans_ratio, imgfinal[i*2+1]*trans_ratio);
+            }
+            
+            ctx.moveTo(imgfinal[0*2]*trans_ratio,imgfinal[0*2+1]*trans_ratio);
+            ctx.lineTo(imgfinal[4*2+0]*trans_ratio, imgfinal[4*2+1]*trans_ratio);
+            ctx.moveTo(imgfinal[1*2]*trans_ratio,imgfinal[1*2+1]*trans_ratio);
+            ctx.lineTo(imgfinal[5*2+0]*trans_ratio, imgfinal[5*2+1]*trans_ratio);
+            ctx.moveTo(imgfinal[2*2]*trans_ratio,imgfinal[2*2+1]*trans_ratio);
+            ctx.lineTo(imgfinal[6*2+0]*trans_ratio, imgfinal[6*2+1]*trans_ratio);
+            ctx.moveTo(imgfinal[3*2]*trans_ratio,imgfinal[3*2+1]*trans_ratio);
+            ctx.lineTo(imgfinal[7*2+0]*trans_ratio, imgfinal[7*2+1]*trans_ratio);
+
+
+            ctx.stroke();
+            
+        }
+    }
+}
+
 
 
 
@@ -1544,105 +1662,4 @@ function vectorsub(vs, v){
     }
 
     return ret;
-}
-
-function update_box_info_text(mesh){
-
-    if (mesh){
-        var scale = mesh.scale;
-        var pos = mesh.position;
-        var rotation = mesh.rotation;
-
-        // document.getElementById("info").innerHTML = "w "+scale.x.toFixed(2) +" l "+scale.y.toFixed(2) + " h " + scale.z.toFixed(2) +
-        //                                              " x "+pos.x.toFixed(2) +" y "+pos.y.toFixed(2) + " z " + pos.z.toFixed(2);
-
-        document.getElementById("box").innerHTML = pos.x.toFixed(2) +" "+pos.y.toFixed(2) + " " + pos.z.toFixed(2) + " | "+
-                                                    scale.x.toFixed(2) +" "+scale.y.toFixed(2) + " " + scale.z.toFixed(2) + " | " + 
-                                                    (rotation.z*180/Math.PI).toFixed(2);
-
-        if (true){
-
-            var scene_meta = data.meta.find(function(x){return x.scene==data.world.file_info.scene;});
-
-            if (scene_meta.calib){
-
-                var img = document.getElementById("camera");
-                if (img){
-
-                    clear_canvas();
-
-
-                    var box3d = psr_to_xyz(pos, scale, rotation);
-
-                    // project corners to image plane
-                    var imgpos = matmul(scene_meta.calib.extrinsic, box3d, 4);
-                    var imgpos3 = vector4to3(imgpos);
-                    var imgpos2 = matmul(scene_meta.calib.intrinsic, imgpos3, 3);
-                    var imgfinal = vector3_nomalize(imgpos2);
-
-                    //console.log(imgfinal);
-                    
-                    var c = document.getElementById("canvas");
-                    var ctx = c.getContext("2d");
-                    
-                    // note: 320*240 should be adjustable
-                    var crop_area = crop_image(img.naturalWidth, img.naturalHeight, 320, 240, imgfinal);
-
-                    ctx.drawImage(img, crop_area[0], crop_area[1],crop_area[2], crop_area[3], 0, 0, 320, 240);// ctx.canvas.clientHeight);
-                    //ctx.drawImage(img, 0,0,img.naturalWidth, img.naturalHeight, 0, 0, 320, 180);// ctx.canvas.clientHeight);
-                    var imgfinal = vectorsub(imgfinal, [crop_area[0],crop_area[1]]);
-
-                    //ctx.lineWidth = 0.5;
-                    ctx.strokeStyle="#00ff00";
-                    ctx.beginPath();
-
-                    var trans_ratio = 240/crop_area[3];
-
-                    ctx.moveTo(imgfinal[3*2]*trans_ratio,imgfinal[3*2+1]*trans_ratio);
-
-                    for (var i=0; i < imgfinal.length/2/2; i++)
-                    {
-                        ctx.lineTo(imgfinal[i*2+0]*trans_ratio, imgfinal[i*2+1]*trans_ratio);
-                    }                
-
-                    ctx.stroke();
-
-                    ctx.strokeStyle="#ff00ff";
-                    ctx.beginPath();
-
-                    ctx.moveTo(imgfinal[7*2]*trans_ratio,imgfinal[7*2+1]*trans_ratio);
-
-                    for (var i=4; i < imgfinal.length/2; i++)
-                    {
-                        ctx.lineTo(imgfinal[i*2+0]*trans_ratio, imgfinal[i*2+1]*trans_ratio);
-                    }
-                    
-                    ctx.moveTo(imgfinal[0*2]*trans_ratio,imgfinal[0*2+1]*trans_ratio);
-                    ctx.lineTo(imgfinal[4*2+0]*trans_ratio, imgfinal[4*2+1]*trans_ratio);
-                    ctx.moveTo(imgfinal[1*2]*trans_ratio,imgfinal[1*2+1]*trans_ratio);
-                    ctx.lineTo(imgfinal[5*2+0]*trans_ratio, imgfinal[5*2+1]*trans_ratio);
-                    ctx.moveTo(imgfinal[2*2]*trans_ratio,imgfinal[2*2+1]*trans_ratio);
-                    ctx.lineTo(imgfinal[6*2+0]*trans_ratio, imgfinal[6*2+1]*trans_ratio);
-                    ctx.moveTo(imgfinal[3*2]*trans_ratio,imgfinal[3*2+1]*trans_ratio);
-                    ctx.lineTo(imgfinal[7*2+0]*trans_ratio, imgfinal[7*2+1]*trans_ratio);
-
-
-                    ctx.stroke();
-                    
-                }
-            }
-        }
-
-    } else {
-        document.getElementById("box").innerHTML = '';
-
-        clear_canvas();
-    }
-}
-
-function clear_canvas(){
-    var c = document.getElementById("canvas");
-    var ctx = c.getContext("2d");
-                
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
 }

@@ -56,12 +56,12 @@ function init() {
 
     renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize( window.innerWidth, window.innerHeight );
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.BasicShadowMap;
+    //renderer.setSize( window.innerWidth, window.innerHeight );
+    //renderer.shadowMap.enabled = true;
+    //renderer.shadowMap.type = THREE.BasicShadowMap;
 
-    renderer.setClearColor( 0x000000, 0 );
-    renderer.setViewport( 0, 0, window.innerWidth, window.innerHeight );
+    //renderer.setClearColor( 0x000000, 0 );
+    //renderer.setViewport( 0, 0, window.innerWidth, window.innerHeight );
     // renderer will set this eventually
     //matLine.resolution.set( window.innerWidth, window.innerHeight ); // resolution of the viewport
     
@@ -404,12 +404,12 @@ function init_gui(){
     
     params['reload'] = function () {
         load_world(data.world.file_info.scene, data.world.file_info.frame);
-        
     };
+
     fileFolder.add( params, 'reload');
 
     params['clear'] = function () {
-        remove_all();
+        clear();
     };
     fileFolder.add( params, 'clear');
 
@@ -1161,13 +1161,20 @@ function remove_selected_box(){
     }
 }
 
-function remove_all(){
+function clear(){
+    //remove boxinfo
+    //remove frameinfo
+    //remove image
+    clear_box_info();
+    document.getElementById("image").innerHTML = '';
+    document.getElementById("frame").innerHTML = '';
+    clear_image_box_projection();
+
+
     data.world.destroy();
+    data.world= null; //dump it
     render();
 }
-
-
-
 
 
 function update_frame_info(scene, frame){

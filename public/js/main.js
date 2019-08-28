@@ -1295,27 +1295,30 @@ function render_2d_image(){
         ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, 0, 0, clientWidth, clientHeight);
 
         var trans_ratio = ctx.canvas.width/img.naturalWidth;
+        var scene_meta = data.meta.find(function(x){return x.scene==data.world.file_info.scene;});
 
-        // draw boxes
-        data.world.boxes.forEach(function(box){
-            var scene_meta = data.meta.find(function(x){return x.scene==data.world.file_info.scene;});
+        if (scene_meta.calib){
+            // draw boxes
+            data.world.boxes.forEach(function(box){
+                
 
-            var scale = box.scale;
-            var pos = box.position;
-            var rotation = box.rotation;
+                var scale = box.scale;
+                var pos = box.position;
+                var rotation = box.rotation;
 
-            var box3d = psr_to_xyz(pos, scale, rotation);
-            
-            var imgpos = matmul(scene_meta.calib.extrinsic, box3d, 4);
-            var imgpos3 = vector4to3(imgpos);
-            var imgpos2 = matmul(scene_meta.calib.intrinsic, imgpos3, 3);
-            var imgfinal = vector3_nomalize(imgpos2);
+                var box3d = psr_to_xyz(pos, scale, rotation);
+                
+                var imgpos = matmul(scene_meta.calib.extrinsic, box3d, 4);
+                var imgpos3 = vector4to3(imgpos);
+                var imgpos2 = matmul(scene_meta.calib.intrinsic, imgpos3, 3);
+                var imgfinal = vector3_nomalize(imgpos2);
 
-            //ctx.lineWidth = 0.5;
-            // front 
-            draw_box_on_image(ctx, box, imgfinal, trans_ratio);
-            
-        })
+                //ctx.lineWidth = 0.5;
+                // front 
+                draw_box_on_image(ctx, box, imgfinal, trans_ratio);
+                
+            });
+        }
     }
 
 
@@ -1426,7 +1429,7 @@ function update_image_box_projection(box){
             //ctx.drawImage(img, 0,0,img.naturalWidth, img.naturalHeight, 0, 0, 320, 180);// ctx.canvas.clientHeight);
             var imgfinal = vectorsub(imgfinal, [crop_area[0],crop_area[1]]);
             var trans_ratio = ctx.canvas.height/crop_area[3];
-            
+
             draw_box_on_image(ctx, box, imgfinal, trans_ratio);
         }
     }

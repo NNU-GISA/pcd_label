@@ -1,5 +1,5 @@
 ## operations
-
+```
 mouse scroll up/down:  zoom in/out
 mouse left key hold/move: rotate (change main view)
 mouse right key hold/move: pan
@@ -46,4 +46,4 @@ n create new box at the position of mouse
 ctrl+s  save current frame
 del/ctrl+d  remove selected box
 
-
+```

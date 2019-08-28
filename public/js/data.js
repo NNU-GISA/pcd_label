@@ -142,6 +142,12 @@ var data = {
 
             reset: function(){this.points=null; this.boxes=null;},
 
+            sort_boxes:function(){
+                this.boxes = this.boxes.sort(function(x,y){
+                    return x.position.y - y.position.y;
+                });
+            },
+
             create_time: 0,
             points_load_time:0,
             boxes_load_time:0,
@@ -285,6 +291,8 @@ var data = {
                         }
                         _self.boxes_load_time = new Date().getTime();
                         console.log(_self.boxes_load_time, _self.file_info.scene, _self.file_info.frame, "loaded boxes ", _self.boxes_load_time - _self.create_time, "ms");
+                        
+                        _self.sort_boxes();
 
                         if (_self.complete()){
                             if (_self.on_preload_finished)
@@ -379,6 +387,7 @@ var data = {
                 mesh.position.z = z;
 
                 this.boxes.push(mesh);
+                this.sort_boxes();
                 return mesh;
             },
 

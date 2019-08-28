@@ -291,8 +291,11 @@ function play_current_scene_with_buffer(resume){
                 data.activate_world(scene,  //this is webgl scene
                     world, 
                     function(){//on load finished
-                        views[0].detach_control();
+                        //views[0].detach_control();
+                        unselect_bbox(null);
+                        unselect_bbox(null);
                         render();
+                        render_2d_image();
                         update_frame_info(scene_meta.scene, frame);
                 });
            
@@ -1141,6 +1144,7 @@ function load_world(scene_name, frame){
             unselect_bbox(null);
             unselect_bbox(null);
             render();
+            render_2d_image();
             update_frame_info(scene_name, frame);
         }
     );
@@ -1196,6 +1200,7 @@ function clear(){
 }
 
 
+
 function update_frame_info(scene, frame){
     document.getElementById("frame").innerHTML = scene+"/"+frame;
 
@@ -1218,6 +1223,7 @@ function on_box_changed(event){
     var mesh = event.target.object;
     //console.log("bbox rotation z", mesh.rotation.z);
     update_subview_by_bbox(mesh);  
+    render_2d_image();
     mark_changed_flag();  
 }
 
@@ -1232,6 +1238,8 @@ function on_selected_box_changed(box){
         clear_box_info();
         clear_image_box_projection();
     }
+
+    render_2d_image();
 }
 
 function clear_box_info(){
@@ -1250,6 +1258,124 @@ function update_box_info(box){
     document.getElementById("box").innerHTML = pos.x.toFixed(2) +" "+pos.y.toFixed(2) + " " + pos.z.toFixed(2) + " | "+
                                                 scale.x.toFixed(2) +" "+scale.y.toFixed(2) + " " + scale.z.toFixed(2) + " | " + 
                                                 (rotation.z*180/Math.PI).toFixed(2);
+}
+
+
+function render_2d_image(){
+    clear_canvas();
+
+    draw_canvas();
+
+    function clear_canvas(){
+        var c = document.getElementById("maincanvas");
+        var ctx = c.getContext("2d");
+                    
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function draw_canvas(){
+        // draw picture
+        var c = document.getElementById("maincanvas");
+        var ctx = c.getContext("2d");
+
+        var img = data.world.image;
+
+        var clientWidth, clientHeight;
+        // adjust canvas width/height
+        if (img.naturalWidth / img.naturalHeight > ctx.canvas.clientWidth, ctx.canvas.clientHeight){
+            clientWidth = ctx.canvas.clientWidth;
+            clientHeight = ctx.canvas.clientWidth * img.naturalHeight/img.naturalWidth;
+        }else{
+            clientHeight = ctx.canvas.clientHeight;
+            clientWidth = ctx.canvas.clientHeight * img.naturalWidth/img.naturalHeight;
+        }
+
+        ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, 0, 0, clientWidth, clientHeight);
+
+        var trans_ratio = ctx.canvas.clientWidth/img.naturalWidth;
+
+        // draw boxes
+        data.world.boxes.forEach(function(box){
+            var scene_meta = data.meta.find(function(x){return x.scene==data.world.file_info.scene;});
+
+            var scale = box.scale;
+            var pos = box.position;
+            var rotation = box.rotation;
+
+            var box3d = psr_to_xyz(pos, scale, rotation);
+            
+            var imgpos = matmul(scene_meta.calib.extrinsic, box3d, 4);
+            var imgpos3 = vector4to3(imgpos);
+            var imgpos2 = matmul(scene_meta.calib.intrinsic, imgpos3, 3);
+            var imgfinal = vector3_nomalize(imgpos2);
+
+            //ctx.lineWidth = 0.5;
+            // front 
+            draw_box_on_image(ctx, box, imgfinal, trans_ratio);
+            
+        })
+    }
+
+
+}
+
+function draw_box_on_image(ctx, box, box_corners, trans_ratio){
+    var imgfinal = box_corners;
+
+    if (selected_box != box){
+        ctx.strokeStyle="#00ff00";
+        ctx.fillStyle="rgba(0,255,0,0.2)";
+    }
+    else{
+        ctx.strokeStyle="#ff00ff";
+        ctx.fillStyle="rgba(255,0,255,0.2)";
+    }
+
+    // front panel
+    ctx.beginPath();
+    ctx.moveTo(imgfinal[3*2]*trans_ratio,imgfinal[3*2+1]*trans_ratio);
+
+    for (var i=0; i < imgfinal.length/2/2; i++)
+    {
+        ctx.lineTo(imgfinal[i*2+0]*trans_ratio, imgfinal[i*2+1]*trans_ratio);
+    }
+
+    ctx.closePath();
+    ctx.fill();
+    
+    // frame
+    ctx.beginPath();
+
+    ctx.moveTo(imgfinal[3*2]*trans_ratio,imgfinal[3*2+1]*trans_ratio);
+
+    for (var i=0; i < imgfinal.length/2/2; i++)
+    {
+        ctx.lineTo(imgfinal[i*2+0]*trans_ratio, imgfinal[i*2+1]*trans_ratio);
+    }
+    //ctx.stroke();
+
+
+    //ctx.strokeStyle="#ff00ff";
+    //ctx.beginPath();
+
+    ctx.moveTo(imgfinal[7*2]*trans_ratio,imgfinal[7*2+1]*trans_ratio);
+
+    for (var i=4; i < imgfinal.length/2; i++)
+    {
+        ctx.lineTo(imgfinal[i*2+0]*trans_ratio, imgfinal[i*2+1]*trans_ratio);
+    }
+    
+    ctx.moveTo(imgfinal[0*2]*trans_ratio,imgfinal[0*2+1]*trans_ratio);
+    ctx.lineTo(imgfinal[4*2+0]*trans_ratio, imgfinal[4*2+1]*trans_ratio);
+    ctx.moveTo(imgfinal[1*2]*trans_ratio,imgfinal[1*2+1]*trans_ratio);
+    ctx.lineTo(imgfinal[5*2+0]*trans_ratio, imgfinal[5*2+1]*trans_ratio);
+    ctx.moveTo(imgfinal[2*2]*trans_ratio,imgfinal[2*2+1]*trans_ratio);
+    ctx.lineTo(imgfinal[6*2+0]*trans_ratio, imgfinal[6*2+1]*trans_ratio);
+    ctx.moveTo(imgfinal[3*2]*trans_ratio,imgfinal[3*2+1]*trans_ratio);
+    ctx.lineTo(imgfinal[7*2+0]*trans_ratio, imgfinal[7*2+1]*trans_ratio);
+
+
+    ctx.stroke();
 }
 
 function clear_image_box_projection(){
@@ -1297,44 +1423,8 @@ function update_image_box_projection(box){
             ctx.drawImage(img, crop_area[0], crop_area[1],crop_area[2], crop_area[3], 0, 0, 320, 240);// ctx.canvas.clientHeight);
             //ctx.drawImage(img, 0,0,img.naturalWidth, img.naturalHeight, 0, 0, 320, 180);// ctx.canvas.clientHeight);
             var imgfinal = vectorsub(imgfinal, [crop_area[0],crop_area[1]]);
-
-            //ctx.lineWidth = 0.5;
-            ctx.strokeStyle="#00ff00";
-            ctx.beginPath();
-
             var trans_ratio = 240/crop_area[3];
-
-            ctx.moveTo(imgfinal[3*2]*trans_ratio,imgfinal[3*2+1]*trans_ratio);
-
-            for (var i=0; i < imgfinal.length/2/2; i++)
-            {
-                ctx.lineTo(imgfinal[i*2+0]*trans_ratio, imgfinal[i*2+1]*trans_ratio);
-            }                
-
-            ctx.stroke();
-
-            ctx.strokeStyle="#ff00ff";
-            ctx.beginPath();
-
-            ctx.moveTo(imgfinal[7*2]*trans_ratio,imgfinal[7*2+1]*trans_ratio);
-
-            for (var i=4; i < imgfinal.length/2; i++)
-            {
-                ctx.lineTo(imgfinal[i*2+0]*trans_ratio, imgfinal[i*2+1]*trans_ratio);
-            }
-            
-            ctx.moveTo(imgfinal[0*2]*trans_ratio,imgfinal[0*2+1]*trans_ratio);
-            ctx.lineTo(imgfinal[4*2+0]*trans_ratio, imgfinal[4*2+1]*trans_ratio);
-            ctx.moveTo(imgfinal[1*2]*trans_ratio,imgfinal[1*2+1]*trans_ratio);
-            ctx.lineTo(imgfinal[5*2+0]*trans_ratio, imgfinal[5*2+1]*trans_ratio);
-            ctx.moveTo(imgfinal[2*2]*trans_ratio,imgfinal[2*2+1]*trans_ratio);
-            ctx.lineTo(imgfinal[6*2+0]*trans_ratio, imgfinal[6*2+1]*trans_ratio);
-            ctx.moveTo(imgfinal[3*2]*trans_ratio,imgfinal[3*2+1]*trans_ratio);
-            ctx.lineTo(imgfinal[7*2+0]*trans_ratio, imgfinal[7*2+1]*trans_ratio);
-
-
-            ctx.stroke();
-            
+            draw_box_on_image(ctx, box, imgfinal, trans_ratio);
         }
     }
 }

@@ -63,6 +63,27 @@ canvas {
 	pointer-events: none;
 	z-index: 1; /* TODO Solve this in HTML */
 }
+
+#maincanvas {
+	border: 1;
+	position: absolute;
+	top:  0%;
+	left: 20%;
+	color: #ffff00;
+	width: auto;
+	height: 30%;
+	padding: 0px;
+	box-sizing: border-box;
+	text-align: left;
+	align-content: left;
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	pointer-events: none;
+	z-index: 1; /* TODO Solve this in HTML */
+}
+
 #canvas {
 	position: absolute;
 	top: 70%;

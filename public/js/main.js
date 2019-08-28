@@ -81,6 +81,8 @@ function init() {
     renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+
+    
 }
 
 function animate() {
@@ -1282,17 +1284,17 @@ function render_2d_image(){
 
         var clientWidth, clientHeight;
         // adjust canvas width/height
-        if (img.naturalWidth / img.naturalHeight > ctx.canvas.clientWidth, ctx.canvas.clientHeight){
-            clientWidth = ctx.canvas.clientWidth;
-            clientHeight = ctx.canvas.clientWidth * img.naturalHeight/img.naturalWidth;
+        if (img.naturalWidth / img.naturalHeight > ctx.canvas.width, ctx.canvas.height){
+            clientWidth = ctx.canvas.width;
+            clientHeight = ctx.canvas.width * img.naturalHeight/img.naturalWidth;
         }else{
-            clientHeight = ctx.canvas.clientHeight;
-            clientWidth = ctx.canvas.clientHeight * img.naturalWidth/img.naturalHeight;
+            clientHeight = ctx.canvas.height;
+            clientWidth = ctx.canvas.height * img.naturalWidth/img.naturalHeight;
         }
 
         ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, 0, 0, clientWidth, clientHeight);
 
-        var trans_ratio = ctx.canvas.clientWidth/img.naturalWidth;
+        var trans_ratio = ctx.canvas.width/img.naturalWidth;
 
         // draw boxes
         data.world.boxes.forEach(function(box){

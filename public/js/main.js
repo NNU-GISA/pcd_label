@@ -1272,7 +1272,7 @@ function render_2d_image(){
         var c = document.getElementById("maincanvas");
         var ctx = c.getContext("2d");
                     
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     }
 
     function draw_canvas(){
@@ -1281,6 +1281,10 @@ function render_2d_image(){
         var ctx = c.getContext("2d");
 
         var img = data.world.image;
+
+        if (img.width==0){
+            return;
+        }
 
         var clientWidth, clientHeight;
         // adjust canvas width/height

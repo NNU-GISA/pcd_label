@@ -1420,12 +1420,13 @@ function update_image_box_projection(box){
             var ctx = c.getContext("2d");
             
             // note: 320*240 should be adjustable
-            var crop_area = crop_image(img.naturalWidth, img.naturalHeight, 320, 240, imgfinal);
+            var crop_area = crop_image(img.naturalWidth, img.naturalHeight, ctx.canvas.width, ctx.canvas.height, imgfinal);
 
-            ctx.drawImage(img, crop_area[0], crop_area[1],crop_area[2], crop_area[3], 0, 0, 320, 240);// ctx.canvas.clientHeight);
+            ctx.drawImage(img, crop_area[0], crop_area[1],crop_area[2], crop_area[3], 0, 0, ctx.canvas.width, ctx.canvas.height);// ctx.canvas.clientHeight);
             //ctx.drawImage(img, 0,0,img.naturalWidth, img.naturalHeight, 0, 0, 320, 180);// ctx.canvas.clientHeight);
             var imgfinal = vectorsub(imgfinal, [crop_area[0],crop_area[1]]);
-            var trans_ratio = 240/crop_area[3];
+            var trans_ratio = ctx.canvas.height/crop_area[3];
+            
             draw_box_on_image(ctx, box, imgfinal, trans_ratio);
         }
     }

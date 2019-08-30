@@ -3,7 +3,7 @@ import string
 
 import cherrypy
 import os
-
+import json
 from jinja2 import Environment, FileSystemLoader
 env = Environment(loader=FileSystemLoader('./'))
 
@@ -27,13 +27,16 @@ class Root(object):
       return "ok"
 
     @cherrypy.expose    
-    def load(self, frame):
-      if (os.path.isfile("./public/"+frame)):
-        with open("./public/"+frame,"r") as f:
-          y=f.read()
-          return y
+    @cherrypy.tools.json_out()
+    def load_annotation(self, scene, frame):
+      filename = "./public/data/"+scene +"/bbox.json/"+ frame + ".bbox.json"
+      if (os.path.isfile(filename)):
+        with open(filename,"r") as f:
+          ann=json.load(f)
+          print(ann)          
+          return ann
       else:
-        return ""
+        return []
 
     @cherrypy.expose    
     @cherrypy.tools.json_out()

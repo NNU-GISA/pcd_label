@@ -308,7 +308,7 @@ var data = {
                     // end of state change: it can be after some time (async)
                 };
                 
-                xhr.open('GET', "/load"+"?frame="+this.file_info.get_anno_path(), true);
+                xhr.open('GET', "/load_annotation"+"?scene="+this.file_info.scene+"&frame="+this.file_info.frame, true);
                 xhr.send();
 
                 function create_bboxs(annotations){

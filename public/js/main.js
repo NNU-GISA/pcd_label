@@ -127,24 +127,18 @@ function save_annotation(){
     var bbox_annotations=[];
     console.log(data.world.boxes.length, "boxes");
     data.world.boxes.forEach(function(b){
-        var b = {
-            position:{
-                x: b.position.x,
-                y: b.position.y,
-                z: b.position.z,
-            },
-            scale:{
-                x: b.scale.x,
-                y: b.scale.y,
-                z: b.scale.z,                
-            },
-            rotation:{                
-                x: b.rotation.x,
-                y: b.rotation.y,
-                z: b.rotation.z,                
-            },
-        };
+        var vertices = psr_to_xyz(b.position, b.scale, b.rotation);
 
+        var b = {
+            position:b.position,
+            scale:b.scale,
+            rotation:{
+                x:b.rotation.x,
+                y:b.rotation.y,
+                z:b.rotation.z,
+            },
+            vertices: vertices,
+        };
 
         bbox_annotations.push(b);
         

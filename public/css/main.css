@@ -64,13 +64,18 @@ canvas {
 	z-index: 1; /* TODO Solve this in HTML */
 }
 
-#maincanvas {
-	border: 1;
+#header-row {
 	position: absolute;
 	top:  0%;
 	left: 20%;
-	color: #ffff00;
-	width: auto;
+	
+	display: block;
+}
+#maincanvas {
+	display: block;
+	float: left;
+	border: 1;
+	width: 40%;
 	height: 30%;
 	padding: 0px;
 	box-sizing: border-box;
@@ -82,6 +87,13 @@ canvas {
 	user-select: none;
 	pointer-events: none;
 	z-index: 1; /* TODO Solve this in HTML */
+}
+
+
+#boxedit {
+	display: block;
+	display: inline;
+	float: left;
 }
 
 #canvas {
@@ -114,3 +126,17 @@ canvas {
 	user-select: none;
 	z-index: 2 !important; /* TODO Solve this in HTML */
 }
+
+
+.float-label {
+	color: #00ff00;
+	position: absolute;
+	background-color: #403b3b99;
+}
+
+.selected-float-label {
+	color: #ff00ff;
+	position: absolute;
+	background-color: #403b3b99;
+}
+

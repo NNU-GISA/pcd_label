@@ -9,7 +9,7 @@ import { GUI } from './lib/dat.gui.module.js';
 
 import {data} from './data.js'
 import {create_views, views} from "./view.js"
-
+import {createFloatLabelManager} from "./floatlabel.js"
 var container;
 
 var scene, renderer;
@@ -29,6 +29,10 @@ var windowWidth, windowHeight;
 
 var params={};
 
+var g_text;
+var g_pos;
+
+var floatLabelManager;
 
 init();
 animate();
@@ -68,6 +72,8 @@ function init() {
 
     create_views(scene, renderer.domElement, render, on_box_changed);
 
+    floatLabelManager = createFloatLabelManager(views[0]);
+
     init_gui();
 
     scene.add( new THREE.AxesHelper( 2 ) );
@@ -81,9 +87,17 @@ function init() {
     renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-
+ 
+    document.getElementById("object-category-selector").onchange = object_category_changed;
+    document.getElementById("object-track_id_editor").onchange = object_track_id_changed;
+    document.getElementById("object-track_id_editor").addEventListener("keydown", function(e){e.stopPropagation();});
+    //document.getElementById("header-row").addEventListener('mousedown', function(e){e.preventDefault();});
+    //document.getElementById("header-row").addEventListener('mousemove', function(e){e.preventDefault();});
     
 }
+
+
+
 
 function animate() {
     requestAnimationFrame( animate );
@@ -117,6 +131,7 @@ function render(){
         renderer.render( scene, camera );
     }   
 
+    floatLabelManager.update_all_labels();
 }
 
 
@@ -137,6 +152,8 @@ function save_annotation(){
                 y:b.rotation.y,
                 z:b.rotation.z,
             },
+            obj_type: b.obj_type,
+            obj_id: b.obj_id,
             vertices: vertices,
         };
 
@@ -292,6 +309,7 @@ function play_current_scene_with_buffer(resume){
                         unselect_bbox(null);
                         render();
                         render_2d_image();
+                        render_2d_labels();
                         update_frame_info(scene_meta.scene, frame);
                 });
            
@@ -434,7 +452,18 @@ function init_gui(){
     gui.open();
 }
 
-
+function object_category_changed(event){
+    if (selected_box){
+        selected_box.obj_type = event.currentTarget.value;
+        floatLabelManager.set_object_type(selected_box.obj_local_id, selected_box.obj_type);
+    }
+}
+function object_track_id_changed(event){
+    if (selected_box){
+        selected_box.obj_id = event.currentTarget.value;
+        floatLabelManager.set_object_track_id(selected_box.obj_local_id, selected_box.obj_id);
+    }
+}
 
 function update_subview_by_windowsize(){
 
@@ -664,7 +693,11 @@ function unselect_bbox(new_object){
                 selected_box.material.color.r=0;
                 selected_box.material.color.g=1;
                 selected_box.material.color.b=0;
+                floatLabelManager.unselect_box(selected_box.obj_local_id);
             }
+
+            
+
             selected_box = null;
             on_selected_box_changed(null);
         }
@@ -676,11 +709,15 @@ function unselect_bbox(new_object){
             selected_box.material.color.r=0;
             selected_box.material.color.g=1;
             selected_box.material.color.b=0;
+            floatLabelManager.unselect_box(selected_box.obj_local_id);
         }
+        
         selected_box = null;
         on_selected_box_changed(null);
 
     }
+
+
 
     render();
 
@@ -694,7 +731,8 @@ function select_bbox(object){
 
         // select me, the first time
         selected_box = object;
-
+        
+        floatLabelManager.select_box(selected_box.obj_local_id);
         selected_box.material.color.r=1;
         selected_box.material.color.g=0;
         selected_box.material.color.b=1;
@@ -775,8 +813,7 @@ function add_raw_boxes(boxes){
 }
 
 function add_bbox(){
-    //mesh = ev.key=='b'?new_bbox(): new_bbox_cube();
-    //mesh = new_bbox_cube();
+
 
     // todo: move to data.world
     var pos = get_mouse_location_in_world(mouse);
@@ -1141,6 +1178,7 @@ function load_world(scene_name, frame){
             unselect_bbox(null);
             render();
             render_2d_image();
+            render_2d_labels();
             update_frame_info(scene_name, frame);
         }
     );
@@ -1256,6 +1294,13 @@ function update_box_info(box){
                                                 (rotation.z*180/Math.PI).toFixed(2);
 }
 
+function render_2d_labels(){
+    floatLabelManager.remove_all_labels();
+
+    data.world.boxes.forEach(function(b){
+        floatLabelManager.add_label(b);
+    })
+}
 
 function render_2d_image(){
     clear_canvas();

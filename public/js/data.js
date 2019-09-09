@@ -270,6 +270,13 @@ var data = {
                 );
             },
 
+            box_local_id: 0,
+            get_new_box_local_id: function(){
+                var ret = this.box_local_id;
+                this.box_local_id+=1;
+                return ret;
+            },
+
             load_annotation: function(){
                 var xhr = new XMLHttpRequest();
                 // we defined the xhr
@@ -311,6 +318,7 @@ var data = {
                 xhr.open('GET', "/load_annotation"+"?scene="+this.file_info.scene+"&frame="+this.file_info.frame, true);
                 xhr.send();
 
+                
                 function create_bboxs(annotations){
                     
                     return annotations.map(function(b){
@@ -326,6 +334,11 @@ var data = {
                         mesh.rotation.x = b.rotation.x;
                         mesh.rotation.y = b.rotation.y;
                         mesh.rotation.z = b.rotation.z;    
+
+                        mesh.obj_track_id = b.obj_id;  //tracking id
+                        mesh.obj_local_id = _self.get_new_box_local_id();
+
+                        mesh.obj_type = b.obj_type;
                         return mesh;  
                     });
                 }
@@ -385,6 +398,9 @@ var data = {
                 mesh.position.x = x;
                 mesh.position.y = y;
                 mesh.position.z = z;
+
+                mesh.obj_track_id = "";  //tracking id
+                mesh.obj_local_id =  this.get_new_box_local_id();
 
                 this.boxes.push(mesh);
                 this.sort_boxes();

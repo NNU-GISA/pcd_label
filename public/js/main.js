@@ -145,6 +145,16 @@ function save_annotation(){
         var vertices = psr_to_xyz(b.position, b.scale, b.rotation);
 
         var b = {
+            psr: {
+                position:b.position,
+                scale:b.scale,
+                rotation:{
+                    x:b.rotation.x,
+                    y:b.rotation.y,
+                    z:b.rotation.z,
+                },
+            },
+            
             position:b.position,
             scale:b.scale,
             rotation:{
@@ -152,6 +162,7 @@ function save_annotation(){
                 y:b.rotation.y,
                 z:b.rotation.z,
             },
+
             obj_type: b.obj_type,
             obj_id: b.obj_id,
             vertices: vertices,

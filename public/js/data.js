@@ -64,10 +64,16 @@ var data = {
                 },
             
                 anno_to_boxes: function(text){
-                    if (this.annotation_format == "psr")
-                        return JSON.parse(text);
+                    var _self = this;
+                    if (this.annotation_format == "psr"){
+
+                        var boxes = JSON.parse(text);
+                        
+
+                        return boxes;
+                    }
                     else
-                        return this.xyz_to_psr(text);
+                        return this.text_xyz_to_psr(text);
             
                 },
                 transform_point: function(m, x,y, z){
@@ -78,7 +84,7 @@ var data = {
                     return [rx, ry, rz];
                 },
             
-                xyz_to_psr: function(text){
+                text_xyz_to_psr: function(text){
                     var _self = this;
             
                     var points_array = text.split('\n').filter(function(x){return x;}).map(function(x){return x.split(' ').map(function(x){return parseFloat(x);})})
@@ -94,42 +100,56 @@ var data = {
                         return ps;
                     });
                     
-                    var boxes_ann = boxes.map(function(ann){
-                        var pos={x:0,y:0,z:0};
-                        for (var i=0; i<8; i++){
-                            pos.x+=ann[i*3];
-                            pos.y+=ann[i*3+1];
-                            pos.z+=ann[i*3+2];
-                        }
-                        pos.x /=8;
-                        pos.y /=8;
-                        pos.z /=8;
-            
-                        var scale={
-                            x: Math.sqrt((ann[0]-ann[3])*(ann[0]-ann[3])+(ann[1]-ann[4])*(ann[1]-ann[4])),
-                            y: Math.sqrt((ann[0]-ann[9])*(ann[0]-ann[9])+(ann[1]-ann[10])*(ann[1]-ann[10])),
-                            z: ann[14]-ann[2],
-                        };
-                        
-                        /*
-                        1. atan2(y,x), not x,y
-                        2. point order in xy plane
-                            0   1
-                            3   2
-                        */
-            
-                        var angle = Math.atan2(ann[4]+ann[7]-2*pos.y, ann[3]+ann[6]-2*pos.x);
-            
-                        return {
-                            position: pos,
-                            scale:scale,
-                            rotation:{x:0,y:0,z:angle},
-                        }
-                    });
+                    var boxes_ann = boxes.map(this.xyz_to_psr);
             
                     return boxes_ann; //, boxes];
                 },
+
+                xyz_to_psr: function(ann_input){
+                    var ann = [];
+                    if (ann_input.length==24)
+                        ann = ann_input;
+                    else
+                        for (var i = 0; i<ann_input.length; i++){
+                            if ((i+1) % 4 != 0){
+                                ann.push(ann_input[i]);
+                            }
+                        }
+
+                    var pos={x:0,y:0,z:0};
+                    for (var i=0; i<8; i++){
+                        pos.x+=ann[i*3];
+                        pos.y+=ann[i*3+1];
+                        pos.z+=ann[i*3+2];
+                    }
+                    pos.x /=8;
+                    pos.y /=8;
+                    pos.z /=8;
+        
+                    var scale={
+                        x: Math.sqrt((ann[0]-ann[3])*(ann[0]-ann[3])+(ann[1]-ann[4])*(ann[1]-ann[4])),
+                        y: Math.sqrt((ann[0]-ann[9])*(ann[0]-ann[9])+(ann[1]-ann[10])*(ann[1]-ann[10])),
+                        z: ann[14]-ann[2],
+                    };
+                    
+                    /*
+                    1. atan2(y,x), not x,y
+                    2. point order in xy plane
+                        0   1
+                        3   2
+                    */
+        
+                    var angle = Math.atan2(ann[4]+ann[7]-2*pos.y, ann[3]+ann[6]-2*pos.x);
+        
+                    return {
+                        position: pos,
+                        scale:scale,
+                        rotation:{x:0,y:0,z:angle},
+                    }
+                },
+                
             }, //end of file_info
+
 
             points: null,
             boxes: null,

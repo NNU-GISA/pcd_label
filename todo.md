@@ -16,3 +16,4 @@
 12.  open new frame when playing
 13.  handle when loading pcd failed.
 14.  gui, add onchange function
+15.  read/write json files directly, don't rely on cherrypy to forward.

@@ -10,6 +10,8 @@ import { GUI } from './lib/dat.gui.module.js';
 import {data} from './data.js'
 import {create_views, views} from "./view.js"
 import {createFloatLabelManager} from "./floatlabel.js"
+import {vector4to3, vector3_nomalize, psr_to_xyz, matmul} from "./util.js"
+
 var container;
 
 var scene, renderer;
@@ -134,9 +136,78 @@ function render(){
     floatLabelManager.update_all_labels();
 }
 
+var marked_object = null;
+
+// mark bbox, which will be used as reference-bbox of an object.
+function mark_bbox(){
+    if (selected_box){
+        marked_object = {
+            frame: data.world.file_info.frame,
+            scene: data.world.file_info.scene,
+            object_id: selected_box.obj_track_id,
+            position: selected_box.position,  //todo, copy x,y,z, not object
+            scale: selected_box.scale,
+            rotation: selected_box.rotation,
+        }
+
+        console.log(marked_object);
+    }
+}
+
+function auto_adjust_bbox(){
+
+    console.log("auto adjust highlighted bbox");
+
+    var xhr = new XMLHttpRequest();
+    // we defined the xhr
+    var _self = this;
+    xhr.onreadystatechange = function () {
+        if (this.readyState != 4) return;
+    
+        if (this.status == 200) {
+            console.log(this.responseText)
+            console.log(selected_box.position);
+            console.log(selected_box.rotation);
 
 
+            var trans_mat = JSON.parse(this.responseText);
 
+            var rotation = Math.atan2(trans_mat[4], trans_mat[0]);
+            
+
+            selected_box.position.x += trans_mat[3];
+            selected_box.position.y += trans_mat[7];
+            selected_box.position.z += trans_mat[11];
+            
+            
+
+            selected_box.scale.x = marked_object.scale.x;
+            selected_box.scale.y = marked_object.scale.y;
+            selected_box.scale.z = marked_object.scale.z;
+
+            selected_box.rotation.z -= rotation;
+
+            console.log(selected_box.position);
+            console.log(selected_box.rotation);
+
+            update_subview_by_bbox(selected_box);
+    
+            mark_changed_flag();
+        }
+    
+        // end of state change: it can be after some time (async)
+    };
+    
+    xhr.open('GET', 
+             "/auto_adjust"+"?scene="+marked_object.scene + "&"+
+                           "ref_frame=" + marked_object.frame + "&" +
+                           "object_id=" + marked_object.object_id + "&" +                           
+                           "adj_frame=" + data.world.file_info.frame, 
+             true);
+    xhr.send();
+
+
+}
 
 function save_annotation(){
     var bbox_annotations=[];
@@ -434,6 +505,18 @@ function init_gui(){
     cfgFolder.add( params, "stop");
     cfgFolder.add( params, "previous frame");
     cfgFolder.add( params, "next frame");
+
+
+    var editFolder = gui.addFolder( 'Edit' );
+    params['mark-bbox'] = function () {
+        mark_bbox();
+    };
+    params['auto-adjust'] = function () {
+        auto_adjust_bbox();
+    };
+    editFolder.add( params, 'auto-adjust');
+    editFolder.add( params, 'mark-bbox');
+
 
 
     var fileFolder = gui.addFolder( 'File' );
@@ -834,6 +917,8 @@ function add_bbox(){
     scene.add(box);
 
     sideview_mesh=box;
+
+    floatLabelManager.add_label(box);
     
     select_bbox(box);
     
@@ -1490,73 +1575,6 @@ function update_image_box_projection(box){
 }
 
 
-
-
-// matrix (m*n), matrix(n*l), vl=n 
-function matmul(m, x, vl)  //vl is vector length
-{
-    var ret=[];
-    for (var vi =0; vi < x.length/vl; vi++){  //vector index
-        for (var r = 0; r<m.length/vl; r++){  //row of matrix
-            ret[vi*vl+r] = 0;
-            for (var i = 0; i<vl; i++){
-                ret[vi*vl+r] += m[r*vl+i]*x[vi*vl+i];
-            }
-        }
-    }
-
-    return ret;
-}
-
-// box(position, scale, rotation) to box corner corrdinates.
-// return 8 points, represented as (x,y,z,1)
-function psr_to_xyz(p,s,r){
-    var trans_matrix=[
-        Math.cos(r.z), -Math.sin(r.z), 0, p.x,
-        Math.sin(r.z), Math.cos(r.z),  0, p.y,
-        0,             0,              1, p.z,
-        0,             0,              0, 1,
-    ];
-
-    var x=s.x/2;
-    var y=s.y/2;
-    var z=s.z/2;
-    var local_coord = [
-        -x, y, -z, 1,   x, y, -z, 1,  //front-left-bottom, front-right-bottom
-        x, y, z, 1,    -x, y, z, 1,  //front-right-top,   front-left-top
-
-        -x, -y, -z, 1,   x, -y, -z, 1,  
-        x, -y, z, 1,   -x, -y, z, 1,        
-        
-    ];
-
-    var world_coord = matmul(trans_matrix, local_coord, 4);
-    var w = world_coord;
-    return w;
-}
-
-
-function vector4to3(v)
-{
-    var ret=[];
-    for (var i=0; i<v.length; i++){
-        if ((i+1)% 4 != 0){
-            ret.push(v[i]);
-        }
-    }
-
-    return ret;
-}
-
-function vector3_nomalize(m){
-    var ret=[];
-    for (var i=0; i<m.length/3; i++){
-        ret.push(m[i*3+0]/m[i*3+2]);
-        ret.push(m[i*3+1]/m[i*3+2]);
-    }
-
-    return ret;
-}
 
 function crop_image(imgWidth, imgHeight, clientWidth, clientHeight, corners)
 {

@@ -40,10 +40,41 @@ class Root(object):
 
     @cherrypy.expose    
     @cherrypy.tools.json_out()
+    def auto_adjust(self, scene, ref_frame, object_id, adj_frame):
+      
+      #os.chdir("./temp")
+      os.system("rm ./temp/src.pcd ./temp/tgt.pcd ./temp/out.pcd ./temp/trans.json")
+      tgt_pcd_file = "./public/data/"+scene +"/pcd/"+ref_frame+".pcd"
+      tgt_json_file = "./public/data/"+scene +"/bbox.json/"+ref_frame+".bbox.json"
+
+      src_pcd_file = "./public/data/"+scene +"/pcd/"+adj_frame+".pcd"      
+      src_json_file = "./public/data/"+scene +"/bbox.json/"+adj_frame+".bbox.json"
+
+      cmd = "~/src/pcltest/build/extract_object "+ src_pcd_file + " " + src_json_file + " " + object_id + " " +"./temp/src.pcd"
+      print(cmd)
+      os.system(cmd)
+
+      cmd = "~/src/pcltest/build/extract_object "+ tgt_pcd_file + " " + tgt_json_file + " " + object_id + " " +"./temp/tgt.pcd"
+      print(cmd)
+      os.system(cmd)
+
+      cmd = "~/src/go_icp_pcl/build/test_go_icp ./temp/tgt.pcd ./temp/src.pcd ./temp/out.pcd ./temp/trans.json"
+      print(cmd)
+      os.system(cmd)
+
+      with open("./temp/trans.json", "r") as f:
+        trans = json.load(f)
+        print(trans)
+        return trans
+
+      return {}
+
+    @cherrypy.expose    
+    @cherrypy.tools.json_out()
     def datameta(self):
       data = []
 
-      scenes = os.listdir("public/data")
+      scenes = os.listdir("./public/data")
       print(scenes)
 
       for s in scenes:
@@ -55,7 +86,7 @@ class Root(object):
         data.append(scene)
 
         frames = os.listdir("public/data/"+s+"/pcd")
-        
+        print(s, frames)
         frames.sort()
         for f in frames:
           if os.path.isfile("public/data/"+s+"/pcd/"+f):

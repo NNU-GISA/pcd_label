@@ -73,7 +73,7 @@ var data = {
                         return boxes;
                     }
                     else
-                        return this.text_xyz_to_psr(text);
+                        return this.python_xyz_to_psr(text);
             
                 },
                 transform_point: function(m, x,y, z){
@@ -84,7 +84,14 @@ var data = {
                     return [rx, ry, rz];
                 },
             
-                text_xyz_to_psr: function(text){
+                /*
+                input is coordinates of 8 vertices
+                bottom-left-front, bottom-right-front, bottom-right-back, bottom-left-back
+                top-left-front,    top-right-front,    top-right-back,    top-left-back
+
+                this format is what SECOND/PointRcnn save their results.
+                */
+               python_xyz_to_psr: function(text){
                     var _self = this;
             
                     var points_array = text.split('\n').filter(function(x){return x;}).map(function(x){return x.split(' ').map(function(x){return parseFloat(x);})})
@@ -261,6 +268,8 @@ var data = {
                         } else {
                             material.color.setHex(0xffffff );
                         }
+
+                        material.size = 0.1;
 
                         // build mesh
 

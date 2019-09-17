@@ -23,7 +23,7 @@ trnas_min_width: 1.0
 trim_fraction: 0.0
 
 # Nodes per dimension of distance transform
-dist_trans_size: 300
+dist_trans_size: 100
 
 # DistanceTransformWidth = ExpandFactor x WidthLargestDimension
 dist_trans_expand_factor: 2.0

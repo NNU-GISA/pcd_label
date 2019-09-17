@@ -30,8 +30,9 @@ canvas {
 	position: absolute;
 	top: 0px;
 	color: #ffff00;
-	width: 20%;
-	font-size: 8pt;
+	background-color: #2228;
+	width: inherit;
+	font-size: inherit;
 	padding: 0px;
 	box-sizing: border-box;
 	text-align: left;
@@ -40,7 +41,7 @@ canvas {
 	-ms-user-select: none;
 	user-select: none;
 	pointer-events: none;
-	z-index: 1; /* TODO Solve this in HTML */
+	z-index: 2; /* TODO Solve this in HTML */
 }
 
 
@@ -64,18 +65,11 @@ canvas {
 	z-index: 1; /* TODO Solve this in HTML */
 }
 
-#header-row {
-	position: absolute;
-	top:  0%;
-	left: 20%;
-	
-	display: block;
-}
 #maincanvas {
-	display: block;
-	float: left;
-	border: 1;
-	width: 40%;
+	position: absolute;
+	top: 0%;
+	left: 20%;
+	width: inherit;
 	height: 30%;
 	padding: 0px;
 	box-sizing: border-box;
@@ -91,9 +85,12 @@ canvas {
 
 
 #boxedit {
-	display: block;
-	display: inline;
-	float: left;
+	font-size: inherit;
+	position: absolute;
+    top: 0%;
+    left: 60%;
+    z-index: 1;
+    background-color: #333a;
 }
 
 #canvas {

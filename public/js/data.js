@@ -429,6 +429,7 @@ var data = {
                 mesh.position.z = z;
 
                 mesh.obj_track_id = "";  //tracking id
+                mesh.obj_type = "car";
                 mesh.obj_local_id =  this.get_new_box_local_id();
 
                 this.boxes.push(mesh);

@@ -8,6 +8,8 @@ from jinja2 import Environment, FileSystemLoader
 env = Environment(loader=FileSystemLoader('./'))
 
 
+extract_object_exe = "~/code/pcltest/build/extract_object"
+registration_exe = "~/code/go_icp_pcl/build/test_go_icp"
 
 
 class Root(object):
@@ -15,7 +17,12 @@ class Root(object):
     def index(self):
       tmpl = env.get_template('index.html')
       return tmpl.render()
-    
+
+    @cherrypy.expose
+    def reg(self):
+      tmpl = env.get_template('registration_demo.html')
+      return tmpl.render()
+
     @cherrypy.expose
     def save(self, scene, frame):
       cl = cherrypy.request.headers['Content-Length']
@@ -44,21 +51,23 @@ class Root(object):
       
       #os.chdir("./temp")
       os.system("rm ./temp/src.pcd ./temp/tgt.pcd ./temp/out.pcd ./temp/trans.json")
+
+
       tgt_pcd_file = "./public/data/"+scene +"/pcd/"+ref_frame+".pcd"
       tgt_json_file = "./public/data/"+scene +"/bbox.json/"+ref_frame+".bbox.json"
 
       src_pcd_file = "./public/data/"+scene +"/pcd/"+adj_frame+".pcd"      
       src_json_file = "./public/data/"+scene +"/bbox.json/"+adj_frame+".bbox.json"
 
-      cmd = "~/src/pcltest/build/extract_object "+ src_pcd_file + " " + src_json_file + " " + object_id + " " +"./temp/src.pcd"
+      cmd = extract_object_exe +" "+ src_pcd_file + " " + src_json_file + " " + object_id + " " +"./temp/src.pcd"
       print(cmd)
       os.system(cmd)
 
-      cmd = "~/src/pcltest/build/extract_object "+ tgt_pcd_file + " " + tgt_json_file + " " + object_id + " " +"./temp/tgt.pcd"
+      cmd = extract_object_exe + " "+ tgt_pcd_file + " " + tgt_json_file + " " + object_id + " " +"./temp/tgt.pcd"
       print(cmd)
       os.system(cmd)
 
-      cmd = "~/src/go_icp_pcl/build/test_go_icp ./temp/tgt.pcd ./temp/src.pcd ./temp/out.pcd ./temp/trans.json"
+      cmd = registration_exe + " ./temp/tgt.pcd ./temp/src.pcd ./temp/out.pcd ./temp/trans.json"
       print(cmd)
       os.system(cmd)
 

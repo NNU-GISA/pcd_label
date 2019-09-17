@@ -9,13 +9,15 @@
 	<body>
 		<div id="container"></div>
 		<div id="info">			
-			<div id="frame"></div>
-			<div id="box"></div>
+			<text id="frame"></text>
+			<text id="box"></text>
 		</div>
 		<div id="image"></div>
-		<div id="header-row">
-			<canvas id="maincanvas" width="960" height="540">maincavas</canvas>
-			<div id="boxedit">
+		<div id="header-row"></div>
+			<canvas id="maincanvas" width="960" height="540">maincavas</canvas>			
+		</div>
+		<div id="boxedit">
+			<div>
 				<text>Category</text>
 				<select id="object-category-selector">
 					<option value ="Car">Car</option>
@@ -25,6 +27,9 @@
 				</select>
 				<text>Track ID</text>
 				<input id="object-track_id_editor" type="text" size="15">
+			</div>
+			<div>
+				<text id='ref-obj'></text>
 			</div>
 		</div>
 		<canvas id="canvas" width="320" height="240">cavas</canvas>

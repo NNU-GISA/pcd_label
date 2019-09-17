@@ -16,7 +16,7 @@ function createFloatLabelManager(view) {
             }
         },
 
-        update_all_labels: function(){
+        update_all_position: function(){
             if (this.html_labels.children.length>0){
                 for (var c=0; c < this.html_labels.children.length; c++){
                     var element = this.html_labels.children[c];
@@ -50,6 +50,23 @@ function createFloatLabelManager(view) {
             label.update_text();
         },
 
+        update_position: function(box){
+            var label = document.getElementById("obj-local-"+box.obj_local_id);
+            
+            label.pos = box.position.clone();
+            label.pos.z += box.scale.z + 2;
+
+            var pos = this.toXYCoords(label.pos);
+            label.style.top = Math.round(pos.y) + 'px';
+            label.style.left = Math.round(pos.x) + 'px';
+            label.hidden = pos.out_view;
+        },
+
+        remove_box: function(box){
+            var label = document.getElementById("obj-local-"+box.obj_local_id);
+            label.remove();
+        },
+
         add_label: function(box){
             var label = document.createElement('div');
             label.className = "float-label";
@@ -59,7 +76,7 @@ function createFloatLabelManager(view) {
             //label.style.height = 100;
             //label.style.backgroundColor = "blue";
             
-            label.update_text = function(){this.innerHTML = this.obj_track_id + "-" + this.obj_type; }
+            label.update_text = function(){this.innerHTML = this.obj_type +"-"+ this.obj_track_id; }
             
             label.obj_type = box.obj_type;
             label.obj_local_id = box.obj_local_id;

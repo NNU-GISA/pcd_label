@@ -36,6 +36,8 @@ var g_pos;
 
 var floatLabelManager;
 
+var lock_obj_track_id;
+
 init();
 animate();
 render();
@@ -66,10 +68,11 @@ function init() {
     //matLine.resolution.set( window.innerWidth, window.innerHeight ); // resolution of the viewport
     
 
-    container = document.createElement( 'container' );
+    //container = document.createElement( 'container' );
+    container = document.getElementById("container");
     
 
-    document.body.appendChild( container );
+    //document.body.appendChild( container );
     container.appendChild( renderer.domElement );
 
     create_views(scene, renderer.domElement, render, on_box_changed);
@@ -85,14 +88,27 @@ function init() {
     window.addEventListener( 'resize', onWindowResize, false );
     window.addEventListener( 'keydown', keydown );
 
-    renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
-    renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
+    //renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
+    //renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
+    container.addEventListener( 'mousemove', onDocumentMouseMove, false );
+    container.addEventListener( 'mousedown', onDocumentMouseDown, false );
+    
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
  
     document.getElementById("object-category-selector").onchange = object_category_changed;
     document.getElementById("object-track_id_editor").onchange = object_track_id_changed;
-    document.getElementById("object-track_id_editor").addEventListener("keydown", function(e){e.stopPropagation();});
+    document.getElementById("object-track_id_editor").addEventListener("keydown", function(e){
+        e.stopPropagation();});
+    
+    document.getElementById("object-track_id_editor").addEventListener("keyup", function(e){
+        e.stopPropagation();
+
+        if (selected_box){
+            selected_box.obj_track_id = this.value;
+            floatLabelManager.set_object_track_id(selected_box.obj_local_id, selected_box.obj_track_id);
+        }
+    });
     //document.getElementById("header-row").addEventListener('mousedown', function(e){e.preventDefault();});
     //document.getElementById("header-row").addEventListener('mousemove', function(e){e.preventDefault();});
     
@@ -133,7 +149,7 @@ function render(){
         renderer.render( scene, camera );
     }   
 
-    floatLabelManager.update_all_labels();
+    floatLabelManager.update_all_position();
 }
 
 var marked_object = null;
@@ -144,72 +160,131 @@ function mark_bbox(){
         marked_object = {
             frame: data.world.file_info.frame,
             scene: data.world.file_info.scene,
-            object_id: selected_box.obj_track_id,
+            obj_type: selected_box.obj_type,
+            obj_track_id: selected_box.obj_track_id,
             position: selected_box.position,  //todo, copy x,y,z, not object
             scale: selected_box.scale,
             rotation: selected_box.rotation,
         }
 
         console.log(marked_object);
+
+        document.getElementById("ref-obj").innerHTML="Ref Obj: "+marked_object.scene+"/"+marked_object.frame+": "+marked_object.obj_type+"-"+marked_object.obj_track_id;
     }
+}
+
+function paste_bbox(){
+
+    var pos = marked_object.position;
+
+    var box = data.world.add_box(pos.x, pos.y, pos.z);
+
+    box.obj_track_id = marked_object.obj_track_id;
+    box.obj_type = marked_object.obj_type;
+
+
+    box.scale.x = marked_object.scale.x;
+    box.scale.y = marked_object.scale.y;
+    box.scale.z = marked_object.scale.z;
+
+    box.rotation.x = marked_object.rotation.x;
+    box.rotation.y = marked_object.rotation.y;
+    box.rotation.z = marked_object.rotation.z;
+
+
+    scene.add(box);
+
+    sideview_mesh=box;
+
+    floatLabelManager.add_label(box);
+    
+    select_bbox(box);
+    
+    return box;
+
+
+
+
 }
 
 function auto_adjust_bbox(){
 
-    console.log("auto adjust highlighted bbox");
+    save_annotation(function(){
+        do_adjust();
+    });
 
-    var xhr = new XMLHttpRequest();
-    // we defined the xhr
-    var _self = this;
-    xhr.onreadystatechange = function () {
-        if (this.readyState != 4) return;
-    
-        if (this.status == 200) {
-            console.log(this.responseText)
-            console.log(selected_box.position);
-            console.log(selected_box.rotation);
+    function do_adjust(){
+        console.log("auto adjust highlighted bbox");
+
+        var xhr = new XMLHttpRequest();
+        // we defined the xhr
+        var _self = this;
+        xhr.onreadystatechange = function () {
+            if (this.readyState != 4) return;
+        
+            if (this.status == 200) {
+                console.log(this.responseText)
+                console.log(selected_box.position);
+                console.log(selected_box.rotation);
 
 
-            var trans_mat = JSON.parse(this.responseText);
+                var trans_mat = JSON.parse(this.responseText);
 
-            var rotation = Math.atan2(trans_mat[4], trans_mat[0]);
-            
+                var rotation = Math.atan2(trans_mat[4], trans_mat[0]) + selected_box.rotation.z;
+                var transform = {
+                    x: -trans_mat[3],
+                    y: -trans_mat[7],
+                    z: -trans_mat[11],
+                }
 
-            selected_box.position.x += trans_mat[3];
-            selected_box.position.y += trans_mat[7];
-            selected_box.position.z += trans_mat[11];
-            
-            
+                
+                /*
+                cos  sin    x 
+                -sin cos    y 
+                */
+            var new_pos = {
+                x: Math.cos(-rotation) * transform.x + Math.sin(-rotation) * transform.y,
+                y: -Math.sin(-rotation) * transform.x + Math.cos(-rotation) * transform.y,
+                z: transform.z,
+            };
 
-            selected_box.scale.x = marked_object.scale.x;
-            selected_box.scale.y = marked_object.scale.y;
-            selected_box.scale.z = marked_object.scale.z;
 
-            selected_box.rotation.z -= rotation;
+                selected_box.position.x += new_pos.x;
+                selected_box.position.y += new_pos.y;
+                selected_box.position.z += new_pos.z;
+                
+                
 
-            console.log(selected_box.position);
-            console.log(selected_box.rotation);
+                selected_box.scale.x = marked_object.scale.x;
+                selected_box.scale.y = marked_object.scale.y;
+                selected_box.scale.z = marked_object.scale.z;
 
-            update_subview_by_bbox(selected_box);
-    
-            mark_changed_flag();
-        }
-    
-        // end of state change: it can be after some time (async)
-    };
-    
-    xhr.open('GET', 
-             "/auto_adjust"+"?scene="+marked_object.scene + "&"+
-                           "ref_frame=" + marked_object.frame + "&" +
-                           "object_id=" + marked_object.object_id + "&" +                           
-                           "adj_frame=" + data.world.file_info.frame, 
-             true);
-    xhr.send();
+                selected_box.rotation.z -= Math.atan2(trans_mat[4], trans_mat[0]);
+
+                console.log(selected_box.position);
+                console.log(selected_box.rotation);
+
+                update_subview_by_bbox(selected_box);
+        
+                mark_changed_flag();
+            }
+        
+            // end of state change: it can be after some time (async)
+        };
+        
+        xhr.open('GET', 
+                "/auto_adjust"+"?scene="+marked_object.scene + "&"+
+                            "ref_frame=" + marked_object.frame + "&" +
+                            "object_id=" + marked_object.obj_track_id + "&" +                           
+                            "adj_frame=" + data.world.file_info.frame, 
+                true);
+        xhr.send();
+    }
 
 
 }
 
-function save_annotation(){
+function save_annotation(done){
     var bbox_annotations=[];
     console.log(data.world.boxes.length, "boxes");
     data.world.boxes.forEach(function(b){
@@ -235,7 +310,7 @@ function save_annotation(){
             },
 
             obj_type: b.obj_type,
-            obj_id: b.obj_id,
+            obj_id: b.obj_track_id,
             vertices: vertices,
         };
 
@@ -246,8 +321,22 @@ function save_annotation(){
     var xhr = new XMLHttpRequest();
     xhr.open("POST", "/save" +"?scene="+data.world.file_info.scene+"&frame="+data.world.file_info.frame, true);
     xhr.setRequestHeader('Content-Type', 'application/json');
+
+    xhr.onreadystatechange = function () {
+        if (this.readyState != 4) return;
+    
+        if (this.status == 200) {
+            console.log("save annotation finished.");
+            if(done){
+                done();
+            }
+        }
+    
+        // end of state change: it can be after some time (async)
+    };
+
     var b = JSON.stringify(bbox_annotations);
-    console.log(b);
+    //console.log(b);
     xhr.send(b);
 
     // unmark changed flag
@@ -387,12 +476,13 @@ function play_current_scene_with_buffer(resume){
                     world, 
                     function(){//on load finished
                         //views[0].detach_control();
-                        unselect_bbox(null);
-                        unselect_bbox(null);
+                        unselect_bbox(null, true);
+                        unselect_bbox(null, true);
                         render();
                         render_2d_image();
                         render_2d_labels();
                         update_frame_info(scene_meta.scene, frame);
+                        select_locked_object();
                 });
            
                 var frame_index = scene_meta.frames.findIndex(function(x){return x == frame;});
@@ -468,6 +558,7 @@ function play_current_scene_without_buffer(){
 function init_gui(){
     var gui = new GUI();
 
+    // view
     var cfgFolder = gui.addFolder( 'View' );
 
     params["hide side views"] = false;    
@@ -507,18 +598,38 @@ function init_gui(){
     cfgFolder.add( params, "next frame");
 
 
+
+
+    //edit
     var editFolder = gui.addFolder( 'Edit' );
-    params['mark-bbox'] = function () {
+    params['select-ref-bbox'] = function () {
         mark_bbox();
     };
+    
     params['auto-adjust'] = function () {
         auto_adjust_bbox();
     };
+
+    params['paste'] = function () {
+        paste_bbox();
+    };
+
+    params['smart-paste'] = function () {
+        paste_bbox();
+        auto_adjust_bbox();
+        save_annotation();
+    };
+    
+    editFolder.add( params, 'select-ref-bbox');
+    editFolder.add( params, 'paste');
     editFolder.add( params, 'auto-adjust');
-    editFolder.add( params, 'mark-bbox');
+    editFolder.add( params, 'smart-paste');
 
 
 
+
+
+    //file
     var fileFolder = gui.addFolder( 'File' );
     params['save'] = function () {
         save_annotation();
@@ -554,9 +665,14 @@ function object_category_changed(event){
 }
 function object_track_id_changed(event){
     if (selected_box){
-        selected_box.obj_id = event.currentTarget.value;
-        floatLabelManager.set_object_track_id(selected_box.obj_local_id, selected_box.obj_id);
+        selected_box.obj_track_id = event.currentTarget.value;
+        floatLabelManager.set_object_track_id(selected_box.obj_local_id, selected_box.obj_track_id);
     }
+}
+
+function update_label_editor(obj_type, obj_track_id){
+    document.getElementById("object-category-selector").value = obj_type;
+    document.getElementById("object-track_id_editor").value = obj_track_id;
 }
 
 function update_subview_by_windowsize(){
@@ -688,8 +804,7 @@ function get_mouse_location_in_world(mouse){
 
 var mouse_right_down = false;
 
-function onDocumentMouseDown( event ) {
-
+function onDocumentMouseDown( event ) {    
     if (event.which==3){
         mouse_right_down = true;
     }
@@ -697,7 +812,7 @@ function onDocumentMouseDown( event ) {
         var array = getMousePosition( renderer.domElement, event.clientX, event.clientY );
         onDownPosition.fromArray( array );
     }
-    document.addEventListener( 'mouseup', onMouseUp, false );
+    this.addEventListener( 'mouseup', onMouseUp, false );
 
 }
 
@@ -713,7 +828,7 @@ function onMouseUp( event ) {
         handleClick();
     }
 
-    document.removeEventListener( 'mouseup', onMouseUp, false );
+    this.removeEventListener( 'mouseup', onMouseUp, false );
 
 }
 
@@ -773,8 +888,20 @@ function handleClick() {
 
 }
 
+
+function select_locked_object(){
+    if (lock_obj_track_id != ""){
+        var box = data.world.boxes.find(function(x){
+            return x.obj_track_id == lock_obj_track_id;
+        })
+
+        if (box)
+            select_bbox(box);
+    }
+}
+
 // new_object
-function unselect_bbox(new_object){
+function unselect_bbox(new_object, keep_lock){
 
     if (new_object==null){
         if (views[0].transform_control.visible)
@@ -787,10 +914,15 @@ function unselect_bbox(new_object){
                 selected_box.material.color.r=0;
                 selected_box.material.color.g=1;
                 selected_box.material.color.b=0;
+
+                
+
                 floatLabelManager.unselect_box(selected_box.obj_local_id);
             }
 
             
+            if (!keep_lock)
+                lock_obj_track_id = "";
 
             selected_box = null;
             on_selected_box_changed(null);
@@ -799,6 +931,8 @@ function unselect_bbox(new_object){
     else{
         //unselect all
         views[0].transform_control.detach();
+
+        
         if (selected_box){
             selected_box.material.color.r=0;
             selected_box.material.color.g=1;
@@ -807,6 +941,10 @@ function unselect_bbox(new_object){
         }
         
         selected_box = null;
+        
+        if (!keep_lock)
+                lock_obj_track_id = "";
+
         on_selected_box_changed(null);
 
     }
@@ -825,8 +963,11 @@ function select_bbox(object){
 
         // select me, the first time
         selected_box = object;
-        
+        lock_obj_track_id = object.obj_track_id;
+
         floatLabelManager.select_box(selected_box.obj_local_id);
+        update_label_editor(object.obj_type, object.obj_track_id);
+
         selected_box.material.color.r=1;
         selected_box.material.color.g=0;
         selected_box.material.color.b=1;
@@ -922,6 +1063,7 @@ function add_bbox(){
     
     select_bbox(box);
     
+    return box;
 }
 
 // axix, xyz, action: scale, move, direction, up/down
@@ -996,8 +1138,7 @@ function transform_bbox(command){
 
     }
 
-    update_subview_by_bbox(selected_box);
-    
+    update_subview_by_bbox(selected_box);    
     mark_changed_flag();
 }
 
@@ -1270,12 +1411,14 @@ function load_world(scene_name, frame){
         world, 
         function(){
             //views[0].detach_control();
-            unselect_bbox(null);
-            unselect_bbox(null);
+            unselect_bbox(null, true);
+            unselect_bbox(null, true);
             render();
             render_2d_image();
             render_2d_labels();
             update_frame_info(scene_name, frame);
+
+            select_locked_object();
         }
     );
 }
@@ -1296,17 +1439,17 @@ function next_frame(){
 
 function remove_selected_box(){
     if (selected_box){
-        var targt_box = selected_box;
+        var target_box = selected_box;
         unselect_bbox(null);
         unselect_bbox(null); //twice to safely unselect.
         //transform_control.detach();
 
-
-        scene.remove(targt_box);
-        targt_box.geometry.dispose();
-        targt_box.material.dispose();
+        floatLabelManager.remove_box(target_box);
+        scene.remove(target_box);        
+        target_box.geometry.dispose();
+        target_box.material.dispose();
         //selected_box.dispose();
-        data.world.boxes = data.world.boxes.filter(function(x){return x !=targt_box;});
+        data.world.boxes = data.world.boxes.filter(function(x){return x !=target_box;});
         selected_box = null;
         sideview_mesh = null;
 
@@ -1363,6 +1506,7 @@ function on_selected_box_changed(box){
         
         update_box_info(box);
         update_image_box_projection(box)
+        floatLabelManager.update_position(box);
 
     } else {
         clear_box_info();
@@ -1385,7 +1529,7 @@ function update_box_info(box){
     // document.getElementById("info").innerHTML = "w "+scale.x.toFixed(2) +" l "+scale.y.toFixed(2) + " h " + scale.z.toFixed(2) +
     //                                              " x "+pos.x.toFixed(2) +" y "+pos.y.toFixed(2) + " z " + pos.z.toFixed(2);
 
-    document.getElementById("box").innerHTML = pos.x.toFixed(2) +" "+pos.y.toFixed(2) + " " + pos.z.toFixed(2) + " | "+
+    document.getElementById("box").innerHTML = "| "+pos.x.toFixed(2) +" "+pos.y.toFixed(2) + " " + pos.z.toFixed(2) + " | "+
                                                 scale.x.toFixed(2) +" "+scale.y.toFixed(2) + " " + scale.z.toFixed(2) + " | " + 
                                                 (rotation.z*180/Math.PI).toFixed(2);
 }

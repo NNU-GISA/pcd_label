@@ -3,10 +3,14 @@ function createFloatLabelManager(view) {
     var manager = 
     {
         view : view,  //access camera by view, since camera is dynamic
-
+        enabled: true,
         html_labels: document.getElementById("2Dlabels"),
 
         remove_all_labels: function(){
+            if (!this.enabled)
+                return;
+                
+
             var _self = this;
 
             if (this.html_labels.children.length>0){
@@ -17,6 +21,9 @@ function createFloatLabelManager(view) {
         },
 
         update_all_position: function(){
+            if (!this.enabled)
+                return;
+
             if (this.html_labels.children.length>0){
                 for (var c=0; c < this.html_labels.children.length; c++){
                     var element = this.html_labels.children[c];
@@ -30,14 +37,23 @@ function createFloatLabelManager(view) {
             }
         },
         select_box: function(local_id){
+            if (!this.enabled)
+                return;
+                
             document.getElementById("obj-local-"+local_id).className = "selected-float-label";
         },
 
         unselect_box: function(local_id){
+            if (!this.enabled)
+                return;
+                
             document.getElementById("obj-local-"+local_id).className = "float-label";
         },
 
         set_object_type: function(local_id, obj_type){
+            if (!this.enabled)
+                return;
+                
             var label = document.getElementById("obj-local-"+local_id);
             label.obj_type = obj_type;
             label.update_text();
@@ -45,12 +61,18 @@ function createFloatLabelManager(view) {
 
         
         set_object_track_id: function(local_id, track_id){
+            if (!this.enabled)
+                return;
+                
             var label = document.getElementById("obj-local-"+local_id);
             label.obj_track_id = track_id;
             label.update_text();
         },
 
         update_position: function(box){
+            if (!this.enabled)
+                return;
+                
             var label = document.getElementById("obj-local-"+box.obj_local_id);
             
             label.pos = box.position.clone();
@@ -63,11 +85,17 @@ function createFloatLabelManager(view) {
         },
 
         remove_box: function(box){
+            if (!this.enabled)
+                return;
+                
             var label = document.getElementById("obj-local-"+box.obj_local_id);
             label.remove();
         },
 
         add_label: function(box){
+            if (!this.enabled)
+                return;
+                
             var label = document.createElement('div');
             label.className = "float-label";
             label.id = "obj-local-"+box.obj_local_id;

@@ -35,15 +35,16 @@ canvas {
 	font-size: inherit;
 	padding: 0px;
 	box-sizing: border-box;
-	text-align: left;
-	-moz-user-select: none;
-	-webkit-user-select: none;
-	-ms-user-select: none;
-	user-select: none;
-	pointer-events: none;
+	text-align: left;	
 	z-index: 2; /* TODO Solve this in HTML */
 }
 
+#object-category-selector, #object-track_id_editor
+{
+	background-color: inherit;
+	color: inherit;
+	border-width: 0;
+}
 
 #image {
 	display: none;

@@ -11,27 +11,18 @@
 		<div id="info">			
 			<text id="frame"></text>
 			<text id="box"></text>
-		</div>
-		<div id="image"></div>
-		<div id="header-row"></div>
-			<canvas id="maincanvas" width="960" height="540">maincavas</canvas>			
-		</div>
-		<div id="boxedit">
-			<div>
-				<text>Category</text>
-				<select id="object-category-selector">
+			<select id="object-category-selector" hidden>
 					<option value ="Car">Car</option>
 					<option value ="Bus">Bus</option>
 					<option value="Pedestrian">Pedestrian</option>
 					<option value="Rider">Rider</option>
-				</select>
-				<text>Track ID</text>
-				<input id="object-track_id_editor" type="text" size="15">
-			</div>
-			<div>
-				<text id='ref-obj'></text>
-			</div>
+			</select>
+			<input id="object-track_id_editor" type="text" size="5" hidden></input>
+			<text id="ref-obj"></text>
 		</div>
+		<div id="image"></div>
+		<canvas id="maincanvas" width="960" height="540">maincavas</canvas>
+		
 		<canvas id="canvas" width="320" height="240">cavas</canvas>
 		<div id="2Dlabels"></div>
 		<script type="module"  src="/static/js/main.js"></script>		

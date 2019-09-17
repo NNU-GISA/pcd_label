@@ -169,7 +169,7 @@ function mark_bbox(){
 
         console.log(marked_object);
 
-        document.getElementById("ref-obj").innerHTML="Ref Obj: "+marked_object.scene+"/"+marked_object.frame+": "+marked_object.obj_type+"-"+marked_object.obj_track_id;
+        document.getElementById("ref-obj").innerHTML="| BoxRef: "+marked_object.scene+"/"+marked_object.frame+": "+marked_object.obj_type+"-"+marked_object.obj_track_id;
     }
 }
 
@@ -1518,7 +1518,9 @@ function on_selected_box_changed(box){
 
 function clear_box_info(){
     document.getElementById("box").innerHTML = '';
-
+    document.getElementById("object-category-selector").hidden=true;
+    document.getElementById("object-track_id_editor").hidden=true;
+    //document.getElementById("ref-obj").hidden=true;
 }
 
 function update_box_info(box){
@@ -1530,8 +1532,11 @@ function update_box_info(box){
     //                                              " x "+pos.x.toFixed(2) +" y "+pos.y.toFixed(2) + " z " + pos.z.toFixed(2);
 
     document.getElementById("box").innerHTML = "| "+pos.x.toFixed(2) +" "+pos.y.toFixed(2) + " " + pos.z.toFixed(2) + " | "+
-                                                scale.x.toFixed(2) +" "+scale.y.toFixed(2) + " " + scale.z.toFixed(2) + " | " + 
-                                                (rotation.z*180/Math.PI).toFixed(2);
+                                                scale.x.toFixed(2) +" "+scale.y.toFixed(2) + " " + scale.z.toFixed(2) + 
+                                                (rotation.z*180/Math.PI).toFixed(2) + " | ";
+
+    document.getElementById("object-category-selector").hidden=false;
+    document.getElementById("object-track_id_editor").hidden=false;
 }
 
 function render_2d_labels(){

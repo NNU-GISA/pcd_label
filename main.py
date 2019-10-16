@@ -17,12 +17,22 @@ class Root(object):
     def index(self):
       tmpl = env.get_template('index.html')
       return tmpl.render()
-
+  
+    @cherrypy.expose
+    def ml(self):
+      tmpl = env.get_template('test_ml.html')
+      return tmpl.render()
+  
     @cherrypy.expose
     def reg(self):
       tmpl = env.get_template('registration_demo.html')
       return tmpl.render()
 
+    @cherrypy.expose
+    def view(self, file):
+      tmpl = env.get_template('view.html')
+      return tmpl.render()
+          
     @cherrypy.expose
     def save(self, scene, frame):
       cl = cherrypy.request.headers['Content-Length']
@@ -92,6 +102,10 @@ class Root(object):
           "frames": []
         }
 
+        if os.path.exists(os.path.join("public/data", s, "disable")):
+          print(s, "disabled")
+          continue
+        
         data.append(scene)
 
         frames = os.listdir("public/data/"+s+"/pcd")
@@ -109,11 +123,14 @@ class Root(object):
             point_transform_matrix=f.read()
             point_transform_matrix = point_transform_matrix.split(",")
 
+        def strip_str(x):
+          return x.strip()
+
         calib={}
         if os.path.isfile("public/data/"+s+"/calib.txt"):
           with open("public/data/"+s+"/calib.txt")  as f:
             lines = f.readlines()
-            calib["extrinsic"] = lines[0].strip().split(",")
+            calib["extrinsic"] = map(strip_str, lines[0].strip().split(","))
             calib["intrinsic"] = lines[1].strip().split(",")            
 
         if not os.path.isdir("public/data/"+s+"/bbox.xyz"):

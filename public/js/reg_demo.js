@@ -13,6 +13,7 @@ var params = {
     src: true,
     tgt: true,
     out: true,
+    reload: load_all,
 };
 
 var last_cloud_ind = {
@@ -67,13 +68,38 @@ function init() {
     onWindowResize();
     window.addEventListener( 'resize', onWindowResize, false );
     
+    load_all();
+    
+    render();
+    
+}
+
+function load_all(){
+
+    clearAll();
     load_pcd("src", "/temp/src.pcd", 0xff0000);
     load_pcd("tgt", "/temp/tgt.pcd", 0x00ff00);
     load_pcd("out", "/temp/out.pcd", 0xffff00);
     load_transform_matrix();
+}
 
-    render();
+function clearAll(){
     
+    remove(clouds["src"]);
+    remove(clouds["tgt"]);
+    remove(clouds["out"]);
+
+    clouds["src"] = null;
+    clouds["tgt"] = null;
+    clouds["our"] = null;
+
+    function remove(p){
+        if (p){
+            scene.remove(p);
+            p.geometry.dispose();
+            p.material.dispose();
+        }
+    }
 }
 
 
@@ -179,7 +205,9 @@ function load_pcd(name, file, overall_color){
             mesh.name = "pcd";
 
             //return mesh;
-            scene.add( mesh );
+            if (params[name])
+                scene.add(mesh);
+
             clouds[name] = mesh;
             //var center = points.geometry.boundingSphere.center;
             //controls.target.set( center.x, center.y, center.z );
@@ -200,6 +228,7 @@ function init_gui(){
     cfgFolder.add( params, "src");
     cfgFolder.add( params, "tgt");
     cfgFolder.add( params, "out");
+    cfgFolder.add( params, "reload");
     cfgFolder.open();
     gui.open();
 }

@@ -24,12 +24,15 @@ function matmul(m, x, vl)  //vl is vector length
 // note the vertices order cannot be changed, draw-box-on-image assumes
 //  the first 4 vertex is the front plane, so it knows box direction.
 function psr_to_xyz(p,s,r){
+    /*
     var trans_matrix=[
         Math.cos(r.z), -Math.sin(r.z), 0, p.x,
         Math.sin(r.z), Math.cos(r.z),  0, p.y,
         0,             0,              1, p.z,
         0,             0,              0, 1,
     ];
+    */
+   var trans_matrix = euler_angle_to_rotate_matrix(r, p);
 
     var x=s.x/2;
     var y=s.y/2;
@@ -110,4 +113,105 @@ function vector3_nomalize(m){
 }
 
 
-export {vector4to3, vector3_nomalize, psr_to_xyz, matmul}
+
+function mat(m, s, x, y){
+    return m[x*s+y];
+}
+
+function euler_angle_to_rotate_matrix(eu, tr){
+    var theta = [eu.x, eu.y, eu.z];
+    // Calculate rotation about x axis
+    var R_x = [
+        1,       0,              0,
+        0,       Math.cos(theta[0]),   -Math.sin(theta[0]),
+        0,       Math.sin(theta[0]),   Math.cos(theta[0])
+    ];
+
+    // Calculate rotation about y axis
+    var R_y = [
+        Math.cos(theta[1]),      0,      Math.sin(theta[1]),
+        0,                       1,      0,
+        -Math.sin(theta[1]),     0,      Math.cos(theta[1])
+    ];
+
+    // Calculate rotation about z axis
+    var R_z = [
+        Math.cos(theta[2]),    -Math.sin(theta[2]),      0,
+        Math.sin(theta[2]),    Math.cos(theta[2]),       0,
+        0,               0,                  1];
+
+
+    console.log(R_x, R_y, R_z);
+
+    // Combined rotation matrix
+    var R = matmul(matmul(R_z, R_y, 3), R_x,3);
+    
+    return [
+        mat(R,3,0,0), mat(R,3,0,1), mat(R,3,0,2), tr.x,
+        mat(R,3,1,0), mat(R,3,1,1), mat(R,3,1,2), tr.y,
+        mat(R,3,2,0), mat(R,3,2,1), mat(R,3,2,2), tr.z,
+        0,          0,          0,          1,
+    ];
+}
+
+
+
+function rotation_matrix_to_euler_angle(m){ //m is 4* 4
+
+    /*
+
+    var sy = Math.sqrt(mat(m,4,0,0) * mat(m,4,0,0) +  mat(m,4,1,0) * mat(m,4, 1,0));
+ 
+
+    var z = Math.atan2(mat(m,4,2,1) , mat(m,4,2,2));
+    var y = Math.atan2(-mat(m,4,2,0), sy);
+    var x = Math.atan2(mat(m,4,1,0), mat(m,4,0,0));
+
+
+    return {
+        x: x,
+        y: y,
+        z: z,
+    };
+    */
+   var odd = false;
+   var res = [0,0,0];
+   var i=0,j=1,k=2;
+   
+   function coeff(x,y){return mat(m,4,x,y); }
+
+   function atan2(x,y) { return Math.atan2(x,y);}
+   var sin = Math.sin;
+   var cos = Math.cos;
+   function Scalar(x){return x;}
+
+   res[0] = atan2(coeff(j,k), coeff(k,k));
+   //var c2 = Vector2(coeff(i,i), coeff(i,j)).norm();
+   var c2 = Math.sqrt(coeff(i,i)*coeff(i,i) + coeff(i,j)*coeff(i,j));
+   if((odd && res[0]<Scalar(0)) || ((!odd) && res[0]>Scalar(0))) {
+     if(res[0] > Scalar(0)) {
+       res[0] -= Scalar(Math.PI);
+     }
+     else {
+       res[0] += Scalar(Math.PI);
+     }
+     res[1] = atan2(-coeff(i,k), -c2);
+   }
+   else
+     res[1] = atan2(-coeff(i,k), c2);
+   var s1 = sin(res[0]);
+   var c1 = cos(res[0]);
+   res[2] = atan2(s1*coeff(k,i)-c1*coeff(j,i), c1*coeff(j,j) - s1 * coeff(k,j));
+
+   if (!odd)
+      res = res.map(function(x){return -x;})
+
+   return {
+       x: res[0],
+       y: res[1],
+       z: res[2],
+   }
+}
+
+
+export {vector4to3, vector3_nomalize, psr_to_xyz, matmul, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle}

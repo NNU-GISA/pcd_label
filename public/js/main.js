@@ -10,7 +10,8 @@ import { GUI } from './lib/dat.gui.module.js';
 import {data} from './data.js'
 import {create_views, views} from "./view.js"
 import {createFloatLabelManager} from "./floatlabel.js"
-import {vector4to3, vector3_nomalize, psr_to_xyz, matmul} from "./util.js"
+import {vector4to3, vector3_nomalize, psr_to_xyz, matmul, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle} from "./util.js"
+import {header} from "./header.js"
 
 var container;
 
@@ -81,7 +82,7 @@ function init() {
 
     init_gui();
 
-    scene.add( new THREE.AxesHelper( 2 ) );
+    scene.add( new THREE.AxesHelper( 1 ) );
 
     onWindowResize();
 
@@ -169,13 +170,14 @@ function mark_bbox(){
 
         console.log(marked_object);
 
-        document.getElementById("ref-obj").innerHTML="| BoxRef: "+marked_object.scene+"/"+marked_object.frame+": "+marked_object.obj_type+"-"+marked_object.obj_track_id;
+        header.set_ref_obj(marked_object);
     }
 }
 
-function paste_bbox(){
+function paste_bbox(pos){
 
-    var pos = marked_object.position;
+    if (!pos)
+       pos = marked_object.position;
 
     var box = data.world.add_box(pos.x, pos.y, pos.z);
 
@@ -201,13 +203,9 @@ function paste_bbox(){
     select_bbox(box);
     
     return box;
-
-
-
-
 }
 
-function auto_adjust_bbox(){
+function auto_adjust_bbox(done){
 
     save_annotation(function(){
         do_adjust();
@@ -242,11 +240,11 @@ function auto_adjust_bbox(){
                 cos  sin    x 
                 -sin cos    y 
                 */
-            var new_pos = {
-                x: Math.cos(-rotation) * transform.x + Math.sin(-rotation) * transform.y,
-                y: -Math.sin(-rotation) * transform.x + Math.cos(-rotation) * transform.y,
-                z: transform.z,
-            };
+                var new_pos = {
+                    x: Math.cos(-rotation) * transform.x + Math.sin(-rotation) * transform.y,
+                    y: -Math.sin(-rotation) * transform.x + Math.cos(-rotation) * transform.y,
+                    z: transform.z,
+                };
 
 
                 selected_box.position.x += new_pos.x;
@@ -267,6 +265,10 @@ function auto_adjust_bbox(){
                 update_subview_by_bbox(selected_box);
         
                 mark_changed_flag();
+
+                if (done){
+                    done();
+                }
             }
         
             // end of state change: it can be after some time (async)
@@ -467,10 +469,8 @@ function play_current_scene_with_buffer(resume){
         if (!stop_play_flag && !pause_play_flag)
         {
             var world = data.future_world_buffer.find(function(w){return w.file_info.frame == frame; });
-            
-            var next_frame = frame;
 
-            if (world)  //found
+            if (world)  //found, data ready
             {
                 data.activate_world(scene,  //this is webgl scene
                     world, 
@@ -483,28 +483,40 @@ function play_current_scene_with_buffer(resume){
                         render_2d_labels();
                         update_frame_info(scene_meta.scene, frame);
                         select_locked_object();
+
+                        next_frame();
+                        
+                        function next_frame(){
+                            var frame_index = scene_meta.frames.findIndex(function(x){return x == frame;});
+                            if (frame_index+1 < scene_meta.frames.length)
+                            {
+                                var next_frame = scene_meta.frames[frame_index+1];
+                                setTimeout(
+                                    function(){                    
+                                        play_frame(scene_meta, next_frame);
+                                    }, 
+                                    100);
+                            } 
+                            else{
+                                stop_play_flag = true;
+                                pause_play_flag = false;
+                            }
+                        }
                 });
            
-                var frame_index = scene_meta.frames.findIndex(function(x){return x == frame;});
-                if (frame_index+1 < scene_meta.frames.length)
-                {
-                    next_frame = scene_meta.frames[frame_index+1];
-                } 
-                else{
-                    stop_play_flag = true;
-                    pause_play_flag = false;
-                }
             }
             else{
                 //not ready.
                 console.log("wait buffer!", frame);   
+
+                setTimeout(
+                    function(){                    
+                        play_frame(scene_meta, frame);
+                    }, 
+                    100);
             } 
             
-            setTimeout(
-                function(){                    
-                    play_frame(scene_meta, next_frame);
-                }, 
-                100);
+            
         }
     };
 }
@@ -615,9 +627,12 @@ function init_gui(){
     };
 
     params['smart-paste'] = function () {
-        paste_bbox();
-        auto_adjust_bbox();
-        save_annotation();
+        if (!selected_box)
+            paste_bbox();
+        auto_adjust_bbox(function(){
+            save_annotation();
+        });
+        
     };
     
     editFolder.add( params, 'select-ref-bbox');
@@ -626,8 +641,42 @@ function init_gui(){
     editFolder.add( params, 'smart-paste');
 
 
+     //calibrate
+     var calibrateFolder = gui.addFolder( 'Calibrate' );
+     params['save cal'] = function () {
+         save_calibration();
+     };
+     calibrateFolder.add( params, 'save cal');
+ 
+     params['reset cal'] = function () {
+        reset_calibration();
+    };
 
+    calibrateFolder.add(params, 'reset cal');
 
+     [
+         {name: "x", v: 0.002},
+         {name: "x", v: -0.002},
+         {name: "y", v: 0.002},
+         {name: "y", v: -0.002},
+         {name: "z", v: 0.002},
+         {name: "z", v: -0.002},
+         
+         {name: "tx", v: 0.005},
+         {name: "tx", v: -0.005},
+         {name: "ty", v: 0.005},
+         {name: "ty", v: -0.005},
+         {name: "tz", v: 0.005},
+         {name: "tz", v: -0.005},
+     ].forEach(function(x){
+         var item_name= x.name+","+x.v;
+        params[item_name] = function () {
+            calibrate(x.name, x.v);
+         };
+         calibrateFolder.add(params, item_name);
+     });
+
+     
 
     //file
     var fileFolder = gui.addFolder( 'File' );
@@ -896,7 +945,7 @@ function select_locked_object(){
         })
 
         if (box)
-            select_bbox(box);
+            select_bbox(box);            
     }
 }
 
@@ -1046,6 +1095,8 @@ function add_raw_boxes(boxes){
         scene.add(box);
     });
 }
+
+
 
 function add_bbox(){
 
@@ -1215,6 +1266,11 @@ function keydown( ev ) {
 
         case 'v':
             change_transform_control_view();
+            break;
+        case 'm':
+        case 'M':
+            paste_bbox(get_mouse_location_in_world(mouse));
+            mark_changed_flag();
             break;
         case 'N':    
         case 'n':
@@ -1461,9 +1517,11 @@ function clear(){
     //remove boxinfo
     //remove frameinfo
     //remove image
-    clear_box_info();
+    header.clear_box_info();
     document.getElementById("image").innerHTML = '';
-    document.getElementById("frame").innerHTML = '';
+    
+    header.clear_frame_info();
+
     clear_image_box_projection();
 
 
@@ -1475,7 +1533,7 @@ function clear(){
 
 
 function update_frame_info(scene, frame){
-    document.getElementById("frame").innerHTML = scene+"/"+frame;
+    header.set_frame_info(scene, frame);
 
     if (params["hide image"]){
         document.getElementById("image").innerHTML = '';
@@ -1504,40 +1562,18 @@ function on_selected_box_changed(box){
 
     if (box){
         
-        update_box_info(box);
+        header.update_box_info(box);
         update_image_box_projection(box)
         floatLabelManager.update_position(box);
 
     } else {
-        clear_box_info();
+        header.clear_box_info();
         clear_image_box_projection();
     }
 
     render_2d_image();
 }
 
-function clear_box_info(){
-    document.getElementById("box").innerHTML = '';
-    document.getElementById("object-category-selector").hidden=true;
-    document.getElementById("object-track_id_editor").hidden=true;
-    //document.getElementById("ref-obj").hidden=true;
-}
-
-function update_box_info(box){
-    var scale = box.scale;
-    var pos = box.position;
-    var rotation = box.rotation;
-
-    // document.getElementById("info").innerHTML = "w "+scale.x.toFixed(2) +" l "+scale.y.toFixed(2) + " h " + scale.z.toFixed(2) +
-    //                                              " x "+pos.x.toFixed(2) +" y "+pos.y.toFixed(2) + " z " + pos.z.toFixed(2);
-
-    document.getElementById("box").innerHTML = "| "+pos.x.toFixed(2) +" "+pos.y.toFixed(2) + " " + pos.z.toFixed(2) + " | "+
-                                                scale.x.toFixed(2) +" "+scale.y.toFixed(2) + " " + scale.z.toFixed(2) + 
-                                                (rotation.z*180/Math.PI).toFixed(2) + " | ";
-
-    document.getElementById("object-category-selector").hidden=false;
-    document.getElementById("object-track_id_editor").hidden=false;
-}
 
 function render_2d_labels(){
     floatLabelManager.remove_all_labels();
@@ -1692,7 +1728,7 @@ function update_image_box_projection(box){
         var rotation = box.rotation;
 
         var img = data.world.image; //document.getElementById("camera");
-        if (img){
+        if (img.naturalWidth > 0){
 
             clear_image_box_projection();
 
@@ -1772,4 +1808,75 @@ function vectorsub(vs, v){
     }
 
     return ret;
+}
+
+
+
+var euler_angle={x:0, y:0, y:0};
+var translate = {x:0, y:0, z:0};
+
+function save_calibration(){
+    var scene_meta = data.meta.find(function(x){return x.scene==data.world.file_info.scene;});
+    var extrinsic = scene_meta.calib.extrinsic.map(function(x){return x*1.0;});
+
+    euler_angle = rotation_matrix_to_euler_angle(extrinsic);
+    translate = {
+        x: extrinsic[3]*1.0,
+        y: extrinsic[7]*1.0,
+        z: extrinsic[11]*1.0,
+    };
+
+
+    console.log(extrinsic, euler_angle, translate);
+
+    console.log("restoreed matrix", euler_angle_to_rotate_matrix(euler_angle, translate));
+
+}
+
+function reset_calibration(){
+    var scene_meta = data.meta.find(function(x){return x.scene==data.world.file_info.scene;});
+    scene_meta.calib.extrinsic = euler_angle_to_rotate_matrix(euler_angle, translate);
+    render_2d_image();
+
+    if (selected_box)
+        update_image_box_projection(selected_box);
+}
+
+
+function calibrate(ax, value){
+    var scene_meta = data.meta.find(function(x){return x.scene==data.world.file_info.scene;});
+    var extrinsic = scene_meta.calib.extrinsic.map(function(x){return x*1.0;});
+
+    var euler_angle = rotation_matrix_to_euler_angle(extrinsic);
+    var translate = {
+        x: extrinsic[3]*1.0,
+        y: extrinsic[7]*1.0,
+        z: extrinsic[11]*1.0,
+    };
+
+    if (ax == 'z'){
+        euler_angle.z += value;
+    }else if (ax == 'x'){
+        euler_angle.x += value;
+    }
+    else if (ax == 'y'){
+        euler_angle.y += value;
+    }else if (ax == 'tz'){
+        translate.z += value;
+    }else if (ax == 'tx'){
+        translate.x += value;
+    }
+    else if (ax == 'ty'){
+        translate.y += value;
+    }
+
+    scene_meta.calib.extrinsic = euler_angle_to_rotate_matrix(euler_angle, translate);
+
+    console.log("extrinsic", scene_meta.calib.extrinsic)
+    console.log("euler", euler_angle, "translate", translate);    
+
+    render_2d_image();
+
+    if (selected_box)
+        update_image_box_projection(selected_box);
 }

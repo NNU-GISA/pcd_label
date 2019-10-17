@@ -798,7 +798,11 @@ function update_subview_by_bbox(mesh){
     //
 
     views[1].camera.rotation.z= r.z;
-    views[2].camera.rotation.y= Math.PI-r.z;
+    
+    views[2].camera.rotation.x= Math.PI/2;
+    views[2].camera.rotation.y= r.z;
+
+    views[3].camera.rotation.x= Math.PI/2;
     views[3].camera.rotation.y= Math.PI/2 + r.z;
 
     for (var i=1; i<views.length; ++i){

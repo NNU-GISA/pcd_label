@@ -281,6 +281,14 @@ function create_rear_view(scene){
         camera.position.y = 0;
         camera.up.set( 0, 0, 1);
         camera.lookAt( 0, -3, 0 );
+
+        //camera.up.set( 0, 1, 0);
+        //camera.lookAt( 0, 0, -3 );
+
+        camera.rotation.x=Math.PI/2;
+        camera.rotation.y=0;
+        camera.rotation.z=0;
+
         view.camera = camera;
 }
 
@@ -303,6 +311,11 @@ function create_side_view(scene){
     camera.position.y = 0;
     camera.up.set( 0, 0, 1);
     camera.lookAt( -3, 0, 0 );
+
+    camera.rotation.x=Math.PI/2;
+    camera.rotation.y=Math.PI/2;
+    camera.rotation.z=0;
+
     view.camera = camera;
 }
 

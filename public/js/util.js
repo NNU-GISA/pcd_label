@@ -141,7 +141,7 @@ function euler_angle_to_rotate_matrix(eu, tr){
         0,               0,                  1];
 
 
-    console.log(R_x, R_y, R_z);
+    //console.log(R_x, R_y, R_z);
 
     // Combined rotation matrix
     var R = matmul(matmul(R_z, R_y, 3), R_x,3);

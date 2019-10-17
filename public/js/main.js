@@ -10,7 +10,7 @@ import { GUI } from './lib/dat.gui.module.js';
 import {data} from './data.js'
 import {create_views, views} from "./view.js"
 import {createFloatLabelManager} from "./floatlabel.js"
-import {vector4to3, vector3_nomalize, psr_to_xyz, matmul, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle} from "./util.js"
+import {vector4to3, vector3_nomalize, psr_to_xyz, matmul, matmul2, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle} from "./util.js"
 import {header} from "./header.js"
 
 var container;
@@ -792,26 +792,67 @@ function update_subview_by_windowsize(){
 function update_subview_by_bbox(mesh){
     var p = mesh.position;
     var r = mesh.rotation;
-
+    console.log(r);
     sideview_mesh = mesh;
 
     //
-
+    views[1].camera.rotation.x= r.x;
+    views[1].camera.rotation.y= r.y;
     views[1].camera.rotation.z= r.z;
+
+    views[1].camera.position.x= p.x;
+    views[1].camera.position.y= p.y;
+    views[1].camera.position.z= p.z;
+    views[1].camera.updateProjectionMatrix();
+    views[1].cameraHelper.update(); 
     
-    views[2].camera.rotation.x= Math.PI/2;
-    views[2].camera.rotation.y= r.z;
 
-    views[3].camera.rotation.x= Math.PI/2;
-    views[3].camera.rotation.y= Math.PI/2 + r.z;
+    var trans_matrix = euler_angle_to_rotate_matrix(r, p);
+    //var rotate_x = euler_angle_to_rotate_matrix({x:Math.PI/2, y:0, z:0}, {x:0, y:0, z:0});
+    //trans_matrix = matmul2(rotate_x, trans_matrix, 4);
+    //var rotation_angle = rotation_matrix_to_euler_angle(trans_matrix)
+    //var lookat2 = matmul(trans_matrix, [0, -1, 0, 1, 0, 0, 1, 1], 4);
+    //views[2].camera.rotation.x= rotation_angle.x; //+Math.PI/2;
+    //views[2].camera.rotation.y= rotation_angle.y;
+    //views[2].camera.rotation.z= rotation_angle.z;
+    //views[2].camera.updateProjectionMatrix();
 
-    for (var i=1; i<views.length; ++i){
-        views[i].camera.position.x= p.x;
-        views[i].camera.position.y= p.y;
-        views[i].camera.position.z= p.z;
-        views[i].camera.updateProjectionMatrix();
-        views[i].cameraHelper.update();        
-    }
+    views[2].camera.position.x= p.x;
+    views[2].camera.position.y= p.y;
+    views[2].camera.position.z= p.z;
+
+    var up = matmul2(trans_matrix, [0, 0, 1, 0], 4);
+    views[2].camera.up.set( up[0], up[1], up[2]);
+    var at = matmul2(trans_matrix, [0, 1, 0, 1], 4);
+    views[2].camera.lookAt( at[0], at[1], at[2] );
+    
+    //views[2].camera.up.set(lookat2[4], lookat2[5], lookat2[6]);
+    //views[2].camera.lookAt(lookat2[0], lookat2[1], lookat2[2]);
+
+
+    
+    
+    views[2].camera.updateProjectionMatrix();
+    views[2].cameraHelper.update();
+    
+
+    views[3].camera.position.x= p.x;
+    views[3].camera.position.y= p.y;
+    views[3].camera.position.z= p.z;
+
+    var up3 = matmul2(trans_matrix, [0, 0, 1, 0], 4);
+    views[3].camera.up.set( up3[0], up3[1], up3[2]);
+    var at3 = matmul2(trans_matrix, [-1, 0, 0, 1], 4);
+    views[3].camera.lookAt( at3[0], at3[1], at3[2] );
+    
+
+    //views[3].camera.rotation.x= Math.PI/2;
+    //views[3].camera.rotation.y= Math.PI/2 + r.z;
+   
+
+    views[3].camera.updateProjectionMatrix();
+    views[3].cameraHelper.update();        
+
 
     on_selected_box_changed(sideview_mesh);
 

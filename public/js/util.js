@@ -4,7 +4,7 @@
 
 
 // matrix (m*n), matrix(n*l), vl=n 
-function matmul(m, x, vl)  //vl is vector length
+function  matmul(m, x, vl)  //vl is vector length
 {
     var ret=[];
     for (var vi =0; vi < x.length/vl; vi++){  //vector index
@@ -12,6 +12,23 @@ function matmul(m, x, vl)  //vl is vector length
             ret[vi*vl+r] = 0;
             for (var i = 0; i<vl; i++){
                 ret[vi*vl+r] += m[r*vl+i]*x[vi*vl+i];
+            }
+        }
+    }
+
+    return ret;
+}
+
+function  matmul2(m, x, vl)  //vl is vector length
+{
+    var ret=[];
+    var rows = m.length/vl;
+    var cols = x.length/vl;
+    for (var r =0; r < rows; r++){
+        for (var c = 0; c < cols; c++){
+            ret[r*cols+c] = 0;
+            for (var i = 0; i<vl; i++){
+                ret[r*cols+c] += m[r*vl+i]*x[i*cols+c];
             }
         }
     }
@@ -144,7 +161,8 @@ function euler_angle_to_rotate_matrix(eu, tr){
     //console.log(R_x, R_y, R_z);
 
     // Combined rotation matrix
-    var R = matmul(matmul(R_z, R_y, 3), R_x,3);
+    //var R = matmul(matmul(R_z, R_y, 3), R_x,3);
+    var R = matmul2(R_x, matmul2(R_y, R_z, 3), 3);
     
     return [
         mat(R,3,0,0), mat(R,3,0,1), mat(R,3,0,2), tr.x,
@@ -214,4 +232,4 @@ function rotation_matrix_to_euler_angle(m){ //m is 4* 4
 }
 
 
-export {vector4to3, vector3_nomalize, psr_to_xyz, matmul, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle}
+export {vector4to3, vector3_nomalize, psr_to_xyz, matmul, matmul2, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle}

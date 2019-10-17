@@ -257,8 +257,8 @@ function create_top_view(scene){
     camera.position.x = 0;
     camera.position.z = 0;
     camera.position.y = 0;
-    camera.up.set( 0, 1, 0);
-    camera.lookAt( 0, 0, -3 );
+    //camera.up.set( 0, 1, 0);
+    //camera.lookAt( 0, 0, -3 );
     view.camera = camera;
 }
 
@@ -279,8 +279,8 @@ function create_rear_view(scene){
         camera.position.x = 0;
         camera.position.z = 0;
         camera.position.y = 0;
-        camera.up.set( 0, 0, 1);
-        camera.lookAt( 0, -3, 0 );
+        //camera.up.set( 0, 0, 1);
+        //camera.lookAt( 0, 3, 0 );
 
         //camera.up.set( 0, 1, 0);
         //camera.lookAt( 0, 0, -3 );

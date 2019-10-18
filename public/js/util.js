@@ -36,6 +36,15 @@ function  matmul2(m, x, vl)  //vl is vector length
     return ret;
 }
 
+
+var obj_type_color_map= {
+    "Car": 0x00ff00,
+    "Pedestrian": 0xff0000,
+    "Rider": 0xffff00,
+    "Bus": 0x0000ff,
+};
+
+
 // box(position, scale, rotation) to box corner corrdinates.
 // return 8 points, represented as (x,y,z,1)
 // note the vertices order cannot be changed, draw-box-on-image assumes
@@ -232,4 +241,4 @@ function rotation_matrix_to_euler_angle(m){ //m is 4* 4
 }
 
 
-export {vector4to3, vector3_nomalize, psr_to_xyz, matmul, matmul2, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle}
+export {vector4to3, vector3_nomalize, psr_to_xyz, matmul, matmul2, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle, obj_type_color_map}

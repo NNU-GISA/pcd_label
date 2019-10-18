@@ -104,7 +104,7 @@ function createFloatLabelManager(view) {
             //label.style.height = 100;
             //label.style.backgroundColor = "blue";
             
-            label.update_text = function(){this.innerHTML = this.obj_type +"-"+ this.obj_track_id; }
+            label.update_text = function(){this.innerHTML = /*this.obj_type +"-"+*/ this.obj_track_id; }
             
             label.obj_type = box.obj_type;
             label.obj_local_id = box.obj_local_id;

@@ -3,6 +3,7 @@
 import * as THREE from './lib/three.module.js';
 import { PCDLoader } from './lib/PCDLoader.js';
 //import { GeometryUtils } from './examples/jsm/utils/GeometryUtils.js';
+import {obj_type_color_map} from "./util.js"
 
 var data = {
     
@@ -349,9 +350,9 @@ var data = {
 
                 
                 function create_bboxs(annotations){
-                    
                     return annotations.map(function(b){
-                        var mesh = _self.new_bbox_cube();
+                        var mesh = _self.new_bbox_cube(obj_type_color_map[b.obj_type]);
+
                         mesh.position.x = b.position.x;
                         mesh.position.y = b.position.y;
                         mesh.position.z = b.position.z;
@@ -373,6 +374,7 @@ var data = {
                 }
 
             },
+            
 
             scene: null,
             destroy_old_world: null,
@@ -429,7 +431,7 @@ var data = {
                 mesh.position.z = z;
 
                 mesh.obj_track_id = "";  //tracking id
-                mesh.obj_type = "car";
+                mesh.obj_type = "Car";
                 mesh.obj_local_id =  this.get_new_box_local_id();
 
                 this.boxes.push(mesh);
@@ -438,7 +440,7 @@ var data = {
             },
 
 
-            new_bbox_cube: function(){
+            new_bbox_cube: function(color){
 
                 var h = 0.5;
                 
@@ -477,7 +479,11 @@ var data = {
                 var bbox = new THREE.BufferGeometry();
                 bbox.addAttribute( 'position', new THREE.Float32BufferAttribute(body, 3 ) );
                 
-                var box = new THREE.LineSegments( bbox, new THREE.LineBasicMaterial( { color: 0x00ff00 } ) );    
+                if (!color){
+                    color = 0x00ff00;
+                }
+
+                var box = new THREE.LineSegments( bbox, new THREE.LineBasicMaterial( { color: color } ) );    
                 
                 box.scale.x=1.8;
                 box.scale.y=4.5;

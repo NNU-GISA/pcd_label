@@ -10,7 +10,7 @@ import { GUI } from './lib/dat.gui.module.js';
 import {data} from './data.js'
 import {create_views, views} from "./view.js"
 import {createFloatLabelManager} from "./floatlabel.js"
-import {vector4to3, vector3_nomalize, psr_to_xyz, matmul, matmul2, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle} from "./util.js"
+import {vector4to3, vector3_nomalize, psr_to_xyz, matmul, matmul2, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle, obj_type_color_map} from "./util.js"
 import {header} from "./header.js"
 
 var container;
@@ -1053,12 +1053,7 @@ function unselect_bbox(new_object, keep_lock){
         }else{
             //unselect second time
             if (selected_box){
-                selected_box.material.color.r=0;
-                selected_box.material.color.g=1;
-                selected_box.material.color.b=0;
-
-                
-
+                selected_box.material.color = new THREE.Color(obj_type_color_map[selected_box.obj_type]);
                 floatLabelManager.unselect_box(selected_box.obj_local_id);
             }
 
@@ -1076,9 +1071,7 @@ function unselect_bbox(new_object, keep_lock){
 
         
         if (selected_box){
-            selected_box.material.color.r=0;
-            selected_box.material.color.g=1;
-            selected_box.material.color.b=0;
+            selected_box.material.color = new THREE.Color(obj_type_color_map[selected_box.obj_type]);
             floatLabelManager.unselect_box(selected_box.obj_local_id);
         }
         

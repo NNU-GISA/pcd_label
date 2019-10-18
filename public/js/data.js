@@ -21,10 +21,18 @@ var data = {
     //         this.world.points.material.size = this.point_size;
     // },
 
+    point_size: 1,
+
+    scale_point_size: function(v){
+        this.point_size *= v;
+        if (this.world){
+            this.world.set_point_size(this.point_size);
+        }
+    },
 
     make_new_world: function(scene_name, frame, on_preload_finished){
         
-
+        
         var scene_meta = this.get_meta_by_scene_name(scene_name);
         var transform_matrix = scene_meta.point_transform_matrix;
         var annotation_format = scene_meta.boxtype;
@@ -32,6 +40,8 @@ var data = {
 
 
         var world = {
+            data: this,
+
             file_info: {
                 dir: "",
                 scene: "",
@@ -182,6 +192,13 @@ var data = {
             finish_time: 0,
 
             on_preload_finished: null,
+            
+            set_point_size: function(v){
+                if (this.points){
+                    this.points.material.size = v;
+                }
+            },
+
             preload: function(on_preload_finished){
                 
                 this.create_time = new Date().getTime();
@@ -262,7 +279,7 @@ var data = {
                         geometry.computeBoundingSphere();
                         // build material
 
-                        var material = new THREE.PointsMaterial( { size: 0.005 } );
+                        var material = new THREE.PointsMaterial( { size: _self.data.point_size } );
 
                         if ( color.length > 0 ) {
                             material.vertexColors = VertexColors;
@@ -270,7 +287,8 @@ var data = {
                             material.color.setHex(0xffffff );
                         }
 
-                        material.size = 0.1;
+                        //material.size = 2;
+                        material.sizeAttenuation = false;
 
                         // build mesh
 

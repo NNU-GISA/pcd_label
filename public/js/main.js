@@ -622,7 +622,7 @@ function init_gui(){
     params["hide id"] = false;
     params["hide category"] = false;
 
-    params["reset"]
+    
     params["reset main view"] = function(){
         views[0].reset_camera();
         views[0].reset_birdseye();
@@ -635,6 +635,20 @@ function init_gui(){
     };
     
     params["side view width"] = 0.2;
+
+    params["increase point size"] = function(){
+        data.scale_point_size(1.2);
+        render();
+    };
+    
+    params["decrease point size"] = function(){
+        data.scale_point_size(0.8);
+        render();
+    };
+
+    cfgFolder.add( params, "increase point size");
+    cfgFolder.add( params, "decrease point size");
+
 
     cfgFolder.add( params, "hide side views");
     cfgFolder.add( params, "side view width");

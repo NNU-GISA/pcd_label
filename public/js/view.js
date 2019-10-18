@@ -253,7 +253,7 @@ function create_top_view(scene){
     cameraOrthoHelper.visible=false;
     scene.add( cameraOrthoHelper );
     view["cameraHelper"] = cameraOrthoHelper;
-            
+
     camera.position.x = 0;
     camera.position.z = 0;
     camera.position.y = 0;

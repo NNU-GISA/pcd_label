@@ -17,7 +17,7 @@ var header={
     
         document.getElementById("box").innerHTML = "| "+pos.x.toFixed(2) +" "+pos.y.toFixed(2) + " " + pos.z.toFixed(2) + " | " +
                                                     scale.x.toFixed(2) +" "+scale.y.toFixed(2) + " " + scale.z.toFixed(2) + " | " +
-                                                    (rotation.z*180/Math.PI).toFixed(2) + " | ";
+                                                    (rotation.x*180/Math.PI).toFixed(2)+" "+(rotation.y*180/Math.PI).toFixed(2)+" "+(rotation.z*180/Math.PI).toFixed(2) + " | ";
     
         document.getElementById("object-category-selector").hidden=false;
         document.getElementById("object-track_id_editor").hidden=false;

@@ -78,6 +78,8 @@ function init() {
 
     create_views(scene, renderer.domElement, render, on_box_changed);
 
+    add_range_box();
+
     floatLabelManager = createFloatLabelManager(views[0]);
 
     init_gui();
@@ -116,7 +118,46 @@ function init() {
 }
 
 
+function add_range_box(){
+    
+    var h = 0.5;
+                
+    var body = [
+        //top
+        -h,h,h,  h,h,h,
+        h,h,h,   h,-h,h,
+        h,-h,h,  -h,-h,h,
+        -h,-h,h, -h, h, h, 
 
+        //botom
+        -h,h,-h,  h,h,-h,
+        h,h,-h,   h,-h,-h,
+        h,-h,-h,  -h,-h,-h,
+        -h,-h,-h, -h, h, -h, 
+
+        // vertical lines
+        -h,h,h, -h,h,-h,
+        h,h,h,   h,h,-h,
+        h,-h,h,  h,-h,-h,
+        -h,-h,h, -h,-h,-h,
+    ];
+    
+
+    var bbox = new THREE.BufferGeometry();
+    bbox.addAttribute( 'position', new THREE.Float32BufferAttribute(body, 3 ) );
+    
+    var box = new THREE.LineSegments( bbox, new THREE.LineBasicMaterial( { color: 0x555544 } ) );    
+    
+    box.scale.x=100;
+    box.scale.y=100;
+    box.scale.z=10;
+    box.position.x=0;
+    box.position.y=0;
+    box.position.z=0;
+    box.computeLineDistances();
+
+    scene.add(box);
+}
 
 function animate() {
     requestAnimationFrame( animate );
@@ -178,6 +219,8 @@ function paste_bbox(pos){
 
     if (!pos)
        pos = marked_object.position;
+    else
+       pos.z = marked_object.position.z;
 
     var box = data.world.add_box(pos.x, pos.y, pos.z);
 
@@ -576,6 +619,8 @@ function init_gui(){
     params["hide side views"] = false;    
     params["bird's eye view"] = false;
     params["hide image"] = false;
+    params["hide id"] = false;
+    params["hide category"] = false;
 
     params["reset"]
     params["reset main view"] = function(){
@@ -595,6 +640,9 @@ function init_gui(){
     cfgFolder.add( params, "side view width");
     cfgFolder.add( params, "bird's eye view");
     cfgFolder.add( params, "hide image");
+    cfgFolder.add( params, "hide id");
+    cfgFolder.add( params, "hide category");
+
     cfgFolder.add( params, "reset main view");
     cfgFolder.add( params, "rotate bird's eye view");
 
@@ -1314,7 +1362,18 @@ function keydown( ev ) {
             break;
         case 'm':
         case 'M':
-            paste_bbox(get_mouse_location_in_world(mouse));
+            if (!selected_box){
+                paste_bbox(get_mouse_location_in_world(mouse));
+                auto_adjust_bbox(function(){
+                    save_annotation();
+                });
+            }
+            else{
+                auto_adjust_bbox(function(){
+                    save_annotation();
+                });
+            }
+
             mark_changed_flag();
             break;
         case 'N':    
@@ -1473,7 +1532,6 @@ function keydown( ev ) {
             remove_selected_box();
             mark_changed_flag();
             break;
-    
     }
 }
 
@@ -1680,12 +1738,13 @@ function render_2d_image(){
                 var imgpos = matmul(scene_meta.calib.extrinsic, box3d, 4);
                 var imgpos3 = vector4to3(imgpos);
                 var imgpos2 = matmul(scene_meta.calib.intrinsic, imgpos3, 3);
+
                 var imgfinal = vector3_nomalize(imgpos2);
 
                 //ctx.lineWidth = 0.5;
                 // front 
                 draw_box_on_image(ctx, box, imgfinal, trans_ratio);
-                
+
             });
         }
     }
@@ -1763,6 +1822,26 @@ function clear_image_box_projection(){
     }
 }
 
+
+function projected_3d_point_out_of_image_range(p){
+    if (p[0]<0 || p[1]<0 || p[2]<0){
+        return true;
+    }
+    else return false;
+}
+
+function all_points_in_image_range(p){
+    for (var i = 0; i<p.length/3; i++){
+        if (p[i*3+0]<0 || p[i*3+1]<0 || p[i*3+2]<0){
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+
+
 function update_image_box_projection(box){
     var scene_meta = data.meta.find(function(x){return x.scene==data.world.file_info.scene;});
 
@@ -1784,22 +1863,26 @@ function update_image_box_projection(box){
             var imgpos = matmul(scene_meta.calib.extrinsic, box3d, 4);
             var imgpos3 = vector4to3(imgpos);
             var imgpos2 = matmul(scene_meta.calib.intrinsic, imgpos3, 3);
-            var imgfinal = vector3_nomalize(imgpos2);
 
-            //console.log(imgfinal);
-            
-            var c = document.getElementById("canvas");
-            var ctx = c.getContext("2d");
-            
-            // note: 320*240 should be adjustable
-            var crop_area = crop_image(img.naturalWidth, img.naturalHeight, ctx.canvas.width, ctx.canvas.height, imgfinal);
+            if (all_points_in_image_range(imgpos2)){  // if projection is out of range of the image, stop drawing.
 
-            ctx.drawImage(img, crop_area[0], crop_area[1],crop_area[2], crop_area[3], 0, 0, ctx.canvas.width, ctx.canvas.height);// ctx.canvas.clientHeight);
-            //ctx.drawImage(img, 0,0,img.naturalWidth, img.naturalHeight, 0, 0, 320, 180);// ctx.canvas.clientHeight);
-            var imgfinal = vectorsub(imgfinal, [crop_area[0],crop_area[1]]);
-            var trans_ratio = ctx.canvas.height/crop_area[3];
+                var imgfinal = vector3_nomalize(imgpos2);
 
-            draw_box_on_image(ctx, box, imgfinal, trans_ratio);
+                //console.log(imgfinal);
+                
+                var c = document.getElementById("canvas");
+                var ctx = c.getContext("2d");
+                
+                // note: 320*240 should be adjustable
+                var crop_area = crop_image(img.naturalWidth, img.naturalHeight, ctx.canvas.width, ctx.canvas.height, imgfinal);
+
+                ctx.drawImage(img, crop_area[0], crop_area[1],crop_area[2], crop_area[3], 0, 0, ctx.canvas.width, ctx.canvas.height);// ctx.canvas.clientHeight);
+                //ctx.drawImage(img, 0,0,img.naturalWidth, img.naturalHeight, 0, 0, 320, 180);// ctx.canvas.clientHeight);
+                var imgfinal = vectorsub(imgfinal, [crop_area[0],crop_area[1]]);
+                var trans_ratio = ctx.canvas.height/crop_area[3];
+
+                draw_box_on_image(ctx, box, imgfinal, trans_ratio);
+            }
         }
     }
 }

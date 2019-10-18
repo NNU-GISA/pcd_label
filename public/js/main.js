@@ -854,7 +854,7 @@ function update_subview_by_windowsize(){
 function update_subview_by_bbox(mesh){
     var p = mesh.position;
     var r = mesh.rotation;
-    console.log(r);
+    //console.log(r);
     sideview_mesh = mesh;
 
     //
@@ -1299,20 +1299,20 @@ function switch_bbox_type(){
         return;
 
     switch (selected_box.obj_type){
-        case "car":
-            selected_box.obj_type = "bus";
+        case "Car":
+            selected_box.obj_type = "Bus";
             selected_box.scale.x=2.8;
             selected_box.scale.y=10;
             selected_box.scale.z=3.0;
             break;
-        case "bus":
-            selected_box.obj_type = "pedestrian";
+        case "Bus":
+            selected_box.obj_type = "Pedestrian";
             selected_box.scale.x=0.5;
             selected_box.scale.y=0.4;
             selected_box.scale.z=1.7;
             break;
-        case "pedestrian":
-            selected_box.obj_type = "car";
+        case "Pedestrian":
+            selected_box.obj_type = "Car";
             selected_box.scale.x=1.8;
             selected_box.scale.y=4.5;
             selected_box.scale.z=1.5;

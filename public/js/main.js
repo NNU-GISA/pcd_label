@@ -146,7 +146,7 @@ function add_range_box(){
     var bbox = new THREE.BufferGeometry();
     bbox.addAttribute( 'position', new THREE.Float32BufferAttribute(body, 3 ) );
     
-    var box = new THREE.LineSegments( bbox, new THREE.LineBasicMaterial( { color: 0x555544 } ) );    
+    var box = new THREE.LineSegments( bbox, new THREE.LineBasicMaterial( { color: 0x090900, linewidth: 0.001 } ) );    
     
     box.scale.x=100;
     box.scale.y=100;
@@ -760,7 +760,7 @@ function init_gui(){
     fileFolder.add( params, 'clear');
 
 
-    fileFolder.open();
+    //fileFolder.open();
 
     var dataFolder = gui.addFolder( 'Data' );
     load_data_meta(dataFolder);
@@ -1319,6 +1319,7 @@ function switch_bbox_type(){
             break;
     }
 
+    on_selected_box_changed(selected_box);
     update_subview_by_windowsize();
 }
 

@@ -173,9 +173,10 @@ var data = {
             boxes: null,
             image: null,
             image_loaded: false,
+            pcd_loaded: false,
 
             complete: function(){
-                return this.points && this.boxes && this.image_loaded;
+                return this.pcd_loaded && this.boxes && this.image_loaded;
             },
 
             reset: function(){this.points=null; this.boxes=null;},
@@ -247,6 +248,7 @@ var data = {
 
                 var _self = this;
                 loader.load( this.file_info.get_pcd_path(), 
+                    //ok
                     function ( pcd ) {
                         var position = pcd.position;
                         var color = pcd.color;
@@ -300,6 +302,8 @@ var data = {
                         
                         _self.points = mesh;
                         _self.points_load_time = new Date().getTime();
+                        _self.pcd_loaded = true;
+
                         console.log(_self.points_load_time, _self.file_info.scene, _self.file_info.frame, "loaded pionts ", _self.points_load_time - _self.create_time, "ms");
 
                         if (_self.complete()){
@@ -314,6 +318,31 @@ var data = {
                         //var center = points.geometry.boundingSphere.center;
                         //controls.target.set( center.x, center.y, center.z );
                         //controls.update();
+                    },
+
+                    // on progress,
+                    function(){
+
+                    },
+
+                    // on error
+                    function(){
+                        //error
+                        console.log("load pcd failed.");
+
+                        _self.pcd_loaded = true;
+                        
+                        //go ahead, may load picture
+                        if (_self.complete()){
+                            if (_self.on_preload_finished)
+                                _self.on_preload_finished(_self);
+                        }
+
+                        if (_self.active){
+                            _self.go();
+                        }                       
+                        
+
                     },
                 );
             },
@@ -424,7 +453,8 @@ var data = {
                         return;
                     }
 
-                    this.scene.add( this.points );
+                    if (this.points)
+                        this.scene.add( this.points );
     
                     
                     var _self=this;

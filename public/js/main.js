@@ -619,8 +619,14 @@ function init_gui(){
     params["hide side views"] = false;    
     params["bird's eye view"] = false;
     params["hide image"] = false;
-    params["hide id"] = false;
-    params["hide category"] = false;
+    params["toggle floating id"] = function(){
+        floatLabelManager.id_enabled = !floatLabelManager.id_enabled;
+        render_2d_labels();
+    };
+    params["toggle floating category"] = function(){
+        floatLabelManager.category_enabled = !floatLabelManager.category_enabled;
+        render_2d_labels();
+    };
 
     
     params["reset main view"] = function(){
@@ -654,8 +660,8 @@ function init_gui(){
     cfgFolder.add( params, "side view width");
     cfgFolder.add( params, "bird's eye view");
     cfgFolder.add( params, "hide image");
-    cfgFolder.add( params, "hide id");
-    cfgFolder.add( params, "hide category");
+    cfgFolder.add( params, "toggle floating id");
+    cfgFolder.add( params, "toggle floating category");
 
     cfgFolder.add( params, "reset main view");
     cfgFolder.add( params, "rotate bird's eye view");

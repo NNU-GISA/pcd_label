@@ -4,6 +4,8 @@ function createFloatLabelManager(view) {
     {
         view : view,  //access camera by view, since camera is dynamic
         enabled: true,
+        id_enabled: true,
+        category_enabled: true,
         html_labels: document.getElementById("2Dlabels"),
 
         remove_all_labels: function(){
@@ -95,7 +97,23 @@ function createFloatLabelManager(view) {
         add_label: function(box){
             if (!this.enabled)
                 return;
-                
+            
+            var label_text = "";
+            if (this.category_enabled){
+                label_text += box.obj_type;
+            }
+            
+            if (this.id_enabled){
+                if (this.category_enabled){
+                    label_text += "-";
+                }
+                label_text += box.obj_track_id;
+            }
+
+            if (label_text.length==0) // both disabled
+                return;
+
+
             var label = document.createElement('div');
             label.className = "float-label";
             label.id = "obj-local-"+box.obj_local_id;
@@ -104,7 +122,8 @@ function createFloatLabelManager(view) {
             //label.style.height = 100;
             //label.style.backgroundColor = "blue";
             
-            label.update_text = function(){this.innerHTML = /*this.obj_type +"-"+*/ this.obj_track_id; }
+            
+            label.update_text = function(){this.innerHTML = label_text; }
             
             label.obj_type = box.obj_type;
             label.obj_local_id = box.obj_local_id;

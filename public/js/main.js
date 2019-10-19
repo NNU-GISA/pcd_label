@@ -1698,6 +1698,10 @@ function render_2d_labels(){
     data.world.boxes.forEach(function(b){
         floatLabelManager.add_label(b);
     })
+
+    if (selected_box){
+        floatLabelManager.select_box(selected_box.obj_local_id)
+    }
 }
 
 function render_2d_image(){

@@ -43,11 +43,11 @@ function createFloatLabelManager(view) {
             document.getElementById("obj-local-"+local_id).className = "selected-float-label";
         },
 
-        unselect_box: function(local_id){
+        unselect_box: function(local_id, obj_type){
             if (!this.enabled)
                 return;
                 
-            document.getElementById("obj-local-"+local_id).className = "float-label";
+            document.getElementById("obj-local-"+local_id).className = "float-label "+obj_type;
         },
 
         set_object_type: function(local_id, obj_type){
@@ -97,7 +97,7 @@ function createFloatLabelManager(view) {
                 return;
                 
             var label = document.createElement('div');
-            label.className = "float-label";
+            label.className = "float-label "+box.obj_type;
             label.id = "obj-local-"+box.obj_local_id;
             //label.style.zIndex = 1;    // if you still don't see the label, try uncommenting this
             //label.style.width = 100;

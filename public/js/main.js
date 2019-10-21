@@ -1054,7 +1054,7 @@ function unselect_bbox(new_object, keep_lock){
             //unselect second time
             if (selected_box){
                 selected_box.material.color = new THREE.Color(obj_type_color_map[selected_box.obj_type]);
-                floatLabelManager.unselect_box(selected_box.obj_local_id);
+                floatLabelManager.unselect_box(selected_box.obj_local_id, selected_box.obj_type);
             }
 
             
@@ -1679,8 +1679,13 @@ function render_2d_labels(){
     })
 }
 
+
+// all boxes
 function render_2d_image(){
     clear_canvas();
+
+    if (params["hide image"])
+        return;
 
     draw_canvas();
 
@@ -1834,7 +1839,7 @@ function all_points_in_image_range(p){
 }
 
 
-
+// draw highlighed box
 function update_image_box_projection(box){
     var scene_meta = data.meta.find(function(x){return x.scene==data.world.file_info.scene;});
 

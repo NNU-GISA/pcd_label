@@ -402,7 +402,7 @@ var data = {
                 
                 function create_bboxs(annotations){
                     return annotations.map(function(b){
-                        var mesh = _self.new_bbox_cube(obj_type_color_map[b.obj_type]);
+                        var mesh = _self.new_bbox_cube(parseInt(obj_type_color_map[b.obj_type]));
 
                         mesh.position.x = b.position.x;
                         mesh.position.y = b.position.y;

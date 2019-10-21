@@ -539,7 +539,7 @@ function play_current_scene_with_buffer(resume){
                                     function(){                    
                                         play_frame(scene_meta, next_frame);
                                     }, 
-                                    100);
+                                    500);
                             } 
                             else{
                                 stop_play_flag = true;
@@ -983,8 +983,9 @@ function onDocumentMouseDown( event ) {
     }
     else{
         var array = getMousePosition( renderer.domElement, event.clientX, event.clientY );
-        onDownPosition.fromArray( array );
+        onDownPosition.fromArray( array );        
     }
+
     this.addEventListener( 'mouseup', onMouseUp, false );
 
 }
@@ -998,7 +999,7 @@ function onMouseUp( event ) {
         var array = getMousePosition( renderer.domElement, event.clientX, event.clientY );
         onUpPosition.fromArray( array );
 
-        handleClick();
+        handleClick(event);
     }
 
     this.removeEventListener( 'mouseup', onMouseUp, false );
@@ -1025,38 +1026,45 @@ function getIntersects( point, objects ) {
 }
 
 
-function handleClick() {
+function handleClick(event) {
 
     
     if ( onDownPosition.distanceTo( onUpPosition ) === 0 ) {
 
-        if (!data.world || !data.world.boxes){
-            return;
+        if (event.ctrlKey){
+            //Ctrl+left click to smart paste!
+
+            smart_paste();
         }
-    
-    
-        var intersects = getIntersects( onUpPosition, data.world.boxes );
+        else{
+            //select box /unselect box
+            if (!data.world || !data.world.boxes){
+                return;
+            }
+        
+        
+            var intersects = getIntersects( onUpPosition, data.world.boxes );
 
-        if ( intersects.length > 0 ) {
+            if ( intersects.length > 0 ) {
 
-            //var object = intersects[ 0 ].object;
-            var object = intersects[ 0 ].object;
+                //var object = intersects[ 0 ].object;
+                var object = intersects[ 0 ].object;
 
-            if ( object.userData.object !== undefined ) {
-                // helper
-                select_bbox( object.userData.object );
+                if ( object.userData.object !== undefined ) {
+                    // helper
+                    select_bbox( object.userData.object );
 
+                } else {
+
+                    select_bbox( object );
+                }
             } else {
 
-                select_bbox( object );
+                    unselect_bbox(null);
             }
-        } else {
 
-                unselect_bbox(null);
+            //render();
         }
-
-        //render();
-
     }
 
 }
@@ -1084,7 +1092,7 @@ function unselect_bbox(new_object, keep_lock){
         }else{
             //unselect second time
             if (selected_box){
-                selected_box.material.color = new THREE.Color(obj_type_color_map[selected_box.obj_type]);
+                selected_box.material.color = new THREE.Color(parseInt(obj_type_color_map[selected_box.obj_type]));
                 floatLabelManager.unselect_box(selected_box.obj_local_id, selected_box.obj_type);
             }
 
@@ -1102,7 +1110,7 @@ function unselect_bbox(new_object, keep_lock){
 
         
         if (selected_box){
-            selected_box.material.color = new THREE.Color(obj_type_color_map[selected_box.obj_type]);
+            selected_box.material.color = new THREE.Color(parseInt(obj_type_color_map[selected_box.obj_type]));
             floatLabelManager.unselect_box(selected_box.obj_local_id);
         }
         
@@ -1387,19 +1395,7 @@ function keydown( ev ) {
             break;
         case 'm':
         case 'M':
-            if (!selected_box){
-                paste_bbox(get_mouse_location_in_world(mouse));
-                auto_adjust_bbox(function(){
-                    save_annotation();
-                });
-            }
-            else{
-                auto_adjust_bbox(function(){
-                    save_annotation();
-                });
-            }
-
-            mark_changed_flag();
+            smart_paste();
             break;
         case 'N':    
         case 'n':
@@ -1560,6 +1556,21 @@ function keydown( ev ) {
     }
 }
 
+function smart_paste(){
+    if (!selected_box){
+        paste_bbox(get_mouse_location_in_world(mouse));
+        auto_adjust_bbox(function(){
+            save_annotation();
+        });
+    }
+    else{
+        auto_adjust_bbox(function(){
+            save_annotation();
+        });
+    }
+
+    mark_changed_flag();
+}
 
 function previous_frame(){
 
@@ -1789,12 +1800,24 @@ function render_2d_image(){
 function draw_box_on_image(ctx, box, box_corners, trans_ratio){
     var imgfinal = box_corners;
 
+    function vtostyple(p){
+        return "#"+p.slice(2);
+    }
+
+
     if (selected_box != box){
-        ctx.strokeStyle="#00ff00";
-        ctx.fillStyle="rgba(0,255,0,0.2)";
+        //ctx.strokeStyle="#00ff00";
+        ctx.strokeStyle = vtostyple(obj_type_color_map[box.obj_type]);
+
+        var c = obj_type_color_map[box.obj_type];
+        var r ="0x"+c.slice(2,4);
+        var g ="0x"+c.slice(4,6);
+        var b ="0x"+c.slice(6,8);
+
+        ctx.fillStyle="rgba("+parseInt(r)+","+parseInt(g)+","+parseInt(b)+",0.2)";
     }
     else{
-        ctx.strokeStyle="#ff00ff";
+        ctx.strokeStyle="#ff00ff";        
         ctx.fillStyle="rgba(255,0,255,0.2)";
     }
 

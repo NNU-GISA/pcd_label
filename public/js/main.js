@@ -146,7 +146,7 @@ function add_range_box(){
     var bbox = new THREE.BufferGeometry();
     bbox.addAttribute( 'position', new THREE.Float32BufferAttribute(body, 3 ) );
     
-    var box = new THREE.LineSegments( bbox, new THREE.LineBasicMaterial( { color: 0x555544 } ) );    
+    var box = new THREE.LineSegments( bbox, new THREE.LineBasicMaterial( { color: 0x444444, linewidth: 1 } ) );    
     
     box.scale.x=100;
     box.scale.y=100;
@@ -619,10 +619,16 @@ function init_gui(){
     params["hide side views"] = false;    
     params["bird's eye view"] = false;
     params["hide image"] = false;
-    params["hide id"] = false;
-    params["hide category"] = false;
+    params["toggle id"] = function(){
+        floatLabelManager.id_enabled = !floatLabelManager.id_enabled;
+        render_2d_labels();
+    };
+    params["toggle category"] = function(){
+        floatLabelManager.category_enabled = !floatLabelManager.category_enabled;
+        render_2d_labels();
+    };
 
-    params["reset"]
+    
     params["reset main view"] = function(){
         views[0].reset_camera();
         views[0].reset_birdseye();
@@ -636,12 +642,26 @@ function init_gui(){
     
     params["side view width"] = 0.2;
 
+    params["increase point size"] = function(){
+        data.scale_point_size(1.2);
+        render();
+    };
+    
+    params["decrease point size"] = function(){
+        data.scale_point_size(0.8);
+        render();
+    };
+
+    cfgFolder.add( params, "increase point size");
+    cfgFolder.add( params, "decrease point size");
+
+
     cfgFolder.add( params, "hide side views");
     cfgFolder.add( params, "side view width");
     cfgFolder.add( params, "bird's eye view");
     cfgFolder.add( params, "hide image");
-    cfgFolder.add( params, "hide id");
-    cfgFolder.add( params, "hide category");
+    cfgFolder.add( params, "toggle id");
+    cfgFolder.add( params, "toggle category");
 
     cfgFolder.add( params, "reset main view");
     cfgFolder.add( params, "rotate bird's eye view");
@@ -746,7 +766,7 @@ function init_gui(){
     fileFolder.add( params, 'clear');
 
 
-    fileFolder.open();
+    //fileFolder.open();
 
     var dataFolder = gui.addFolder( 'Data' );
     load_data_meta(dataFolder);
@@ -840,7 +860,7 @@ function update_subview_by_windowsize(){
 function update_subview_by_bbox(mesh){
     var p = mesh.position;
     var r = mesh.rotation;
-    console.log(r);
+    //console.log(r);
     sideview_mesh = mesh;
 
     //
@@ -1285,26 +1305,27 @@ function switch_bbox_type(){
         return;
 
     switch (selected_box.obj_type){
-        case "car":
-            selected_box.obj_type = "bus";
+        case "Car":
+            selected_box.obj_type = "Bus";
             selected_box.scale.x=2.8;
             selected_box.scale.y=10;
             selected_box.scale.z=3.0;
             break;
-        case "bus":
-            selected_box.obj_type = "pedestrian";
+        case "Bus":
+            selected_box.obj_type = "Pedestrian";
             selected_box.scale.x=0.5;
             selected_box.scale.y=0.4;
             selected_box.scale.z=1.7;
             break;
-        case "pedestrian":
-            selected_box.obj_type = "car";
+        case "Pedestrian":
+            selected_box.obj_type = "Car";
             selected_box.scale.x=1.8;
             selected_box.scale.y=4.5;
             selected_box.scale.z=1.5;
             break;
     }
 
+    on_selected_box_changed(selected_box);
     update_subview_by_windowsize();
 }
 
@@ -1677,6 +1698,10 @@ function render_2d_labels(){
     data.world.boxes.forEach(function(b){
         floatLabelManager.add_label(b);
     })
+
+    if (selected_box){
+        floatLabelManager.select_box(selected_box.obj_local_id)
+    }
 }
 
 
@@ -1739,7 +1764,7 @@ function render_2d_image(){
 
                 var imgfinal = vector3_nomalize(imgpos2);
 
-                //ctx.lineWidth = 0.5;
+                ctx.lineWidth = 2;
                 // front 
                 draw_box_on_image(ctx, box, imgfinal, trans_ratio);
 

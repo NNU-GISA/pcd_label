@@ -98,6 +98,7 @@ function create_main_view(scene, dom, render, on_box_changed){
     
     camera = new THREE.OrthographicCamera(-asp*200, asp*200, 200, -200, -200, 200 );
     camera.position.z = 50;
+    
 
     // var cameraOrthoHelper = new THREE.CameraHelper( camera );
     // cameraOrthoHelper.visible=true;
@@ -253,7 +254,7 @@ function create_top_view(scene){
     cameraOrthoHelper.visible=false;
     scene.add( cameraOrthoHelper );
     view["cameraHelper"] = cameraOrthoHelper;
-            
+
     camera.position.x = 0;
     camera.position.z = 0;
     camera.position.y = 0;

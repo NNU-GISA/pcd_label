@@ -94,7 +94,9 @@ function createFloatLabelManager(view) {
             //    return;
                 
             var label = document.getElementById("obj-local-"+box.obj_local_id);
-            label.remove();
+
+            if (label)
+                label.remove();
         },
 
         add_label: function(box){

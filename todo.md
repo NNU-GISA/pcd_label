@@ -19,3 +19,4 @@
 15.  read/write json files directly, don't rely on cherrypy to forward.
 16.  auto lock object
 17.  combine all shots of an object in multiple frames, try annotate them in one view.
+18.  load data hierachically

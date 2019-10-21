@@ -144,7 +144,7 @@ canvas {
 	background-color: #403b3b99;
 }
 
-.Bus {
+.Bus, .Truck {
 	color: #ffff00;
 	position: absolute;
 	background-color: #403b3b99;

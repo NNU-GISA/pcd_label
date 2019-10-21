@@ -404,7 +404,7 @@ function load_data_meta(gui_folder){
         c.frames.forEach(function(f){
             //var f = c.frames[frame_index];
             thisscene[f] = function(){
-                console.log("clicked", c);
+                //console.log("clicked", c);
 
                 //data.file_info.set(c.scene, f, c.point_transform_matrix, c.boxtype);
                 //remove_all();  //remove before new data loaded.
@@ -412,7 +412,7 @@ function load_data_meta(gui_folder){
 
                 //update_frame_info(c.scene, f);
                 load_world(c.scene, f);
-            }
+            };
 
             folder.add(thisscene, f);
         });
@@ -428,13 +428,14 @@ function load_data_meta(gui_folder){
     
         if (this.status == 200) {
             var ret = JSON.parse(this.responseText);
-            //console.log(ret);
-
             data.meta = ret;
+                                
+            //play_frame(scene_meta, frame);
             ret.forEach(function(c){
                 add_one_scene(c);
-            })
+            });
         }
+
     };
     
     xhr.open('GET', "/datameta", true);
@@ -648,6 +649,16 @@ function init_gui(){
     };
     
     params["decrease point size"] = function(){
+        data.scale_point_size(0.8);
+        render();
+    };
+
+    params["point birghtness+"] = function(){
+        data.scale_point_size(1.2);
+        render();
+    };
+    
+    params["point birghtness-"] = function(){
         data.scale_point_size(0.8);
         render();
     };

@@ -22,6 +22,7 @@ var data = {
     // },
 
     point_size: 1,
+    point_brightness: 0.6,
 
     scale_point_size: function(v){
         this.point_size *= v;
@@ -286,7 +287,10 @@ var data = {
                         if ( color.length > 0 ) {
                             material.vertexColors = VertexColors;
                         } else {
-                            material.color.setHex(0xffffff );
+                            //material.color.setHex(0xffffff);
+                            material.color.r = 0.6;
+                            material.color.g = 0.6;
+                            material.color.b = 0.6;
                         }
 
                         //material.size = 2;

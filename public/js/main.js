@@ -121,14 +121,10 @@ function init() {
 
 function add_range_box(){
     
-    var h = 0.5;
+    var h = 1;
+    
                 
     var body = [
-        //top
-        -h,h,h,  h,h,h,
-        h,h,h,   h,-h,h,
-        h,-h,h,  -h,-h,h,
-        -h,-h,h, -h, h, h, 
         
         /*
         -h,h,h,  h,h,h,
@@ -151,6 +147,18 @@ function add_range_box(){
         */
     ];
     
+    var segments=64;
+    for (var i = 0; i<segments; i++){
+        var theta1 = (2*Math.PI/segments) * i;
+        var x1 = Math.cos(theta1);
+        var y1 = Math.sin(theta1);
+
+        var theta2 = 2*Math.PI/segments * ((i+1)%segments);
+        var x2 = Math.cos(theta2);
+        var y2 = Math.sin(theta2);
+
+        body.push(x1,y1,h,x2,y2,h);
+    }
 
     var bbox = new THREE.BufferGeometry();
     bbox.addAttribute( 'position', new THREE.Float32BufferAttribute(body, 3 ) );

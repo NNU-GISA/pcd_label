@@ -44,7 +44,7 @@ function createFloatLabelManager(view) {
         unselect_box: function(local_id){
             var label = document.getElementById("obj-local-"+local_id);
             if (label){                
-                label.className = "float-label";
+                label.className = "float-label" + " " + label.obj_type;
             }
         },
 
@@ -94,40 +94,42 @@ function createFloatLabelManager(view) {
             //    return;
                 
             var label = document.getElementById("obj-local-"+box.obj_local_id);
-            label.remove();
+
+            if (label)
+                label.remove();
         },
 
         add_label: function(box){
             if (!this.enabled())
                 return;
             
-            var label_text = "";
-            if (this.category_enabled){
-                label_text += box.obj_type;
-            }
             
-            if (this.id_enabled){
-                if (this.category_enabled){
-                    label_text += "-";
-                }
-                label_text += box.obj_track_id;
-            }
-
-            // same as this.enabled(),  keep it anyway.
-            if (label_text.length==0) // both disabled
-                return;
-
+            
 
             var label = document.createElement('div');
-            label.className = "float-label";
+            label.className = "float-label "+box.obj_type;
             label.id = "obj-local-"+box.obj_local_id;
             //label.style.zIndex = 1;    // if you still don't see the label, try uncommenting this
             //label.style.width = 100;
             //label.style.height = 100;
             //label.style.backgroundColor = "blue";
             
-            
-            label.update_text = function(){this.innerHTML = label_text; }
+            var _self =this;
+
+            label.update_text = function(){
+                var label_text = "";
+                if (_self.category_enabled){
+                    label_text += this.obj_type;
+                }
+                
+                if (_self.id_enabled){
+                    if (_self.category_enabled){
+                        label_text += "-";
+                    }
+                    label_text += this.obj_track_id;
+                }
+                this.innerHTML = label_text; 
+            }
             
             label.obj_type = box.obj_type;
             label.obj_local_id = box.obj_local_id;

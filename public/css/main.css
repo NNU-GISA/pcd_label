@@ -127,10 +127,36 @@ canvas {
 
 
 .float-label {
+	color: #0000ff;
+	position: absolute;
+	background-color: #403b3b99;
+}
+
+.Rider {
+	color: #ff8800;
+	position: absolute;
+	background-color: #403b3b99;
+}
+
+.Car {
 	color: #00ff00;
 	position: absolute;
 	background-color: #403b3b99;
 }
+
+.Bus, .Truck {
+	color: #ffff00;
+	position: absolute;
+	background-color: #403b3b99;
+}
+
+.Pedestrian {
+	color: #ff0000;
+	position: absolute;
+	background-color: #403b3b99;
+}
+
+
 
 .selected-float-label {
 	color: #ff00ff;

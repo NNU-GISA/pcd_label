@@ -112,7 +112,7 @@ class Root(object):
         print(s, frames)
         frames.sort()
         for f in frames:
-          if os.path.isfile("public/data/"+s+"/pcd/"+f):
+          #if os.path.isfile("public/data/"+s+"/pcd/"+f):
             filename, fileext = os.path.splitext(f)
             scene["frames"].append(filename)
 

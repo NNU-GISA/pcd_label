@@ -165,9 +165,9 @@ function add_range_box(){
     
     var box = new THREE.LineSegments( bbox, new THREE.LineBasicMaterial( { color: 0x444444, linewidth: 1 } ) );    
     
-    box.scale.x=100;
-    box.scale.y=100;
-    box.scale.z=-6;
+    box.scale.x=50;
+    box.scale.y=50;
+    box.scale.z=-3;
     box.position.x=0;
     box.position.y=0;
     box.position.z=0;

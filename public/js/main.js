@@ -129,7 +129,14 @@ function add_range_box(){
         h,h,h,   h,-h,h,
         h,-h,h,  -h,-h,h,
         -h,-h,h, -h, h, h, 
+        
+        /*
+        -h,h,h,  h,h,h,
+        h,h,h,   h,-h,h,
+        h,-h,h,  -h,-h,h,
+        -h,-h,h, -h, h, h, 
 
+        
         //botom
         -h,h,-h,  h,h,-h,
         h,h,-h,   h,-h,-h,
@@ -141,6 +148,7 @@ function add_range_box(){
         h,h,h,   h,h,-h,
         h,-h,h,  h,-h,-h,
         -h,-h,h, -h,-h,-h,
+        */
     ];
     
 
@@ -151,7 +159,7 @@ function add_range_box(){
     
     box.scale.x=100;
     box.scale.y=100;
-    box.scale.z=10;
+    box.scale.z=-6;
     box.position.x=0;
     box.position.y=0;
     box.position.z=0;

@@ -13,6 +13,7 @@ import {createFloatLabelManager} from "./floatlabel.js"
 import {vector4to3, vector3_nomalize, psr_to_xyz, matmul, matmul2, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle, obj_type_color_map} from "./util.js"
 import {header} from "./header.js"
 
+var sideview_enabled = true;
 var container;
 
 var scene, renderer;
@@ -172,7 +173,7 @@ function render(){
     
     for ( var ii = 0; ii < views.length; ++ ii ) {
 
-        if ((ii > 0) && params["hide side views"]){
+        if ((ii > 0) && !sideview_enabled){
             break;
         }
 
@@ -616,14 +617,18 @@ function init_gui(){
     // view
     var cfgFolder = gui.addFolder( 'View' );
 
-    params["hide side views"] = false;    
+    params["toggle side views"] = function(){
+        sideview_enabled = !sideview_enabled;
+        render();
+    };  
+
     params["bird's eye view"] = false;
     params["hide image"] = false;
-    params["toggle floating id"] = function(){
+    params["toggle id"] = function(){
         floatLabelManager.id_enabled = !floatLabelManager.id_enabled;
         render_2d_labels();
     };
-    params["toggle floating category"] = function(){
+    params["toggle category"] = function(){
         floatLabelManager.category_enabled = !floatLabelManager.category_enabled;
         render_2d_labels();
     };
@@ -640,7 +645,7 @@ function init_gui(){
         render();
     };
     
-    params["side view width"] = 0.2;
+    //params["side view width"] = 0.2;
 
     params["increase point size"] = function(){
         data.scale_point_size(1.2);
@@ -656,12 +661,12 @@ function init_gui(){
     cfgFolder.add( params, "decrease point size");
 
 
-    cfgFolder.add( params, "hide side views");
-    cfgFolder.add( params, "side view width");
+    cfgFolder.add( params, "toggle side views");
+    //cfgFolder.add( params, "side view width");
     cfgFolder.add( params, "bird's eye view");
     cfgFolder.add( params, "hide image");
-    cfgFolder.add( params, "toggle floating id");
-    cfgFolder.add( params, "toggle floating category");
+    cfgFolder.add( params, "toggle id");
+    cfgFolder.add( params, "toggle category");
 
     cfgFolder.add( params, "reset main view");
     cfgFolder.add( params, "rotate bird's eye view");
@@ -807,7 +812,7 @@ function update_subview_by_windowsize(){
         var view = views[ ii ];
         var camera = view.camera;
 
-        view.width = params["side view width"];
+        view.width = 0.2;//params["side view width"];
 
         var view_width = Math.floor( window.innerWidth * view.width );
         var view_height = Math.floor( window.innerHeight * view.height );
@@ -1759,7 +1764,7 @@ function render_2d_image(){
 
                 var imgfinal = vector3_nomalize(imgpos2);
 
-                //ctx.lineWidth = 0.5;
+                ctx.lineWidth = 2;
                 // front 
                 draw_box_on_image(ctx, box, imgfinal, trans_ratio);
 
@@ -1890,7 +1895,8 @@ function update_image_box_projection(box){
                 
                 var c = document.getElementById("canvas");
                 var ctx = c.getContext("2d");
-                
+                ctx.lineWidth = 0.5;
+
                 // note: 320*240 should be adjustable
                 var crop_area = crop_image(img.naturalWidth, img.naturalHeight, ctx.canvas.width, ctx.canvas.height, imgfinal);
 

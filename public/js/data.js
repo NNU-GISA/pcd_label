@@ -531,7 +531,11 @@ var data = {
                     color = 0x00ff00;
                 }
 
-                var box = new THREE.LineSegments( bbox, new THREE.LineBasicMaterial( { color: color } ) );    
+                /*
+                https://threejs.org/docs/index.html#api/en/materials/LineBasicMaterial
+                linewidth is 1, regardless of set value.
+                */
+                var box = new THREE.LineSegments( bbox, new THREE.LineBasicMaterial( { color: color, linewidth: 1 } ) );
                 
                 box.scale.x=1.8;
                 box.scale.y=4.5;

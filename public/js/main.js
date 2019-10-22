@@ -43,7 +43,7 @@ var lock_obj_track_id;
 init();
 animate();
 render();
-
+$( "#maincanvas" ).resizable();
 
 
 function init() {
@@ -1805,11 +1805,14 @@ function render_2d_image(){
                 var imgpos3 = vector4to3(imgpos);
                 var imgpos2 = matmul(scene_meta.calib.intrinsic, imgpos3, 3);
 
+                if (imgpos2[2]<0){
+                    return;
+                }
                 var imgfinal = vector3_nomalize(imgpos2);
 
                 ctx.lineWidth = 2;
                 // front 
-                draw_box_on_image(ctx, box, imgfinal, trans_ratio);
+                draw_box_on_image(ctx, box, imgfinal, trans_ratio, selected_box == box);
 
             });
         }
@@ -1818,7 +1821,7 @@ function render_2d_image(){
 
 }
 
-function draw_box_on_image(ctx, box, box_corners, trans_ratio){
+function draw_box_on_image(ctx, box, box_corners, trans_ratio, selected){
     var imgfinal = box_corners;
 
     function vtostyple(p){
@@ -1826,7 +1829,7 @@ function draw_box_on_image(ctx, box, box_corners, trans_ratio){
     }
 
 
-    if (selected_box != box){
+    if (!selected){
         //ctx.strokeStyle="#00ff00";
         ctx.strokeStyle = vtostyple(obj_type_color_map[box.obj_type]);
 
@@ -1960,7 +1963,7 @@ function update_image_box_projection(box){
                 var imgfinal = vectorsub(imgfinal, [crop_area[0],crop_area[1]]);
                 var trans_ratio = ctx.canvas.height/crop_area[3];
 
-                draw_box_on_image(ctx, box, imgfinal, trans_ratio);
+                draw_box_on_image(ctx, box, imgfinal, trans_ratio, false);
             }
         }
     }

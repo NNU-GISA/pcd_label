@@ -22,3 +22,5 @@
 18.  load data hierachically
 19.  allocate global tracking id, automatically
 20.  try more renderers.
+21.  let main canvas fit the dimension of image.
+22.  show left/right camera images.

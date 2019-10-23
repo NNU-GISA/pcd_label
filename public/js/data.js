@@ -172,12 +172,65 @@ var data = {
 
             points: null,
             boxes: null,
-            image: null,
+            
+            images:{
+                loaded: function(){
+                    for (var n in this.names){
+                        if (!this.loaded_flag[this.names[n]])
+                            return false;
+                    }
+
+                    return true;
+                },
+
+                names: ["image","left","right"],
+                loaded_flag: {},
+                active_name: "image",
+                active_image: function(){
+                    return this.content[this.active_name];
+                },
+                activate: function(name){
+                    this.active_name = name;
+                },
+
+                content:{},
+                on_all_loaded: null,
+
+                load: function(on_all_loaded){
+                    this.on_all_loaded = on_all_loaded;
+                    var _self = this;
+                    this.names.forEach(function(img){
+                        _self.content[img] = new Image();
+                        _self.content[img].onload= function(){ 
+                            _self.loaded_flag[img] = true;
+                            _self.on_image_loaded();
+                        };
+                        _self.content[img].onerror=function(){ 
+                            _self.loaded_flag[img] = true;
+                            _self.on_image_loaded();
+                        };
+
+                        _self.content[img].src = '/static/data/'+scene_name+'/' + img + '/'+ frame+'.jpg';
+                    })
+                },
+
+                on_image_loaded: function(){
+                    if (this.loaded()){
+                        this.on_all_loaded();
+                    }
+                }
+            },
+
+            image_front: null,
+            image_left: null,
+            image_right: null,
             image_loaded: false,
+            image_left_loaded: false,
+            image_right_loaded: false,
             pcd_loaded: false,
 
             complete: function(){
-                return this.pcd_loaded && this.boxes && this.image_loaded;
+                return this.pcd_loaded && this.boxes && this.images.loaded();
             },
 
             reset: function(){this.points=null; this.boxes=null;},
@@ -209,41 +262,24 @@ var data = {
                 this.on_preload_finished = on_preload_finished;
                 this.load_points();
                 this.load_annotation();
-
-                this.image = new Image();
-                
                 var _self = this;
-                this.image.onload= function(){ _self.on_image_loaded();};
-                this.image.onerror=function(){ _self.on_image_error();}
-                this.image.src = '/static/data/'+scene_name+'/image/'+ frame+'.jpg';
-            },
 
-            on_image_error: function(){
-                this.image_loaded = true;
+                this.images.load(function(){_self.on_image_loaded();});
 
-                if (this.complete()){
-                    if (this.on_preload_finished)
-                    this.on_preload_finished(this);
-                }
-
-                if (this.active){
-                    this.go();
-                }  
                 
             },
-            on_image_loaded: function(){
-                this.image_loaded = true;
 
+            on_image_loaded: function(){
                 if (this.complete()){
-                    if (this.on_preload_finished)
-                    this.on_preload_finished(this);
+                    if (this.on_preload_finished){
+                        this.on_preload_finished(this);
+                    }
                 }
 
                 if (this.active){
                     this.go();
                 }  
             },
-            
             load_points: function(){
                 var loader = new PCDLoader();
 

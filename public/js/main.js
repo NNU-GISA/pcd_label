@@ -641,6 +641,19 @@ function init_gui(){
 
     params["bird's eye view"] = false;
     params["hide image"] = false;
+    params["left image"] = function(){
+        data.world.images.activate("left");
+        render_2d_image();
+    },
+    params["right image"] = function(){
+        data.world.images.activate("right");
+        render_2d_image();
+    },
+    params["front image"] = function(){
+        data.world.images.activate("image");
+        render_2d_image();
+    },
+
     params["toggle id"] = function(){
         floatLabelManager.id_enabled = !floatLabelManager.id_enabled;
         render_2d_labels();
@@ -692,6 +705,10 @@ function init_gui(){
     //cfgFolder.add( params, "side view width");
     cfgFolder.add( params, "bird's eye view");
     cfgFolder.add( params, "hide image");
+    cfgFolder.add( params, "left image");
+    cfgFolder.add( params, "right image");
+    cfgFolder.add( params, "front image");
+
     cfgFolder.add( params, "toggle id");
     cfgFolder.add( params, "toggle category");
 
@@ -1695,11 +1712,12 @@ function clear(){
 function update_frame_info(scene, frame){
     header.set_frame_info(scene, frame);
 
+    /*
     if (params["hide image"]){
         document.getElementById("image").innerHTML = '';
         //document.getElementById("image").innerHTML = '<img id="camera" display="none" src="/static/data/'+data.world.file_info.scene+'/image/'+ data.world.file_info.frame+'.jpg" alt="img">';
     } else{
-        if (data.world.image.naturalHeight){
+        if (data.world.image_front.naturalHeight){
             document.getElementById("image").innerHTML = '<img id="camera" src="/static/data/'+scene+'/image/'+ frame+'.jpg" alt="img">';
         }
         else{
@@ -1707,6 +1725,7 @@ function update_frame_info(scene, frame){
             document.getElementById("image").innerHTML = 'no image';
         }
     }
+    */
 }
 
 function on_box_changed(event){
@@ -1769,9 +1788,9 @@ function render_2d_image(){
         var c = document.getElementById("maincanvas");
         var ctx = c.getContext("2d");
 
-        var img = data.world.image;
+        var img = data.world.images.active_image();
 
-        if (img.width==0){
+        if (img && img.width==0){
             return;
         }
 
@@ -1932,7 +1951,7 @@ function update_image_box_projection(box){
         var pos = box.position;
         var rotation = box.rotation;
 
-        var img = data.world.image; //document.getElementById("camera");
+        var img = data.world.images.active_image(); //document.getElementById("camera");
         if (img.naturalWidth > 0){
 
             clear_image_box_projection();

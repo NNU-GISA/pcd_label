@@ -31,6 +31,14 @@ var data = {
         }
     },
 
+    active_image_name: "image",
+    set_active_image: function(name){
+        this.active_image_name = name;
+        if (this.world){
+            this.world.images.activate(name);
+        }
+    },
+
     make_new_world: function(scene_name, frame, on_preload_finished){
         
         
@@ -265,8 +273,8 @@ var data = {
                 var _self = this;
 
                 this.images.load(function(){_self.on_image_loaded();});
+                this.images.activate(this.data.active_image_name);
 
-                
             },
 
             on_image_loaded: function(){
@@ -669,8 +677,6 @@ var data = {
             },
             on_finished);
     },
-
-
 
 
     meta: null,  //meta data

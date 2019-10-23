@@ -642,15 +642,15 @@ function init_gui(){
     params["bird's eye view"] = false;
     params["hide image"] = false;
     params["left image"] = function(){
-        data.world.images.activate("left");
+        data.set_active_image("left");
         render_2d_image();
     },
     params["right image"] = function(){
-        data.world.images.activate("right");
+        data.set_active_image("right");
         render_2d_image();
     },
     params["front image"] = function(){
-        data.world.images.activate("image");
+        data.set_active_image("image");
         render_2d_image();
     },
 
@@ -1789,6 +1789,7 @@ function render_2d_image(){
         var ctx = c.getContext("2d");
 
         var img = data.world.images.active_image();
+       
 
         if (img && img.width==0){
             return;
@@ -1809,7 +1810,9 @@ function render_2d_image(){
         var trans_ratio = ctx.canvas.width/img.naturalWidth;
         var scene_meta = data.meta.find(function(x){return x.scene==data.world.file_info.scene;});
 
-        if (scene_meta.calib){
+        var active_image_name = data.world.images.active_name;
+        var calib = scene_meta.calib[active_image_name]
+        if (calib){
             // draw boxes
             data.world.boxes.forEach(function(box){
                 
@@ -1820,9 +1823,9 @@ function render_2d_image(){
 
                 var box3d = psr_to_xyz(pos, scale, rotation);
                 
-                var imgpos = matmul(scene_meta.calib.extrinsic, box3d, 4);
+                var imgpos = matmul(calib.extrinsic, box3d, 4);
                 var imgpos3 = vector4to3(imgpos);
-                var imgpos2 = matmul(scene_meta.calib.intrinsic, imgpos3, 3);
+                var imgpos2 = matmul(calib.intrinsic, imgpos3, 3);
 
                 if (imgpos2[2]<0){
                     return;
@@ -1945,8 +1948,9 @@ function all_points_in_image_range(p){
 function update_image_box_projection(box){
     var scene_meta = data.meta.find(function(x){return x.scene==data.world.file_info.scene;});
 
-    if (scene_meta.calib){
-
+    var active_image_name = data.world.images.active_name;
+    var calib = scene_meta.calib[active_image_name]
+    if (calib){
         var scale = box.scale;
         var pos = box.position;
         var rotation = box.rotation;
@@ -1960,9 +1964,9 @@ function update_image_box_projection(box){
             var box3d = psr_to_xyz(pos, scale, rotation);
 
             // project corners to image plane
-            var imgpos = matmul(scene_meta.calib.extrinsic, box3d, 4);
+            var imgpos = matmul(calib.extrinsic, box3d, 4);
             var imgpos3 = vector4to3(imgpos);
-            var imgpos2 = matmul(scene_meta.calib.intrinsic, imgpos3, 3);
+            var imgpos2 = matmul(calib.intrinsic, imgpos3, 3);
 
             if (all_points_in_image_range(imgpos2)){  // if projection is out of range of the image, stop drawing.
 
@@ -2045,8 +2049,15 @@ var euler_angle={x:0, y:0, y:0};
 var translate = {x:0, y:0, z:0};
 
 function save_calibration(){
+
+    
     var scene_meta = data.meta.find(function(x){return x.scene==data.world.file_info.scene;});
-    var extrinsic = scene_meta.calib.extrinsic.map(function(x){return x*1.0;});
+
+
+    var active_image_name = data.world.images.active_name;
+    var calib = scene_meta.calib[active_image_name]
+    
+    var extrinsic = calib.extrinsic.map(function(x){return x*1.0;});
 
     euler_angle = rotation_matrix_to_euler_angle(extrinsic);
     translate = {
@@ -2064,7 +2075,11 @@ function save_calibration(){
 
 function reset_calibration(){
     var scene_meta = data.meta.find(function(x){return x.scene==data.world.file_info.scene;});
-    scene_meta.calib.extrinsic = euler_angle_to_rotate_matrix(euler_angle, translate);
+
+    var active_image_name = data.world.images.active_name;
+    var calib = scene_meta.calib[active_image_name]
+
+    calib.extrinsic = euler_angle_to_rotate_matrix(euler_angle, translate);
     render_2d_image();
 
     if (selected_box)
@@ -2074,7 +2089,10 @@ function reset_calibration(){
 
 function calibrate(ax, value){
     var scene_meta = data.meta.find(function(x){return x.scene==data.world.file_info.scene;});
-    var extrinsic = scene_meta.calib.extrinsic.map(function(x){return x*1.0;});
+
+    var active_image_name = data.world.images.active_name;
+    var calib = scene_meta.calib[active_image_name]
+    var extrinsic = calib.extrinsic.map(function(x){return x*1.0;});
 
     var euler_angle = rotation_matrix_to_euler_angle(extrinsic);
     var translate = {
@@ -2099,9 +2117,9 @@ function calibrate(ax, value){
         translate.y += value;
     }
 
-    scene_meta.calib.extrinsic = euler_angle_to_rotate_matrix(euler_angle, translate);
+    calib.extrinsic = euler_angle_to_rotate_matrix(euler_angle, translate);
 
-    console.log("extrinsic", scene_meta.calib.extrinsic)
+    console.log("extrinsic", calib.extrinsic)
     console.log("euler", euler_angle, "translate", translate);    
 
     render_2d_image();

@@ -127,11 +127,32 @@ class Root(object):
           return x.strip()
 
         calib={}
-        if os.path.isfile("public/data/"+s+"/calib.txt"):
-          with open("public/data/"+s+"/calib.txt")  as f:
+        calib_file = "public/data/"+s+"/calib.txt"
+        if os.path.isfile(calib_file):
+          calib["image"] = {}
+          with open(calib_file)  as f:
             lines = f.readlines()
-            calib["extrinsic"] = map(strip_str, lines[0].strip().split(","))
-            calib["intrinsic"] = lines[1].strip().split(",")            
+            calib["image"]["extrinsic"] = map(strip_str, lines[0].strip().split(","))
+            calib["image"]["intrinsic"] = lines[1].strip().split(",") 
+
+        calibleft={}
+        calib_file = "public/data/"+s+"/calib_left.txt"
+        if os.path.isfile(calib_file):
+          calib["left"] = {}
+          with open(calib_file)  as f:
+            lines = f.readlines()
+            calib["left"]["extrinsic"] = map(strip_str, lines[0].strip().split(","))
+            calib["left"]["intrinsic"] = lines[1].strip().split(",") 
+
+        calibright={}
+        calib_file = "public/data/"+s+"/calib_right.txt"
+        if os.path.isfile(calib_file):
+          calib["right"] = {}
+          with open(calib_file)  as f:
+            lines = f.readlines()
+            calib["right"]["extrinsic"] = map(strip_str, lines[0].strip().split(","))
+            calib["right"]["intrinsic"] = lines[1].strip().split(",") 
+
 
         if not os.path.isdir("public/data/"+s+"/bbox.xyz"):
           scene["boxtype"] = "psr"

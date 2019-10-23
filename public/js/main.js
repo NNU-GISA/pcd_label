@@ -1771,10 +1771,20 @@ function render_2d_labels(){
 function render_2d_image(){
     clear_canvas();
 
-    if (params["hide image"])
+    if (params["hide image"]){
+        hide_canvas();
         return;
+    }
 
     draw_canvas();
+
+    function hide_canvas(){
+        document.getElementsByClassName("ui-wrapper")[0].style.display="none";
+    }
+
+    function show_canvas(){
+        document.getElementsByClassName("ui-wrapper")[0].style.display="inherit";
+    }
 
     function clear_canvas(){
         var c = document.getElementById("maincanvas");
@@ -1791,9 +1801,12 @@ function render_2d_image(){
         var img = data.world.images.active_image();
        
 
-        if (img && img.width==0){
+        if (!img || img.width==0){
+            hide_canvas();
             return;
         }
+
+        show_canvas();
 
         var clientWidth, clientHeight;
         // adjust canvas width/height

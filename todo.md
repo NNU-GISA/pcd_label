@@ -21,3 +21,4 @@
 17.  combine all shots of an object in multiple frames, try annotate them in one view.
 18.  load data hierachically
 19.  allocate global tracking id, automatically
+20.  try more renderers.

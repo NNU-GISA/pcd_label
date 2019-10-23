@@ -43,6 +43,7 @@ var obj_type_color_map= {
     "Rider": '0xff8800',
     "Bus": '0xffff00',
     "Truck": '0xffff00',
+    "Unknown": '0xffffff',
 };
 
 

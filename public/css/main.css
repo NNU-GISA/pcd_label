@@ -36,7 +36,7 @@ canvas {
 	padding: 0px;
 	box-sizing: border-box;
 	text-align: left;	
-	z-index: 2; /* TODO Solve this in HTML */
+	z-index: 3; /* TODO Solve this in HTML */
 }
 
 #object-category-selector, #object-track_id_editor
@@ -61,7 +61,7 @@ canvas {
 	-ms-user-select: none;
 	user-select: none;
 	pointer-events: none;
-	z-index: 2; /* TODO Solve this in HTML */
+	z-index: 1; /* TODO Solve this in HTML */
 }
 
 #maincanvas-c {

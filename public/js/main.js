@@ -1836,33 +1836,40 @@ function render_2d_image(){
         var scene_meta = data.meta.find(function(x){return x.scene==data.world.file_info.scene;});
 
         var active_image_name = data.world.images.active_name;
-        var calib = scene_meta.calib[active_image_name]
-        if (calib){
-            // draw boxes
-            data.world.boxes.forEach(function(box){
-                
-
-                var scale = box.scale;
-                var pos = box.position;
-                var rotation = box.rotation;
-
-                var box3d = psr_to_xyz(pos, scale, rotation);
-                
-                var imgpos = matmul(calib.extrinsic, box3d, 4);
-                var imgpos3 = vector4to3(imgpos);
-                var imgpos2 = matmul(calib.intrinsic, imgpos3, 3);
-
-                if (imgpos2[2]<0){
-                    return;
-                }
-                var imgfinal = vector3_nomalize(imgpos2);
-
-                ctx.lineWidth = 2;
-                // front 
-                draw_box_on_image(ctx, box, imgfinal, trans_ratio, selected_box == box);
-
-            });
+        if (!scene_meta.calib){
+            return;
         }
+
+        var calib = scene_meta.calib[active_image_name]
+        if (!calib){
+            return;
+        }
+
+        // draw boxes
+        data.world.boxes.forEach(function(box){
+            
+
+            var scale = box.scale;
+            var pos = box.position;
+            var rotation = box.rotation;
+
+            var box3d = psr_to_xyz(pos, scale, rotation);
+            
+            var imgpos = matmul(calib.extrinsic, box3d, 4);
+            var imgpos3 = vector4to3(imgpos);
+            var imgpos2 = matmul(calib.intrinsic, imgpos3, 3);
+
+            if (imgpos2[2]<0){
+                return;
+            }
+            var imgfinal = vector3_nomalize(imgpos2);
+
+            ctx.lineWidth = 2;
+            // front 
+            draw_box_on_image(ctx, box, imgfinal, trans_ratio, selected_box == box);
+
+        });
+    
     }
 
 
@@ -1974,7 +1981,15 @@ function update_image_box_projection(box){
     var scene_meta = data.meta.find(function(x){return x.scene==data.world.file_info.scene;});
 
     var active_image_name = data.world.images.active_name;
+    if (!scene_meta.calib){
+        return;
+    }
+    
     var calib = scene_meta.calib[active_image_name]
+    if (!calib){
+        return;
+    }
+    
     if (calib){
         var scale = box.scale;
         var pos = box.position;

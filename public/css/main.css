@@ -46,14 +46,12 @@ canvas {
 	border-width: 0;
 }
 
-#image {
-	display: none;
+#maincanvas {
 	position: absolute;
-	top: 0px;
+	top: 0%;
 	left: 20%;
-	color: #ffff00;
-	width: 30%;
-	height: auto;
+	width: inherit;
+	height: 30%;
 	padding: 0px;
 	box-sizing: border-box;
 	text-align: left;
@@ -63,15 +61,16 @@ canvas {
 	-ms-user-select: none;
 	user-select: none;
 	pointer-events: none;
-	z-index: 1; /* TODO Solve this in HTML */
+	z-index: 2; /* TODO Solve this in HTML */
 }
 
-#maincanvas {
-	position: absolute;
+#maincanvas-c {
+	position: relative;
 	top: 0%;
-	left: 20%;
+	left: 0%;
 	width: inherit;
-	height: 30%;
+	height: 100%;
+
 	padding: 0px;
 	box-sizing: border-box;
 	text-align: left;

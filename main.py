@@ -190,6 +190,31 @@ class Root(object):
       #           "boxtype":"psr",
       #         },
       #        ]
+    
+    @cherrypy.expose    
+    @cherrypy.tools.json_out()
+    def objs_of_scene(self, scene):
+      return self.get_all_unique_objs(os.path.join("public/data",scene))
+
+    def get_all_unique_objs(self, path):
+      files = os.listdir(os.path.join(path, "bbox.json"))
+
+      files = filter(lambda x: x.split(".")[-1]=="json", files)
+
+
+      def file_2_objs(f):
+          with open(f) as fd:
+              boxes = json.load(fd)
+              objs = [x for x in map(lambda b: b["obj_type"]+"-"+b["obj_id"], boxes)]
+              return objs
+
+      boxes = map(lambda f: file_2_objs(os.path.join(path, "bbox.json", f)), files)
+
+      all_objs={}
+      for x in boxes:
+          for o in x:
+              all_objs[o]=1;
+      return [x for x in all_objs.keys()]
 
 if __name__ == '__main__':
   cherrypy.quickstart(Root(), '/', config="server.conf")

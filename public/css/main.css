@@ -39,11 +39,12 @@ canvas {
 	z-index: 3; /* TODO Solve this in HTML */
 }
 
-#object-category-selector, #object-track_id_editor
+#object-category-selector, #object-track_id_editor, #scene-selector, #frame-selector, #camera-selector
 {
 	background-color: inherit;
 	color: inherit;
 	border-width: 0;
+	
 }
 
 #maincanvas {

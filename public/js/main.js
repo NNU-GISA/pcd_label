@@ -118,6 +118,7 @@ function init() {
     
     document.getElementById("scene-selector").onchange = function(event){return scene_changed(event.currentTarget.value);};
     document.getElementById("frame-selector").onchange = frame_changed;
+    document.getElementById("camera-selector").onchange = camera_changed;
 }
 
 
@@ -458,7 +459,7 @@ function load_data_meta(gui_folder){
 
             var scene_selector_str = ret.map(function(c){
                 return "<option value="+c.scene +">"+c.scene + "</option>";
-            }).reduce(function(x,y){return x+y;}, "<option>--choose scene--</option>");
+            }).reduce(function(x,y){return x+y;}, "<option>--scene--</option>");
 
             document.getElementById("scene-selector").innerHTML = scene_selector_str;
         }
@@ -483,7 +484,7 @@ function scene_changed(scene_name){
 
     var frame_selector_str = meta.frames.map(function(f){
         return "<option value="+f+">"+f + "</option>";
-    }).reduce(function(x,y){return x+y;}, "<option>--choose frame--</option>");
+    }).reduce(function(x,y){return x+y;}, "<option>--frame--</option>");
 
     document.getElementById("frame-selector").innerHTML = frame_selector_str;
 
@@ -501,6 +502,17 @@ function frame_changed(event){
     console.log(scene_name, frame);
     load_world(scene_name, frame);
 }
+
+
+function camera_changed(event){
+    var camera_name = event.currentTarget.value;
+
+    data.set_active_image(camera_name);
+    render_2d_image();
+}
+
+
+
 
 var stop_play_flag=true;
 var pause_play_flag=false;

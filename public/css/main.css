@@ -39,7 +39,7 @@ canvas {
 	z-index: 3; /* TODO Solve this in HTML */
 }
 
-#object-category-selector, #object-track_id_editor, #scene-selector, #frame-selector, #camera-selector
+#object-category-selector, #object-track-id-editor, #scene-selector, #frame-selector, #camera-selector, #obj-ids-of-scene
 {
 	background-color: inherit;
 	color: inherit;
@@ -89,6 +89,10 @@ canvas {
 	position: absolute;
 	color: #ff00ff;
 	background-color: #222;
+	font-size: inherit;
+	padding: 0px;
+	box-sizing: border-box;
+	text-align: left;
 }
 
 #canvas {
@@ -129,7 +133,7 @@ canvas {
 	/* background-color: #403b3b99; */
 }
 
-.Rider {
+.Rider, .Motor, .Bicycle{
 	color: #ff8800;	
 }
 

@@ -41,9 +41,13 @@
 						<option value="Pedestrian" class="Pedestrian">Pedestrian</option>
 						<option value="Truck"  class="Truck">Truck</option>
 						<option value="Rider"  class="Rider">Rider</option>
+						<option value="Motor"  class="Motor">Motor</option>
+						<option value="Bicycle"  class="Bicycle">Bicycle</option>
 						<option value="Unknown"  class="Unknown">Unknown</option>
 				</select>
-				<input id="object-track_id_editor" type="text" size="5" hidden></input>
+				<input list="obj-ids-of-scene" id="object-track-id-editor" type="text" size="5" hidden></input>
+				<datalist id="obj-ids-of-scene">
+				</datalist>
 		</div>
 		<!-- div id="image"></div -->
 		<div id="2Dlabels"></div>

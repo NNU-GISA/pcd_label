@@ -26,3 +26,4 @@
 22.  show left/right camera images.
 23.  what if the active image changes while an image is preloaded?, we could clear buffer.
 24.  save prompt if nav to another frame/scene
+25.  some objects are soft-body, the shape may change over time.

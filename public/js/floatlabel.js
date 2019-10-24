@@ -103,7 +103,7 @@ function createFloatLabelManager(view) {
                 label.remove();
         },
 
-        add_label: function(box){
+        add_label: function(box, on_click){
             if (!this.enabled())
                 return;
             
@@ -132,7 +132,7 @@ function createFloatLabelManager(view) {
                     }
                     label_text += this.obj_track_id;
                 }
-                this.innerHTML = label_text; 
+                this.innerText = label_text; 
             }
             
             label.obj_type = box.obj_type;
@@ -151,7 +151,9 @@ function createFloatLabelManager(view) {
             label.hidden = pos.out_view;
             
             document.getElementById("2Dlabels").appendChild(label);
-
+            label.onclick = function(){
+                on_click();
+            };
         },
 
 

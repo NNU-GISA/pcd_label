@@ -103,11 +103,11 @@ function init() {
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
  
     document.getElementById("object-category-selector").onchange = object_category_changed;
-    document.getElementById("object-track_id_editor").onchange = object_track_id_changed;
-    document.getElementById("object-track_id_editor").addEventListener("keydown", function(e){
+    document.getElementById("object-track-id-editor").onchange = object_track_id_changed;
+    document.getElementById("object-track-id-editor").addEventListener("keydown", function(e){
         e.stopPropagation();});
     
-    document.getElementById("object-track_id_editor").addEventListener("keyup", function(e){
+    document.getElementById("object-track-id-editor").addEventListener("keyup", function(e){
         e.stopPropagation();
 
         if (selected_box){
@@ -119,7 +119,7 @@ function init() {
     //document.getElementById("header-row").addEventListener('mousemove', function(e){e.preventDefault();});
     
     document.getElementById("scene-selector").onchange = function(event){
-        scene_changed(event.currentTarget.value);
+        scene_changed(event.currentTarget.value);        
         event.currentTarget.blur();
     };
 
@@ -270,11 +270,15 @@ function paste_bbox(pos){
 
     sideview_mesh=box;
 
-    floatLabelManager.add_label(box);
+    floatLabelManager.add_label(box, function(){on_label_clicked(box);});
     
     select_bbox(box);
     
     return box;
+}
+
+function on_label_clicked(box){
+    select_bbox(box);
 }
 
 function auto_adjust_bbox(done){
@@ -404,6 +408,9 @@ function save_annotation(done){
             if(done){
                 done();
             }
+
+            //reload obj-ids of the scene
+            load_obj_ids_of_scene(data.world.file_info.scene);
         }
     
         // end of state change: it can be after some time (async)
@@ -463,9 +470,34 @@ function scene_changed(scene_name){
     }).reduce(function(x,y){return x+y;}, "<option>--frame--</option>");
 
     document.getElementById("frame-selector").innerHTML = frame_selector_str;
-    event.currentTarget.blur();
+    
+    load_obj_ids_of_scene(scene_name);
 }
 
+function load_obj_ids_of_scene(scene){
+
+    var xhr = new XMLHttpRequest();
+    // we defined the xhr
+    
+    xhr.onreadystatechange = function () {
+        if (this.readyState != 4) 
+            return;
+    
+        if (this.status == 200) {
+            var ret = JSON.parse(this.responseText);
+            
+            var obj_ids_list = ret.map(function(c){
+                return "<option value="+c.id+">"+c.category+"</option>";
+            }).reduce(function(x,y){return x+y;}, "");
+
+            document.getElementById("obj-ids-of-scene").innerHTML = obj_ids_list;
+        }
+
+    };
+    
+    xhr.open('GET', "/objs_of_scene?scene="+scene, true);
+    xhr.send();
+}
 
 function frame_changed(event){
     var scene_name = document.getElementById("scene-selector").value;
@@ -578,6 +610,8 @@ function play_current_scene_with_buffer(resume){
                         update_frame_info(scene_meta.scene, frame);
                         select_locked_object();
                         header.unmark_changed_flag();
+                        load_obj_ids_of_scene(scene_name);
+
                         next_frame();
                         
                         function next_frame(){
@@ -1289,7 +1323,7 @@ function add_bbox(){
 
     sideview_mesh=box;
 
-    floatLabelManager.add_label(box);
+    floatLabelManager.add_label(box, function(){on_label_clicked(box);});
     
     select_bbox(box);
     
@@ -1675,6 +1709,7 @@ function load_world(scene_name, frame){
 
             select_locked_object();
             header.unmark_changed_flag();
+            load_obj_ids_of_scene(scene_name);
         }
     );
 }
@@ -1781,7 +1816,7 @@ function render_2d_labels(){
     floatLabelManager.remove_all_labels();
 
     data.world.boxes.forEach(function(b){
-        floatLabelManager.add_label(b);
+        floatLabelManager.add_label(b, function(){on_label_clicked(b);});
     })
 
     if (selected_box){

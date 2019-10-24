@@ -205,7 +205,7 @@ class Root(object):
       def file_2_objs(f):
           with open(f) as fd:
               boxes = json.load(fd)
-              objs = [x for x in map(lambda b: b["obj_type"]+"-"+b["obj_id"], boxes)]
+              objs = [x for x in map(lambda b: {"category":b["obj_type"], "id": b["obj_id"]}, boxes)]
               return objs
 
       boxes = map(lambda f: file_2_objs(os.path.join(path, "bbox.json", f)), files)
@@ -213,8 +213,10 @@ class Root(object):
       all_objs={}
       for x in boxes:
           for o in x:
-              all_objs[o]=1;
-      return [x for x in all_objs.keys()]
+              all_objs[o["category"]+"-"+o["id"]]=o
+      objs = [x for x in all_objs.values()]
+      objs.sort()
+      return objs
 
 if __name__ == '__main__':
   cherrypy.quickstart(Root(), '/', config="server.conf")

@@ -44,6 +44,8 @@ init();
 animate();
 render();
 $( "#maincanvas" ).resizable();
+load_data_meta();
+
 
 
 function init() {
@@ -419,32 +421,7 @@ function save_annotation(done){
 
 
 
-function load_data_meta(gui_folder){
-
-    function add_one_scene(c){
-        console.log("add scene", c);
-
-        var folder = gui_folder.addFolder(c.scene);
-
-        var thisscene={};
-
-        c.frames.forEach(function(f){
-            //var f = c.frames[frame_index];
-            thisscene[f] = function(){
-                //console.log("clicked", c);
-
-                //data.file_info.set(c.scene, f, c.point_transform_matrix, c.boxtype);
-                //remove_all();  //remove before new data loaded.
-                //load_all();
-
-                //update_frame_info(c.scene, f);
-                load_world(c.scene, f);
-            };
-
-            folder.add(thisscene, f);
-        });
-
-    }
+function load_data_meta(){    
 
     var xhr = new XMLHttpRequest();
     // we defined the xhr
@@ -455,14 +432,7 @@ function load_data_meta(gui_folder){
     
         if (this.status == 200) {
             var ret = JSON.parse(this.responseText);
-            data.meta = ret;
-                                
-            //play_frame(scene_meta, frame);
-            /*
-            ret.forEach(function(c){
-                add_one_scene(c);
-            });
-            */
+            data.meta = ret;                               
 
             var scene_selector_str = ret.map(function(c){
                 return "<option value="+c.scene +">"+c.scene + "</option>";
@@ -476,7 +446,6 @@ function load_data_meta(gui_folder){
     xhr.open('GET', "/datameta", true);
     xhr.send();
 }
-
 
 function scene_changed(scene_name){
     
@@ -881,8 +850,8 @@ function init_gui(){
 
     //fileFolder.open();
 
-    var dataFolder = gui.addFolder( 'Data' );
-    load_data_meta(dataFolder);
+    //var dataFolder = gui.addFolder( 'Data' );
+    //load_data_meta(dataFolder);
 
     gui.open();
 }

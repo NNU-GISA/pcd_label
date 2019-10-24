@@ -116,6 +116,8 @@ function init() {
     //document.getElementById("header-row").addEventListener('mousedown', function(e){e.preventDefault();});
     //document.getElementById("header-row").addEventListener('mousemove', function(e){e.preventDefault();});
     
+    document.getElementById("scene-selector").onchange = function(event){return scene_changed(event.currentTarget.value);};
+    document.getElementById("frame-selector").onchange = frame_changed;
 }
 
 
@@ -324,7 +326,7 @@ function auto_adjust_bbox(done){
 
                 update_subview_by_bbox(selected_box);
         
-                mark_changed_flag();
+                header.mark_changed_flag();
 
                 if (done){
                     done();
@@ -403,7 +405,7 @@ function save_annotation(done){
 
     // unmark changed flag
     //document.getElementById("frame").innerHTML = data.world.file_info.scene+"/"+data.world.file_info.frame;
-    unmark_changed_flag();
+    header.unmark_changed_flag();
 }
 
 
@@ -448,9 +450,17 @@ function load_data_meta(gui_folder){
             data.meta = ret;
                                 
             //play_frame(scene_meta, frame);
+            /*
             ret.forEach(function(c){
                 add_one_scene(c);
             });
+            */
+
+            var scene_selector_str = ret.map(function(c){
+                return "<option value="+c.scene +">"+c.scene + "</option>";
+            }).reduce(function(x,y){return x+y;}, "<option>--choose scene--</option>");
+
+            document.getElementById("scene-selector").innerHTML = scene_selector_str;
         }
 
     };
@@ -460,6 +470,37 @@ function load_data_meta(gui_folder){
 }
 
 
+function scene_changed(scene_name){
+    
+    //var scene_name = event.currentTarget.value;
+
+    if (scene_name.length == 0){
+        return;
+    }
+    
+    console.log("choose scene_name " + scene_name);
+    var meta = data.get_meta_by_scene_name(scene_name);
+
+    var frame_selector_str = meta.frames.map(function(f){
+        return "<option value="+f+">"+f + "</option>";
+    }).reduce(function(x,y){return x+y;}, "<option>--choose frame--</option>");
+
+    document.getElementById("frame-selector").innerHTML = frame_selector_str;
+
+}
+
+
+function frame_changed(event){
+    var scene_name = document.getElementById("scene-selector").value;
+
+    if (scene_name.length == 0){
+        return;
+    }
+
+    var frame =  event.currentTarget.value;
+    console.log(scene_name, frame);
+    load_world(scene_name, frame);
+}
 
 var stop_play_flag=true;
 var pause_play_flag=false;
@@ -544,7 +585,7 @@ function play_current_scene_with_buffer(resume){
                         render_2d_labels();
                         update_frame_info(scene_meta.scene, frame);
                         select_locked_object();
-
+                        header.unmark_changed_flag();
                         next_frame();
                         
                         function next_frame(){
@@ -977,23 +1018,6 @@ function update_subview_by_bbox(mesh){
 }
 
 
-function unmark_changed_flag(){
-
-    var s = document.getElementById("frame").innerHTML
-    document.getElementById("frame").innerHTML = s.split("*")[0];
-}
-
-function mark_changed_flag(){
-    var s = document.getElementById("frame").innerHTML
-    if (! s.endsWith("*"))
-        document.getElementById("frame").innerHTML += "*"
-}
-
-
-
-
-
-
 function onDocumentMouseMove( event ) {
     event.preventDefault();
     mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
@@ -1353,7 +1377,7 @@ function transform_bbox(command){
     }
 
     update_subview_by_bbox(selected_box);    
-    mark_changed_flag();
+    header.mark_changed_flag();
 }
 
 
@@ -1438,12 +1462,12 @@ function keydown( ev ) {
         case 'N':    
         case 'n':
             add_bbox();
-            mark_changed_flag();
+            header.mark_changed_flag();
             break;        
         case 'B':
         case 'b':
             switch_bbox_type();
-            mark_changed_flag();
+            header.mark_changed_flag();
             break;
         case '+':
         case '=': // +, =, num+
@@ -1460,7 +1484,11 @@ function keydown( ev ) {
             views[0].transform_control.showY = ! views[0].transform_control.showY;
             break;
         case 'c': // Z
-            views[0].transform_control.showZ = ! views[0].transform_control.showZ;
+            if (ev.ctrlKey){
+                mark_bbox();
+            } else {
+                views[0].transform_control.showZ = ! views[0].transform_control.showZ;
+            }
             break;            
         case ' ': // Spacebar
             //views[0].transform_control.enabled = ! views[0].transform_control.enabled;
@@ -1543,7 +1571,7 @@ function keydown( ev ) {
                 }
                 else if (ev.ctrlKey){
                     remove_selected_box();
-                    mark_changed_flag();
+                    header.mark_changed_flag();
                 }else{
                     transform_bbox("z_move_down");
                 }
@@ -1589,7 +1617,7 @@ function keydown( ev ) {
         
         case 'Delete':
             remove_selected_box();
-            mark_changed_flag();
+            header.mark_changed_flag();
             break;
     }
 }
@@ -1607,7 +1635,7 @@ function smart_paste(){
         });
     }
 
-    mark_changed_flag();
+    header.mark_changed_flag();
 }
 
 function previous_frame(){
@@ -1652,6 +1680,7 @@ function load_world(scene_name, frame){
             update_frame_info(scene_name, frame);
 
             select_locked_object();
+            header.unmark_changed_flag();
         }
     );
 }
@@ -1710,7 +1739,7 @@ function clear(){
 
 
 function update_frame_info(scene, frame){
-    header.set_frame_info(scene, frame);
+    header.set_frame_info(scene, frame, scene_changed);
 
     /*
     if (params["hide image"]){
@@ -1734,7 +1763,7 @@ function on_box_changed(event){
     //console.log("bbox rotation z", mesh.rotation.z);
     update_subview_by_bbox(mesh);  
     render_2d_image();
-    mark_changed_flag();  
+    header.mark_changed_flag();  
 }
 
 function on_selected_box_changed(box){

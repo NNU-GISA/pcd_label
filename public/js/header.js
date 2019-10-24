@@ -27,13 +27,31 @@ var header={
         document.getElementById("ref-obj").innerHTML="| BoxRef: "+marked_object.scene+"/"+marked_object.frame+": "+marked_object.obj_type+"-"+marked_object.obj_track_id;
     },
 
-    set_frame_info: function(scene, frame){
-        document.getElementById("frame").innerHTML = scene+"/"+frame;
+    set_frame_info: function(scene, frame, on_scene_changed){
+        //document.getElementById("frame").innerHTML = scene+"/"+frame;
+
+        var e = document.getElementById("scene-selector");
+
+        if (e.value != scene){
+            document.getElementById("scene-selector").value = scene;
+            on_scene_changed(scene);
+        }
+
+        document.getElementById("frame-selector").value = frame;
     },
 
     clear_frame_info: function(scene, frame){
-        document.getElementById("frame").innerHTML = "";
+        //document.getElementById("frame").innerHTML = "";
     },
+    
+    unmark_changed_flag: function(){
+        document.getElementById("changed-mark").innerText=" ";
+        
+    },
+    
+    mark_changed_flag: function(){
+        document.getElementById("changed-mark").innerText="*";
+    }
     
 }
 

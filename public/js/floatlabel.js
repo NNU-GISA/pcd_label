@@ -38,6 +38,9 @@ function createFloatLabelManager(view) {
             var label = document.getElementById("obj-local-"+local_id);
             if (label){                
                 label.className = "selected-float-label";
+                label.hidden = true;
+                document.getElementById("obj-editor").style.top = label.style.top;
+                document.getElementById("obj-editor").style.left = label.style.left;
             }
         },
 
@@ -45,6 +48,7 @@ function createFloatLabelManager(view) {
             var label = document.getElementById("obj-local-"+local_id);
             if (label){                
                 label.className = "float-label" + " " + label.obj_type;
+                label.hidden = false;
             }
         },
 

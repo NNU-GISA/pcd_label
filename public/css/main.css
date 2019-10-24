@@ -85,13 +85,10 @@ canvas {
 }
 
 
-#boxedit {
-	font-size: inherit;
+#obj-editor{
 	position: absolute;
-    top: 0%;
-    left: 60%;
-    z-index: 1;
-    background-color: #333a;
+	color: #ff00ff;
+	background-color: #222;
 }
 
 #canvas {

@@ -95,7 +95,7 @@ function init() {
     //renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
     //renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
     container.addEventListener( 'mousemove', onDocumentMouseMove, false );
-    container.addEventListener( 'mousedown', onDocumentMouseDown, false );
+    container.addEventListener( 'mousedown', onDocumentMouseDown, true );
     
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
@@ -116,7 +116,11 @@ function init() {
     //document.getElementById("header-row").addEventListener('mousedown', function(e){e.preventDefault();});
     //document.getElementById("header-row").addEventListener('mousemove', function(e){e.preventDefault();});
     
-    document.getElementById("scene-selector").onchange = function(event){return scene_changed(event.currentTarget.value);};
+    document.getElementById("scene-selector").onchange = function(event){
+        scene_changed(event.currentTarget.value);
+        event.currentTarget.blur();
+    };
+
     document.getElementById("frame-selector").onchange = frame_changed;
     document.getElementById("camera-selector").onchange = camera_changed;
 }
@@ -212,6 +216,9 @@ function render(){
     }   
 
     floatLabelManager.update_all_position();
+    if (selected_box){
+        floatLabelManager.select_box(selected_box.obj_local_id);
+    }
 }
 
 var marked_object = null;
@@ -487,7 +494,7 @@ function scene_changed(scene_name){
     }).reduce(function(x,y){return x+y;}, "<option>--frame--</option>");
 
     document.getElementById("frame-selector").innerHTML = frame_selector_str;
-
+    event.currentTarget.blur();
 }
 
 
@@ -501,6 +508,8 @@ function frame_changed(event){
     var frame =  event.currentTarget.value;
     console.log(scene_name, frame);
     load_world(scene_name, frame);
+
+    event.currentTarget.blur();
 }
 
 
@@ -509,6 +518,8 @@ function camera_changed(event){
 
     data.set_active_image(camera_name);
     render_2d_image();
+
+    event.currentTarget.blur();
 }
 
 
@@ -880,19 +891,18 @@ function object_category_changed(event){
     if (selected_box){
         selected_box.obj_type = event.currentTarget.value;
         floatLabelManager.set_object_type(selected_box.obj_local_id, selected_box.obj_type);
+        header.mark_changed_flag();
     }
 }
 function object_track_id_changed(event){
     if (selected_box){
         selected_box.obj_track_id = event.currentTarget.value;
         floatLabelManager.set_object_track_id(selected_box.obj_local_id, selected_box.obj_track_id);
+        header.mark_changed_flag();
     }
 }
 
-function update_label_editor(obj_type, obj_track_id){
-    document.getElementById("object-category-selector").value = obj_type;
-    document.getElementById("object-track_id_editor").value = obj_track_id;
-}
+
 
 function update_subview_by_windowsize(){
 
@@ -1052,6 +1062,7 @@ function get_mouse_location_in_world(mouse){
 var mouse_right_down = false;
 
 function onDocumentMouseDown( event ) {    
+    
     if (event.which==3){
         mouse_right_down = true;
     }
@@ -1214,7 +1225,7 @@ function select_bbox(object){
         lock_obj_track_id = object.obj_track_id;
 
         floatLabelManager.select_box(selected_box.obj_local_id);
-        update_label_editor(object.obj_type, object.obj_track_id);
+        header.update_label_editor(object.obj_type, object.obj_track_id);
 
         selected_box.material.color.r=1;
         selected_box.material.color.g=0;
@@ -1419,6 +1430,8 @@ function switch_bbox_type(){
     }
 
     on_selected_box_changed(selected_box);
+    floatLabelManager.set_object_type(selected_box.obj_local_id, selected_box.obj_type);
+    header.update_label_editor(selected_box.obj_type, selected_box.obj_track_id);
     update_subview_by_windowsize();
 }
 

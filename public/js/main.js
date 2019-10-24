@@ -44,6 +44,8 @@ init();
 animate();
 render();
 $( "#maincanvas" ).resizable();
+load_data_meta();
+
 
 
 function init() {
@@ -95,17 +97,17 @@ function init() {
     //renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
     //renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
     container.addEventListener( 'mousemove', onDocumentMouseMove, false );
-    container.addEventListener( 'mousedown', onDocumentMouseDown, false );
+    container.addEventListener( 'mousedown', onDocumentMouseDown, true );
     
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
  
     document.getElementById("object-category-selector").onchange = object_category_changed;
-    document.getElementById("object-track_id_editor").onchange = object_track_id_changed;
-    document.getElementById("object-track_id_editor").addEventListener("keydown", function(e){
+    document.getElementById("object-track-id-editor").onchange = object_track_id_changed;
+    document.getElementById("object-track-id-editor").addEventListener("keydown", function(e){
         e.stopPropagation();});
     
-    document.getElementById("object-track_id_editor").addEventListener("keyup", function(e){
+    document.getElementById("object-track-id-editor").addEventListener("keyup", function(e){
         e.stopPropagation();
 
         if (selected_box){
@@ -116,6 +118,13 @@ function init() {
     //document.getElementById("header-row").addEventListener('mousedown', function(e){e.preventDefault();});
     //document.getElementById("header-row").addEventListener('mousemove', function(e){e.preventDefault();});
     
+    document.getElementById("scene-selector").onchange = function(event){
+        scene_changed(event.currentTarget.value);        
+        event.currentTarget.blur();
+    };
+
+    document.getElementById("frame-selector").onchange = frame_changed;
+    document.getElementById("camera-selector").onchange = camera_changed;
 }
 
 
@@ -209,6 +218,9 @@ function render(){
     }   
 
     floatLabelManager.update_all_position();
+    if (selected_box){
+        floatLabelManager.select_box(selected_box.obj_local_id);
+    }
 }
 
 var marked_object = null;
@@ -258,11 +270,15 @@ function paste_bbox(pos){
 
     sideview_mesh=box;
 
-    floatLabelManager.add_label(box);
+    floatLabelManager.add_label(box, function(){on_label_clicked(box);});
     
     select_bbox(box);
     
     return box;
+}
+
+function on_label_clicked(box){
+    select_bbox(box);
 }
 
 function auto_adjust_bbox(done){
@@ -324,7 +340,7 @@ function auto_adjust_bbox(done){
 
                 update_subview_by_bbox(selected_box);
         
-                mark_changed_flag();
+                header.mark_changed_flag();
 
                 if (done){
                     done();
@@ -392,6 +408,9 @@ function save_annotation(done){
             if(done){
                 done();
             }
+
+            //reload obj-ids of the scene
+            load_obj_ids_of_scene(data.world.file_info.scene);
         }
     
         // end of state change: it can be after some time (async)
@@ -403,38 +422,13 @@ function save_annotation(done){
 
     // unmark changed flag
     //document.getElementById("frame").innerHTML = data.world.file_info.scene+"/"+data.world.file_info.frame;
-    unmark_changed_flag();
+    header.unmark_changed_flag();
 }
 
 
 
 
-function load_data_meta(gui_folder){
-
-    function add_one_scene(c){
-        console.log("add scene", c);
-
-        var folder = gui_folder.addFolder(c.scene);
-
-        var thisscene={};
-
-        c.frames.forEach(function(f){
-            //var f = c.frames[frame_index];
-            thisscene[f] = function(){
-                //console.log("clicked", c);
-
-                //data.file_info.set(c.scene, f, c.point_transform_matrix, c.boxtype);
-                //remove_all();  //remove before new data loaded.
-                //load_all();
-
-                //update_frame_info(c.scene, f);
-                load_world(c.scene, f);
-            };
-
-            folder.add(thisscene, f);
-        });
-
-    }
+function load_data_meta(){    
 
     var xhr = new XMLHttpRequest();
     // we defined the xhr
@@ -445,12 +439,13 @@ function load_data_meta(gui_folder){
     
         if (this.status == 200) {
             var ret = JSON.parse(this.responseText);
-            data.meta = ret;
-                                
-            //play_frame(scene_meta, frame);
-            ret.forEach(function(c){
-                add_one_scene(c);
-            });
+            data.meta = ret;                               
+
+            var scene_selector_str = ret.map(function(c){
+                return "<option value="+c.scene +">"+c.scene + "</option>";
+            }).reduce(function(x,y){return x+y;}, "<option>--scene--</option>");
+
+            document.getElementById("scene-selector").innerHTML = scene_selector_str;
         }
 
     };
@@ -458,6 +453,76 @@ function load_data_meta(gui_folder){
     xhr.open('GET', "/datameta", true);
     xhr.send();
 }
+
+function scene_changed(scene_name){
+    
+    //var scene_name = event.currentTarget.value;
+
+    if (scene_name.length == 0){
+        return;
+    }
+    
+    console.log("choose scene_name " + scene_name);
+    var meta = data.get_meta_by_scene_name(scene_name);
+
+    var frame_selector_str = meta.frames.map(function(f){
+        return "<option value="+f+">"+f + "</option>";
+    }).reduce(function(x,y){return x+y;}, "<option>--frame--</option>");
+
+    document.getElementById("frame-selector").innerHTML = frame_selector_str;
+    
+    load_obj_ids_of_scene(scene_name);
+}
+
+function load_obj_ids_of_scene(scene){
+
+    var xhr = new XMLHttpRequest();
+    // we defined the xhr
+    
+    xhr.onreadystatechange = function () {
+        if (this.readyState != 4) 
+            return;
+    
+        if (this.status == 200) {
+            var ret = JSON.parse(this.responseText);
+            
+            var obj_ids_list = ret.map(function(c){
+                return "<option value="+c.id+">"+c.category+"</option>";
+            }).reduce(function(x,y){return x+y;}, "");
+
+            document.getElementById("obj-ids-of-scene").innerHTML = obj_ids_list;
+        }
+
+    };
+    
+    xhr.open('GET', "/objs_of_scene?scene="+scene, true);
+    xhr.send();
+}
+
+function frame_changed(event){
+    var scene_name = document.getElementById("scene-selector").value;
+
+    if (scene_name.length == 0){
+        return;
+    }
+
+    var frame =  event.currentTarget.value;
+    console.log(scene_name, frame);
+    load_world(scene_name, frame);
+
+    event.currentTarget.blur();
+}
+
+
+function camera_changed(event){
+    var camera_name = event.currentTarget.value;
+
+    data.set_active_image(camera_name);
+    render_2d_image();
+
+    event.currentTarget.blur();
+}
+
 
 
 
@@ -544,6 +609,8 @@ function play_current_scene_with_buffer(resume){
                         render_2d_labels();
                         update_frame_info(scene_meta.scene, frame);
                         select_locked_object();
+                        header.unmark_changed_flag();
+                        load_obj_ids_of_scene(scene_name);
 
                         next_frame();
                         
@@ -817,8 +884,8 @@ function init_gui(){
 
     //fileFolder.open();
 
-    var dataFolder = gui.addFolder( 'Data' );
-    load_data_meta(dataFolder);
+    //var dataFolder = gui.addFolder( 'Data' );
+    //load_data_meta(dataFolder);
 
     gui.open();
 }
@@ -827,19 +894,18 @@ function object_category_changed(event){
     if (selected_box){
         selected_box.obj_type = event.currentTarget.value;
         floatLabelManager.set_object_type(selected_box.obj_local_id, selected_box.obj_type);
+        header.mark_changed_flag();
     }
 }
 function object_track_id_changed(event){
     if (selected_box){
         selected_box.obj_track_id = event.currentTarget.value;
         floatLabelManager.set_object_track_id(selected_box.obj_local_id, selected_box.obj_track_id);
+        header.mark_changed_flag();
     }
 }
 
-function update_label_editor(obj_type, obj_track_id){
-    document.getElementById("object-category-selector").value = obj_type;
-    document.getElementById("object-track_id_editor").value = obj_track_id;
-}
+
 
 function update_subview_by_windowsize(){
 
@@ -977,23 +1043,6 @@ function update_subview_by_bbox(mesh){
 }
 
 
-function unmark_changed_flag(){
-
-    var s = document.getElementById("frame").innerHTML
-    document.getElementById("frame").innerHTML = s.split("*")[0];
-}
-
-function mark_changed_flag(){
-    var s = document.getElementById("frame").innerHTML
-    if (! s.endsWith("*"))
-        document.getElementById("frame").innerHTML += "*"
-}
-
-
-
-
-
-
 function onDocumentMouseMove( event ) {
     event.preventDefault();
     mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
@@ -1016,6 +1065,7 @@ function get_mouse_location_in_world(mouse){
 var mouse_right_down = false;
 
 function onDocumentMouseDown( event ) {    
+    
     if (event.which==3){
         mouse_right_down = true;
     }
@@ -1178,7 +1228,7 @@ function select_bbox(object){
         lock_obj_track_id = object.obj_track_id;
 
         floatLabelManager.select_box(selected_box.obj_local_id);
-        update_label_editor(object.obj_type, object.obj_track_id);
+        header.update_label_editor(object.obj_type, object.obj_track_id);
 
         selected_box.material.color.r=1;
         selected_box.material.color.g=0;
@@ -1273,7 +1323,7 @@ function add_bbox(){
 
     sideview_mesh=box;
 
-    floatLabelManager.add_label(box);
+    floatLabelManager.add_label(box, function(){on_label_clicked(box);});
     
     select_bbox(box);
     
@@ -1353,7 +1403,7 @@ function transform_bbox(command){
     }
 
     update_subview_by_bbox(selected_box);    
-    mark_changed_flag();
+    header.mark_changed_flag();
 }
 
 
@@ -1383,6 +1433,8 @@ function switch_bbox_type(){
     }
 
     on_selected_box_changed(selected_box);
+    floatLabelManager.set_object_type(selected_box.obj_local_id, selected_box.obj_type);
+    header.update_label_editor(selected_box.obj_type, selected_box.obj_track_id);
     update_subview_by_windowsize();
 }
 
@@ -1438,12 +1490,12 @@ function keydown( ev ) {
         case 'N':    
         case 'n':
             add_bbox();
-            mark_changed_flag();
+            header.mark_changed_flag();
             break;        
         case 'B':
         case 'b':
             switch_bbox_type();
-            mark_changed_flag();
+            header.mark_changed_flag();
             break;
         case '+':
         case '=': // +, =, num+
@@ -1460,7 +1512,11 @@ function keydown( ev ) {
             views[0].transform_control.showY = ! views[0].transform_control.showY;
             break;
         case 'c': // Z
-            views[0].transform_control.showZ = ! views[0].transform_control.showZ;
+            if (ev.ctrlKey){
+                mark_bbox();
+            } else {
+                views[0].transform_control.showZ = ! views[0].transform_control.showZ;
+            }
             break;            
         case ' ': // Spacebar
             //views[0].transform_control.enabled = ! views[0].transform_control.enabled;
@@ -1543,7 +1599,7 @@ function keydown( ev ) {
                 }
                 else if (ev.ctrlKey){
                     remove_selected_box();
-                    mark_changed_flag();
+                    header.mark_changed_flag();
                 }else{
                     transform_bbox("z_move_down");
                 }
@@ -1589,7 +1645,7 @@ function keydown( ev ) {
         
         case 'Delete':
             remove_selected_box();
-            mark_changed_flag();
+            header.mark_changed_flag();
             break;
     }
 }
@@ -1607,7 +1663,7 @@ function smart_paste(){
         });
     }
 
-    mark_changed_flag();
+    header.mark_changed_flag();
 }
 
 function previous_frame(){
@@ -1652,6 +1708,8 @@ function load_world(scene_name, frame){
             update_frame_info(scene_name, frame);
 
             select_locked_object();
+            header.unmark_changed_flag();
+            load_obj_ids_of_scene(scene_name);
         }
     );
 }
@@ -1710,7 +1768,7 @@ function clear(){
 
 
 function update_frame_info(scene, frame){
-    header.set_frame_info(scene, frame);
+    header.set_frame_info(scene, frame, scene_changed);
 
     /*
     if (params["hide image"]){
@@ -1734,7 +1792,7 @@ function on_box_changed(event){
     //console.log("bbox rotation z", mesh.rotation.z);
     update_subview_by_bbox(mesh);  
     render_2d_image();
-    mark_changed_flag();  
+    header.mark_changed_flag();  
 }
 
 function on_selected_box_changed(box){
@@ -1758,7 +1816,7 @@ function render_2d_labels(){
     floatLabelManager.remove_all_labels();
 
     data.world.boxes.forEach(function(b){
-        floatLabelManager.add_label(b);
+        floatLabelManager.add_label(b, function(){on_label_clicked(b);});
     })
 
     if (selected_box){

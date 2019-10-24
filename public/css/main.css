@@ -30,7 +30,7 @@ canvas {
 	position: absolute;
 	top: 0px;
 	color: #ffff00;
-	background-color: #2228;
+	background-color: #222;
 	width: inherit;
 	font-size: inherit;
 	padding: 0px;
@@ -39,11 +39,12 @@ canvas {
 	z-index: 3; /* TODO Solve this in HTML */
 }
 
-#object-category-selector, #object-track_id_editor
+#object-category-selector, #object-track-id-editor, #scene-selector, #frame-selector, #camera-selector, #obj-ids-of-scene
 {
 	background-color: inherit;
 	color: inherit;
 	border-width: 0;
+	
 }
 
 #maincanvas {
@@ -84,13 +85,14 @@ canvas {
 }
 
 
-#boxedit {
-	font-size: inherit;
+#obj-editor{
 	position: absolute;
-    top: 0%;
-    left: 60%;
-    z-index: 1;
-    background-color: #333a;
+	color: #ff00ff;
+	background-color: #222;
+	font-size: inherit;
+	padding: 0px;
+	box-sizing: border-box;
+	text-align: left;
 }
 
 #canvas {
@@ -131,7 +133,7 @@ canvas {
 	/* background-color: #403b3b99; */
 }
 
-.Rider {
+.Rider, .Motor, .Bicycle{
 	color: #ff8800;	
 }
 

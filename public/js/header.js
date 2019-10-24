@@ -3,7 +3,7 @@ var header={
     clear_box_info: function(){
         document.getElementById("box").innerHTML = '';
         document.getElementById("object-category-selector").hidden=true;
-        document.getElementById("object-track_id_editor").hidden=true;
+        document.getElementById("object-track-id-editor").hidden=true;
         //document.getElementById("ref-obj").hidden=true;
     },
     
@@ -20,20 +20,44 @@ var header={
                                                     (rotation.x*180/Math.PI).toFixed(2)+" "+(rotation.y*180/Math.PI).toFixed(2)+" "+(rotation.z*180/Math.PI).toFixed(2) + " | ";
     
         document.getElementById("object-category-selector").hidden=false;
-        document.getElementById("object-track_id_editor").hidden=false;
+        document.getElementById("object-track-id-editor").hidden=false;
     },
+
+    update_label_editor: function(obj_type, obj_track_id){
+        document.getElementById("object-category-selector").value = obj_type;
+        document.getElementById("object-track-id-editor").value = obj_track_id;
+    },
+
 
     set_ref_obj: function(marked_object){
         document.getElementById("ref-obj").innerHTML="| BoxRef: "+marked_object.scene+"/"+marked_object.frame+": "+marked_object.obj_type+"-"+marked_object.obj_track_id;
     },
 
-    set_frame_info: function(scene, frame){
-        document.getElementById("frame").innerHTML = scene+"/"+frame;
+    set_frame_info: function(scene, frame, on_scene_changed){
+        //document.getElementById("frame").innerHTML = scene+"/"+frame;
+
+        var e = document.getElementById("scene-selector");
+
+        if (e.value != scene){
+            document.getElementById("scene-selector").value = scene;
+            on_scene_changed(scene);
+        }
+
+        document.getElementById("frame-selector").value = frame;
     },
 
     clear_frame_info: function(scene, frame){
-        document.getElementById("frame").innerHTML = "";
+        //document.getElementById("frame").innerHTML = "";
     },
+    
+    unmark_changed_flag: function(){
+        document.getElementById("changed-mark").innerText=" ";
+        
+    },
+    
+    mark_changed_flag: function(){
+        document.getElementById("changed-mark").innerText="*";
+    }
     
 }
 

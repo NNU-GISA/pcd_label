@@ -13,26 +13,57 @@
 	<body>
 		<div id="container"></div>
 		<div id="info">			
-			<text id="frame"></text>
-			<text id="box"></text>
-			<select id="object-category-selector" hidden>
-					<option value="Car">Car</option>
-					<option value="Bus">Bus</option>
-					<option value="Pedestrian">Pedestrian</option>
-					<option value="Truck">Truck</option>
-					<option value="Rider">Rider</option>
-					<option value="Unknown">Unknown</option>
+			<!-- text id="frame"></text-->
+			
+
+			<select id="scene-selector">
+				<option>--scene--</option>
 			</select>
-			<input id="object-track_id_editor" type="text" size="5" hidden></input>
+			<select id="frame-selector">
+					<option>--frame--</option>
+			</select>
+
+			<select id="camera-selector">
+					<option>--camera--</option>
+					<option value="image">front</option>
+					<option value="left">left</option>
+					<option value="right">right</option>
+			</select>
+
+			<text id="changed-mark"></text>
+			<text id="box"></text>			
 			<text id="ref-obj"></text>
 		</div>
-		<!-- div id="image"></div -->
-		<div id="2Dlabels"></div>
 		
+		<!-- div id="image"></div -->
+		
+		<div id="2Dlabels"></div>
+
+		<div id="obj-editor">
+				<select id="object-category-selector" hidden>
+						<option value="Car" class="Car">Car</option>
+						<option value="Bus" class="Bus">Bus</option>
+						<option value="Pedestrian" class="Pedestrian">Pedestrian</option>
+						<option value="Truck"  class="Truck">Truck</option>
+						<option value="Rider"  class="Rider">Rider</option>
+						<option value="Motor"  class="Motor">Motor</option>
+						<option value="Bicycle"  class="Bicycle">Bicycle</option>
+						<option value="Unknown"  class="Unknown">Unknown</option>
+				</select>
+				<input list="obj-ids-of-scene" id="object-track-id-editor" type="text" size="5" hidden></input>
+				<datalist id="obj-ids-of-scene">
+				</datalist>
+		</div>
+
+
 		<canvas id="maincanvas" width="2048" height="1536">
 		
 		</canvas>
 		<canvas id="canvas" width="320" height="240">cavas</canvas>		
+
+		
+
+		
 		<script type="module"  src="/static/js/main.js"></script>		
 	</body>
 </html>

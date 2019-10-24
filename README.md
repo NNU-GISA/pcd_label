@@ -85,7 +85,10 @@ v switch transform control view: tranform/rotate/scale
 
 b switch box between bus/perdestrian/car
 n create new box at the position of mouse
-m paste/auto-adjust a box from a ref-box
+
+m/Ctrl + left_click  paste/auto-adjust a box from a ref-box
+
+
 
 ctrl+s  save current frame
 del/ctrl+d  remove selected box

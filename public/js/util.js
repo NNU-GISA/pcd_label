@@ -41,6 +41,8 @@ var obj_type_color_map= {
     "Car": '0x00ff00',
     "Pedestrian": '0xff0000',
     "Rider": '0xff8800',
+    "Motor": '0xff8800',
+    "Bicycle": '0xff8800',
     "Bus": '0xffff00',
     "Truck": '0xffff00',
     "Unknown": '0xffffff',

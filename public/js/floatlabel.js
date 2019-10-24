@@ -38,6 +38,9 @@ function createFloatLabelManager(view) {
             var label = document.getElementById("obj-local-"+local_id);
             if (label){                
                 label.className = "selected-float-label";
+                label.hidden = true;
+                document.getElementById("obj-editor").style.top = label.style.top;
+                document.getElementById("obj-editor").style.left = label.style.left;
             }
         },
 
@@ -45,6 +48,7 @@ function createFloatLabelManager(view) {
             var label = document.getElementById("obj-local-"+local_id);
             if (label){                
                 label.className = "float-label" + " " + label.obj_type;
+                label.hidden = false;
             }
         },
 
@@ -99,7 +103,7 @@ function createFloatLabelManager(view) {
                 label.remove();
         },
 
-        add_label: function(box){
+        add_label: function(box, on_click){
             if (!this.enabled())
                 return;
             
@@ -128,7 +132,7 @@ function createFloatLabelManager(view) {
                     }
                     label_text += this.obj_track_id;
                 }
-                this.innerHTML = label_text; 
+                this.innerText = label_text; 
             }
             
             label.obj_type = box.obj_type;
@@ -147,7 +151,9 @@ function createFloatLabelManager(view) {
             label.hidden = pos.out_view;
             
             document.getElementById("2Dlabels").appendChild(label);
-
+            label.onclick = function(){
+                on_click();
+            };
         },
 
 

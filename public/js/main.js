@@ -131,6 +131,16 @@ function init() {
         remove_selected_box();
         header.mark_changed_flag();
     };
+
+    document.getElementById("label-copy").onclick = function(event){
+        mark_bbox();
+        event.currentTarget.blur();
+    }
+
+    document.getElementById("label-paste").onclick = function(event){
+        smart_paste();
+        event.currentTarget.blur();
+    }
 }
 
 
@@ -223,10 +233,14 @@ function render(){
         renderer.render( scene, camera );
     }   
 
+    
     floatLabelManager.update_all_position();
+    
     if (selected_box){
         floatLabelManager.select_box(selected_box.obj_local_id);
     }
+    
+    
 }
 
 var marked_object = null;
@@ -1042,9 +1056,6 @@ function update_subview_by_bbox(mesh){
     views[3].camera.updateProjectionMatrix();
     views[3].cameraHelper.update();        
 
-
-    on_selected_box_changed(sideview_mesh);
-
     update_subview_by_windowsize();  // render() is called inside this func
 }
 
@@ -1188,6 +1199,7 @@ function unselect_bbox(new_object, keep_lock){
             if (selected_box){
                 selected_box.material.color = new THREE.Color(parseInt(obj_type_color_map[selected_box.obj_type]));
                 floatLabelManager.unselect_box(selected_box.obj_local_id, selected_box.obj_type);
+                floatLabelManager.update_position(selected_box, true);
             }
 
             
@@ -1206,6 +1218,7 @@ function unselect_bbox(new_object, keep_lock){
         if (selected_box){
             selected_box.material.color = new THREE.Color(parseInt(obj_type_color_map[selected_box.obj_type]));
             floatLabelManager.unselect_box(selected_box.obj_local_id);
+            floatLabelManager.update_position(selected_box, true);
         }
         
         selected_box = null;
@@ -1213,7 +1226,7 @@ function unselect_bbox(new_object, keep_lock){
         if (!keep_lock)
                 lock_obj_track_id = "";
 
-        on_selected_box_changed(null);
+        //on_selected_box_changed(null);
 
     }
 
@@ -1253,7 +1266,7 @@ function select_bbox(object){
         }
     }
 
-    update_subview_by_bbox(object);
+    on_selected_box_changed(object);
     
 }
 
@@ -1408,8 +1421,8 @@ function transform_bbox(command){
 
     }
 
-    update_subview_by_bbox(selected_box);    
-    header.mark_changed_flag();
+    on_box_changed(selected_box);    
+    
 }
 
 
@@ -1438,10 +1451,12 @@ function switch_bbox_type(){
             break;
     }
 
-    on_selected_box_changed(selected_box);
+    
     floatLabelManager.set_object_type(selected_box.obj_local_id, selected_box.obj_type);
     header.update_label_editor(selected_box.obj_type, selected_box.obj_track_id);
-    update_subview_by_windowsize();
+
+    on_box_changed(selected_box);
+    
 }
 
 function keydown( ev ) {
@@ -1792,28 +1807,30 @@ function update_frame_info(scene, frame){
     */
 }
 
-function on_box_changed(event){
-    
-    var mesh = event.target.object;
+//box edited
+function on_box_changed(box){
+    //var box = event.target.object;
     //console.log("bbox rotation z", mesh.rotation.z);
-    update_subview_by_bbox(mesh);  
+    update_subview_by_bbox(box);      
+    update_image_box_projection(box);
     render_2d_image();
+    //floatLabelManager.update_position(box, false);
     header.mark_changed_flag();  
 }
 
 function on_selected_box_changed(box){
 
-    if (box){
-        
+    if (box){        
         header.update_box_info(box);
         update_image_box_projection(box)
-        floatLabelManager.update_position(box);
-
+        floatLabelManager.update_position(box, true);
+        update_subview_by_bbox(box);
     } else {
         header.clear_box_info();
         clear_image_box_projection();
     }
 
+      
     render_2d_image();
 }
 

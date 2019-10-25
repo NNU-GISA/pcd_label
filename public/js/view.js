@@ -70,7 +70,7 @@ function create_main_view(scene, dom, render, on_box_changed){
     var transform_control = new TransformControls(camera, dom );
     transform_control.setSpace("local");
     transform_control.addEventListener( 'change', render );
-    transform_control.addEventListener( 'objectChange', on_box_changed );
+    transform_control.addEventListener( 'objectChange', function(e){on_box_changed(e.target.object);});
     
     transform_control.addEventListener( 'dragging-changed', function ( event ) {
         views[0].orbit_perspective.enabled = ! event.value;
@@ -130,7 +130,7 @@ function create_main_view(scene, dom, render, on_box_changed){
     transform_control = new TransformControls(view.camera_orth, dom );
     transform_control.setSpace("local");
     transform_control.addEventListener( 'change', render );
-    transform_control.addEventListener( 'objectChange', on_box_changed );
+    transform_control.addEventListener( 'objectChange', function(e){on_box_changed(e.target.object);} );
     
     
     transform_control.addEventListener( 'dragging-changed', function ( event ) {

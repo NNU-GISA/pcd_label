@@ -89,7 +89,7 @@ function createFloatLabelManager(view) {
             }
         },
 
-        update_position: function(box){
+        update_position: function(box, refresh){
             //if (!this.enabled())
             //    return;
                 
@@ -105,12 +105,14 @@ function createFloatLabelManager(view) {
 
                label.vertices = psr_to_xyz(box.position, box.scale, box.rotation);  //vector 4
 
-                var best_pos = this.compute_best_position(label.vertices);
-                var pos = this.coord_to_pixel(best_pos);
+               if (refresh){
+                    var best_pos = this.compute_best_position(label.vertices);
+                    var pos = this.coord_to_pixel(best_pos);
 
-                label.style.top = Math.round(pos.y) + 'px';
-                label.style.left = Math.round(pos.x) + 'px';
-                label.hidden = pos.out_view;
+                    label.style.top = Math.round(pos.y) + 'px';
+                    label.style.left = Math.round(pos.x) + 'px';
+                    label.hidden = pos.out_view;
+               }
             }
         },
 

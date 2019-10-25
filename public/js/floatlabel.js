@@ -52,6 +52,7 @@ function createFloatLabelManager(view) {
                 label.hidden = true;
                 document.getElementById("obj-editor").style.top = label.style.top;
                 document.getElementById("obj-editor").style.left = label.style.left;
+                document.getElementById("obj-editor").style.display = "inline-block";
             }
         },
 
@@ -60,6 +61,7 @@ function createFloatLabelManager(view) {
             if (label){                
                 label.className = "float-label" + " " + label.obj_type;
                 label.hidden = false;
+                document.getElementById("obj-editor").style.display = "none";
             }
         },
 

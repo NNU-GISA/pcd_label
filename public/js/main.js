@@ -125,6 +125,12 @@ function init() {
 
     document.getElementById("frame-selector").onchange = frame_changed;
     document.getElementById("camera-selector").onchange = camera_changed;
+
+
+    document.getElementById("label-del").onclick = function(){
+        remove_selected_box();
+        header.mark_changed_flag();
+    };
 }
 
 

@@ -2,8 +2,7 @@ var header={
 
     clear_box_info: function(){
         document.getElementById("box").innerHTML = '';
-        document.getElementById("object-category-selector").hidden=true;
-        document.getElementById("object-track-id-editor").hidden=true;
+        document.getElementById("obj-editor").hidden=true;
         //document.getElementById("ref-obj").hidden=true;
     },
     
@@ -19,8 +18,8 @@ var header={
                                                     scale.x.toFixed(2) +" "+scale.y.toFixed(2) + " " + scale.z.toFixed(2) + " | " +
                                                     (rotation.x*180/Math.PI).toFixed(2)+" "+(rotation.y*180/Math.PI).toFixed(2)+" "+(rotation.z*180/Math.PI).toFixed(2) + " | ";
     
-        document.getElementById("object-category-selector").hidden=false;
-        document.getElementById("object-track-id-editor").hidden=false;
+        document.getElementById("obj-editor").hidden=false;
+        //document.getElementById("object-track-id-editor").hidden=false;
     },
 
     update_label_editor: function(obj_type, obj_track_id){

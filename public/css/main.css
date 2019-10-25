@@ -93,6 +93,7 @@ canvas {
 	padding: 0px;
 	box-sizing: border-box;
 	text-align: left;
+	display: none; /* defult hidden */
 }
 
 #canvas {
@@ -157,3 +158,11 @@ canvas {
 	/* background-color: #403b3b99; */
 }
 
+
+.ui-button {
+	background-color: #222;
+	padding-left: 0;
+	padding-right: 0;
+	border-width: 1;
+	border-color: #222;
+}

@@ -1,3 +1,11 @@
+
+
+import {vector4to3, vector3_nomalize, psr_to_xyz, matmul, matmul2, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle, obj_type_color_map} from "./util.js"
+import {
+	Vector3
+} from "./lib/three.module.js";
+
+
 function createFloatLabelManager(view) {
 
     var manager = 
@@ -25,7 +33,10 @@ function createFloatLabelManager(view) {
             if (this.html_labels.children.length>0){
                 for (var c=0; c < this.html_labels.children.length; c++){
                     var element = this.html_labels.children[c];
-                    var pos = this.toXYCoords(element.pos);
+                    
+                    var best_pos = this.compute_best_position(element.vertices);
+                    var pos = this.coord_to_pixel(best_pos);
+
                     element.style.top = Math.round(pos.y) + 'px';
                     element.style.left = Math.round(pos.x) + 'px';
 
@@ -83,10 +94,18 @@ function createFloatLabelManager(view) {
             var label = document.getElementById("obj-local-"+box.obj_local_id);
             
             if (label){
+                /*
                 label.pos = box.position.clone();
                 label.pos.z += box.scale.z + 2;
 
                 var pos = this.toXYCoords(label.pos);
+                */
+
+               label.vertices = psr_to_xyz(box.position, box.scale, box.rotation);  //vector 4
+
+                var best_pos = this.compute_best_position(label.vertices);
+                var pos = this.coord_to_pixel(best_pos);
+
                 label.style.top = Math.round(pos.y) + 'px';
                 label.style.left = Math.round(pos.x) + 'px';
                 label.hidden = pos.out_view;
@@ -107,9 +126,6 @@ function createFloatLabelManager(view) {
             if (!this.enabled())
                 return;
             
-            
-            
-
             var label = document.createElement('div');
             label.className = "float-label "+box.obj_type;
             label.id = "obj-local-"+box.obj_local_id;
@@ -140,10 +156,18 @@ function createFloatLabelManager(view) {
             label.obj_track_id = box.obj_track_id;
             label.update_text();
 
+            label.vertices = psr_to_xyz(box.position, box.scale, box.rotation);  //vector 4
+
+            var best_pos = this.compute_best_position(label.vertices);
+            best_pos = this.coord_to_pixel(best_pos);
+            
+            /*
             label.pos = box.position.clone();
             label.pos.z += box.scale.z + 2;
             
-            var pos = this.toXYCoords(label.pos);
+            //var pos = this.toXYCoords(label.pos);
+            */
+            var pos = best_pos;
             
             label.style.top = Math.round(pos.y) + 'px';
             label.style.left = Math.round(pos.x) + 'px';
@@ -172,6 +196,60 @@ function createFloatLabelManager(view) {
             }
 
             return ret;
+        },
+
+
+        coord_to_pixel: function(p){
+            var width = window.innerWidth, height = window.innerHeight;
+            var widthHalf = width / 2, heightHalf = height / 2;
+
+            var ret={
+                x: ( p.x * widthHalf ) + widthHalf + 5,
+                y: - ( p.y * heightHalf ) + heightHalf - 5,
+                out_view: p.x>0.9 || p.x<-0.9 || p.y<-0.9 || p.y>0.9 || p.z< -1 || p.z > 1,
+            }
+
+            return ret;
+        },
+
+        compute_best_position: function(vertices){
+            var _self = this;
+            var camera_p = [0,1,2,3,4,5,6,7].map(function(i){
+                return new Vector3(vertices[i*4+0], vertices[i*4+1], vertices[i*4+2]);
+            });
+            
+            camera_p.forEach(function(x){
+                x.project(_self.view.camera);
+            });
+            
+            /*
+            var visible_p = camera_p.filter(function(p){
+                return !(p.x>0.9 || p.x<-0.9 || p.y<-0.9 || p.y>0.9 || p.z< 0);
+            });
+
+            if (visible_p.length==0){
+                return null;
+            } 
+            */
+            var visible_p = camera_p;
+
+            var best_p = {x:-1, y: -1, z: -2};
+
+            visible_p.forEach(function(p){
+                if (p.x > best_p.x){
+                    best_p.x = p.x;
+                }
+
+                if (p.y > best_p.y){
+                    best_p.y = p.y;
+                }
+
+                if (p.z > best_p.z){
+                    best_p.z = p.z;
+                }
+            })
+
+            return best_p;
         },
 
     };

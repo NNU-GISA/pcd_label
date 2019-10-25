@@ -1297,6 +1297,8 @@ function onWindowResize() {
 
     //dirLightShadowMapViewer.updateForWindowResize();
 
+    document.getElementById("maincanvas").parentElement.style.left="20%";
+
 }
 
 function change_transform_control_view(){

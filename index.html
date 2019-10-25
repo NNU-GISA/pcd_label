@@ -44,7 +44,7 @@
 		<div id="2Dlabels"></div>
 
 		<div id="obj-editor">
-				<select id="object-category-selector">
+				<select title="category" id="object-category-selector">
 						<option value="Car" class="Car">Car</option>
 						<option value="Bus" class="Bus">Bus</option>
 						<option value="Pedestrian" class="Pedestrian">Pedestrian</option>
@@ -54,13 +54,13 @@
 						<option value="Bicycle"  class="Bicycle">Bicycle</option>
 						<option value="Unknown"  class="Unknown">Unknown</option>
 				</select>
-				<input list="obj-ids-of-scene" id="object-track-id-editor" type="text" size="5"></input>
+				<input title="tracking id" list="obj-ids-of-scene" id="object-track-id-editor" type="text" size="5"></input>
 				<datalist id="obj-ids-of-scene">
 				</datalist>				
 				
-				<button id="label-copy" class="ui-button"><span class="ui-icon ui-icon-copy"></span></button>
-				<button id="label-paste" class="ui-button"><span class="ui-icon ui-icon-key"></span></button>
-				<button id="label-del" class="ui-button"><span class="ui-icon ui-icon-trash"></span></button>
+				<button id="label-copy" class="ui-button" title="copy"><span class="ui-icon ui-icon-copy"></span></button>
+				<button id="label-paste" class="ui-button"  title="auto-adjust"><span class="ui-icon ui-icon-key"></span></button>
+				<button id="label-del" class="ui-button"  title="delete"><span class="ui-icon ui-icon-trash"></span></button>
 
 		</div>
 

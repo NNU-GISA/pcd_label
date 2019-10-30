@@ -96,6 +96,17 @@ canvas {
 	display: none; /* defult hidden */
 }
 
+#obj-label {
+	display: none;
+}
+
+#category-id-editor {
+	display: none;
+	color: inherit;
+	background: inherit;
+	padding: inherit;
+}
+
 #canvas {
 	position: absolute;
 	top: 70%;
@@ -148,6 +159,11 @@ canvas {
 }
 .menu-item-text {
 	display: inline;
+}
+
+.menu-seperator {
+	padding: 0.5px;
+	background-color: #333;
 }
 
 .dg.ac {

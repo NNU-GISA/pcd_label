@@ -44,22 +44,27 @@
 		<div id="2Dlabels"></div>
 
 		<div id="obj-editor">
-				<select title="category" id="object-category-selector">
-						<option value="Car" class="Car">Car</option>
-						<option value="Bus" class="Bus">Bus</option>
-						<option value="Pedestrian" class="Pedestrian">Pedestrian</option>
-						<option value="Truck"  class="Truck">Truck</option>
-						<option value="Rider"  class="Rider">Rider</option>
-						<option value="Motor"  class="Motor">Motor</option>
-						<option value="Bicycle"  class="Bicycle">Bicycle</option>
-						<option value="Unknown"  class="Unknown">Unknown</option>
-				</select>
-				<input title="tracking id" list="obj-ids-of-scene" id="object-track-id-editor" type="text" size="5"></input>
+				<div id="category-id-editor">
+					<select title="category" id="object-category-selector">
+							<option value="Car" class="Car">Car</option>
+							<option value="Bus" class="Bus">Bus</option>
+							<option value="Pedestrian" class="Pedestrian">Pedestrian</option>
+							<option value="Truck"  class="Truck">Truck</option>
+							<option value="Rider"  class="Rider">Rider</option>
+							<option value="Motor"  class="Motor">Motor</option>
+							<option value="Bicycle"  class="Bicycle">Bicycle</option>
+							<option value="Unknown"  class="Unknown">Unknown</option>
+					</select>
+					<input title="tracking id" list="obj-ids-of-scene" id="object-track-id-editor" type="text" size="5"></input>
+				</div>
+				<div>
+					<text id="obj-label">cat-id</text>
+				</div>
 				<datalist id="obj-ids-of-scene">
 				</datalist>				
 				
 				<button id="label-copy" class="ui-button" title="copy"><span class="ui-icon ui-icon-copy"></span></button>
-				<button id="label-paste" class="ui-button"  title="paste/auto-adjust"><span class="ui-icon ui-icon-key"></span></button>
+				<button id="label-paste" class="ui-button"  title="auto-adjust"><span class="ui-icon ui-icon-key"></span></button>
 				<button id="label-edit" class="ui-button"  title="edit"><span class="ui-icon ui-icon-pencil"></span></button>
 				<button id="label-del" class="ui-button"  title="delete"><span class="ui-icon ui-icon-trash"></span></button>
 
@@ -79,9 +84,10 @@
 					<span class="ui-icon ui-icon-key"></span>
 				</div>
 				<div class="menu-item-text">
-					Paste
+					Paste/Auto Adjust
 				</div>				
 			</div>
+			<div class="menu-item menu-seperator"></div>
 
 			<div class="menu-item" id="cm-prev-frame">
 				<div class="menu-item-icon">
@@ -98,6 +104,43 @@
 				</div>
 				<div class="menu-item-text">
 					Next frame
+				</div>				
+			</div>
+
+			<div class="menu-item" id="cm-play">
+				<div class="menu-item-icon">
+					<span class="ui-icon ui-icon-play"></span>
+				</div>
+				<div class="menu-item-text">
+					Play
+				</div>				
+			</div>
+		
+			<div class="menu-item" id="cm-pause">
+				<div class="menu-item-icon">
+					<span class="ui-icon ui-icon-pause"></span>
+				</div>
+				<div class="menu-item-text">
+					Pause/Resume
+				</div>				
+			</div>
+
+			<div class="menu-item" id="cm-stop">
+				<div class="menu-item-icon">
+					<span class="ui-icon ui-icon-stop"></span>
+				</div>
+				<div class="menu-item-text">
+					Stop
+				</div>				
+			</div>
+
+			<div class="menu-item menu-seperator"></div>
+			<div class="menu-item" id="cm-save">
+				<div class="menu-item-icon">
+					<span class="ui-icon ui-icon-disk"></span>
+				</div>
+				<div class="menu-item-text">
+					Save
 				</div>				
 			</div>
 			

@@ -47,12 +47,25 @@ function createFloatLabelManager(view) {
         },
         select_box: function(local_id){
             var label = document.getElementById("obj-local-"+local_id);
+
+            
             if (label){                
-                label.className = "selected-float-label";
-                label.hidden = true;
+                if (!label.selected){
+                    label.className = "selected-float-label";
+                    label.hidden = true;
+                    label.selected = true;                
+                    
+                    document.getElementById("obj-editor").style.display = "inline-block";
+                    
+                    document.getElementById("category-id-editor").style.display = "inherit";//"none";
+                    document.getElementById("obj-label").style.display = "none";
+                    document.getElementById("obj-label").innerText = label.innerText;
+                    
+                }
+
                 document.getElementById("obj-editor").style.top = label.style.top;
                 document.getElementById("obj-editor").style.left = label.style.left;
-                document.getElementById("obj-editor").style.display = "inline-block";
+                
             }
         },
 
@@ -61,6 +74,7 @@ function createFloatLabelManager(view) {
             if (label){                
                 label.className = "float-label" + " " + label.obj_type;
                 label.hidden = false;
+                label.selected = false;
                 document.getElementById("obj-editor").style.display = "none";
             }
         },
@@ -177,7 +191,8 @@ function createFloatLabelManager(view) {
             label.style.left = Math.round(pos.x) + 'px';
 
             label.hidden = pos.out_view;
-            
+            label.selected = false;
+
             document.getElementById("2Dlabels").appendChild(label);
             label.onclick = function(){
                 on_click();

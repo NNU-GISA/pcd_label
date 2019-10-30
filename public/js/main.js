@@ -149,6 +149,9 @@ function init() {
     document.getElementById("label-edit").onclick = function(event){
         event.currentTarget.blur();
         select_bbox(selected_box);
+        //document.getElementById("obj-label").style.display="none";
+        //document.getElementById("category-id-editor").style.display="inherit";
+        
     }
 
 
@@ -176,6 +179,21 @@ function install_context_menu(){
 
     document.getElementById("cm-next-frame").onclick = function(event){      
         next_frame();
+    };
+
+    document.getElementById("cm-save").onclick = function(event){      
+        save_annotation();
+    };
+
+
+    document.getElementById("cm-play").onclick = function(event){      
+        play_current_scene_with_buffer();
+    };
+    document.getElementById("cm-stop").onclick = function(event){      
+        stop_play();
+    };
+    document.getElementById("cm-pause").onclick = function(event){      
+        pause_resume_play();
     };
 }
 
@@ -393,7 +411,7 @@ function auto_adjust_bbox(done){
                 console.log(selected_box.position);
                 console.log(selected_box.rotation);
 
-                update_subview_by_bbox(selected_box);
+                on_box_changed(selected_box);
         
                 header.mark_changed_flag();
 

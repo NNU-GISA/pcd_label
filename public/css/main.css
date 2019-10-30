@@ -119,6 +119,37 @@ canvas {
 	height:100%;
 }
 
+#context-menu-wrapper {
+	position: absolute;
+	display: none;
+	top: 0%;
+	left: 0%;
+	height: 100%;
+	width: 100%;
+	z-index: 10;
+}
+
+#context-menu {
+	position: absolute;
+	display: block;
+	width: 180px;
+	background-color: #222;
+}
+
+.menu-item {
+	cursor: pointer;
+}
+.menu-item:hover {
+	background-color: gray;	
+}
+
+.menu-item-icon {
+	display: inline;	
+}
+.menu-item-text {
+	display: inline;
+}
+
 .dg.ac {
 	-moz-user-select: none;
 	-webkit-user-select: none;
@@ -167,3 +198,4 @@ canvas {
 	border-color: #222;
 	color: yellow;
 }
+

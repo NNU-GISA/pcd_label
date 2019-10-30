@@ -59,7 +59,8 @@
 				</datalist>				
 				
 				<button id="label-copy" class="ui-button" title="copy"><span class="ui-icon ui-icon-copy"></span></button>
-				<button id="label-paste" class="ui-button"  title="auto-adjust"><span class="ui-icon ui-icon-key"></span></button>
+				<button id="label-paste" class="ui-button"  title="paste/auto-adjust"><span class="ui-icon ui-icon-key"></span></button>
+				<button id="label-edit" class="ui-button"  title="edit"><span class="ui-icon ui-icon-pencil"></span></button>
 				<button id="label-del" class="ui-button"  title="delete"><span class="ui-icon ui-icon-trash"></span></button>
 
 		</div>
@@ -71,7 +72,37 @@
 		<canvas id="canvas" width="320" height="240">cavas</canvas>		
 
 		
+		<div id="context-menu-wrapper">
+		  <div id="context-menu">
+			<div class="menu-item" id="cm-paste">
+				<div class="menu-item-icon">
+					<span class="ui-icon ui-icon-key"></span>
+				</div>
+				<div class="menu-item-text">
+					Paste
+				</div>				
+			</div>
 
+			<div class="menu-item" id="cm-prev-frame">
+				<div class="menu-item-icon">
+					<span class="ui-icon ui-icon-triangle-1-w"></span>
+				</div>
+				<div class="menu-item-text">
+					Previous frame
+				</div>				
+			</div>
+		
+			<div class="menu-item" id="cm-next-frame">
+				<div class="menu-item-icon">
+					<span class="ui-icon ui-icon-triangle-1-e"></span>
+				</div>
+				<div class="menu-item-text">
+					Next frame
+				</div>				
+			</div>
+			
+		  </div>
+		</div>
 		
 		<script type="module"  src="/static/js/main.js"></script>		
 	</body>

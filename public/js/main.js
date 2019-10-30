@@ -40,6 +40,10 @@ var floatLabelManager;
 
 var lock_obj_track_id;
 
+
+var mouse_right_down = false;
+var key_pressed = false;
+
 init();
 animate();
 render();
@@ -141,8 +145,39 @@ function init() {
         smart_paste();
         event.currentTarget.blur();
     }
+
+    document.getElementById("label-edit").onclick = function(event){
+        event.currentTarget.blur();
+        select_bbox(selected_box);
+    }
+
+
+    install_context_menu();
 }
 
+function install_context_menu(){
+
+    document.getElementById("context-menu-wrapper").onclick = function(event){
+        event.currentTarget.style.display="none";
+    }
+
+    document.getElementById("context-menu-wrapper").oncontextmenu = function(event){
+        event.currentTarget.style.display="none";
+        event.preventDefault();
+    }
+
+    document.getElementById("cm-paste").onclick = function(event){
+        smart_paste();
+    };
+
+    document.getElementById("cm-prev-frame").onclick = function(event){      
+        previous_frame();
+    };
+
+    document.getElementById("cm-next-frame").onclick = function(event){      
+        next_frame();
+    };
+}
 
 function add_range_box(){
     
@@ -1079,17 +1114,19 @@ function get_mouse_location_in_world(mouse){
     return {x:x, y:y, z:0};
 }
 
-var mouse_right_down = false;
+
 
 function onDocumentMouseDown( event ) {    
     
     if (event.which==3){
         mouse_right_down = true;
+        key_pressed = false;
     }
-    else{
-        var array = getMousePosition( renderer.domElement, event.clientX, event.clientY );
-        onDownPosition.fromArray( array );        
-    }
+    
+
+    var array = getMousePosition( renderer.domElement, event.clientX, event.clientY );
+    onDownPosition.fromArray( array );        
+    
 
     this.addEventListener( 'mouseup', onMouseUp, false );
 
@@ -1100,13 +1137,25 @@ function onMouseUp( event ) {
     if (event.which==3){
         mouse_right_down = false;
     }
-    else{
-        var array = getMousePosition( renderer.domElement, event.clientX, event.clientY );
-        onUpPosition.fromArray( array );
+    
+    var array = getMousePosition( renderer.domElement, event.clientX, event.clientY );
+    onUpPosition.fromArray( array );
 
-        handleClick(event);
+    if ( onDownPosition.distanceTo( onUpPosition ) === 0 ) {
+        if (event.which == 3){
+            //right click
+            // if no other key pressed, we consider this as a right click
+            if (!key_pressed){
+                console.log("right clicked.");
+                handleRightClick(event);
+            }
+        }
+        else{
+            // left click
+            handleClick(event);
+        }
     }
-
+    
     this.removeEventListener( 'mouseup', onMouseUp, false );
 
 }
@@ -1119,6 +1168,15 @@ function getMousePosition( dom, x, y ) {
 
 }
 
+
+function handleRightClick(event){
+
+    var pos = getMousePosition(renderer.domElement, event.clientX, event.clientY );
+    document.getElementById("context-menu").style.left = event.clientX+"px";
+    document.getElementById("context-menu").style.top = event.clientY+"px";
+    document.getElementById("context-menu-wrapper").style.display = "block";
+
+}
 
 function getIntersects( point, objects ) {
 
@@ -1134,7 +1192,7 @@ function getIntersects( point, objects ) {
 function handleClick(event) {
 
     
-    if ( onDownPosition.distanceTo( onUpPosition ) === 0 ) {
+    
 
         if (event.ctrlKey){
             //Ctrl+left click to smart paste!
@@ -1170,7 +1228,7 @@ function handleClick(event) {
 
             //render();
         }
-    }
+    
 
 }
 
@@ -1462,7 +1520,8 @@ function switch_bbox_type(){
 }
 
 function keydown( ev ) {
-    
+    key_pressed = true;
+
     switch ( ev.key) {
         case '+':
             //data.increase_point_size();

@@ -2020,7 +2020,7 @@ function render_2d_image(){
             var imgpos3 = vector4to3(imgpos);
             var imgpos2 = matmul(calib.intrinsic, imgpos3, 3);
 
-            if (imgpos2[2]<0){
+            if (!all_points_in_image_range(imgpos3)){
                 return;
             }
             var imgfinal = vector3_nomalize(imgpos2);
@@ -2128,7 +2128,7 @@ function projected_3d_point_out_of_image_range(p){
 
 function all_points_in_image_range(p){
     for (var i = 0; i<p.length/3; i++){
-        if (p[i*3+0]<0 || p[i*3+1]<0 || p[i*3+2]<0){
+        if (p[i*3+2]<0){
             return false;
         }
     }
@@ -2166,11 +2166,10 @@ function update_image_box_projection(box){
 
             // project corners to image plane
             var imgpos = matmul(calib.extrinsic, box3d, 4);
-            var imgpos3 = vector4to3(imgpos);
-            var imgpos2 = matmul(calib.intrinsic, imgpos3, 3);
+            var imgpos3 = vector4to3(imgpos);            
 
-            if (all_points_in_image_range(imgpos2)){  // if projection is out of range of the image, stop drawing.
-
+            if (all_points_in_image_range(imgpos3)){  // if projection is out of range of the image, stop drawing.
+                var imgpos2 = matmul(calib.intrinsic, imgpos3, 3);
                 var imgfinal = vector3_nomalize(imgpos2);
 
                 //console.log(imgfinal);

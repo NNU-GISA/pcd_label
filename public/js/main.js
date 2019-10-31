@@ -1845,6 +1845,7 @@ function remove_selected_box(){
         sideview_mesh = null;
 
         render();
+        render_2d_image();
     }
 }
 

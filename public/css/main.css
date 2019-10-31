@@ -148,6 +148,12 @@ canvas {
 	background-color: #222;
 }
 
+#new-submenu {
+	display: none;
+	position: absolute;	
+	width: 120px;
+	background-color: #222;
+}
 .menu-item {
 	cursor: pointer;
 }
@@ -181,23 +187,6 @@ canvas {
 	position: absolute;
 	/* background-color: #403b3b99; */
 }
-
-.Rider, .Motor, .Bicycle{
-	color: #ff8800;	
-}
-
-.Car {
-	color: #00ff00;
-}
-
-.Bus, .Truck {
-	color: #ffff00;
-}
-
-.Pedestrian {
-	color: #ff0000;
-}
-
 
 
 .selected-float-label {

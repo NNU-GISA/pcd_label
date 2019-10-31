@@ -45,15 +45,7 @@
 
 		<div id="obj-editor">
 				<div id="category-id-editor">
-					<select title="category" id="object-category-selector">
-							<option value="Car" class="Car">Car</option>
-							<option value="Bus" class="Bus">Bus</option>
-							<option value="Pedestrian" class="Pedestrian">Pedestrian</option>
-							<option value="Truck"  class="Truck">Truck</option>
-							<option value="Rider"  class="Rider">Rider</option>
-							<option value="Motor"  class="Motor">Motor</option>
-							<option value="Bicycle"  class="Bicycle">Bicycle</option>
-							<option value="Unknown"  class="Unknown">Unknown</option>
+					<select title="category" id="object-category-selector">							
 					</select>
 					<input title="tracking id" list="obj-ids-of-scene" id="object-track-id-editor" type="text" size="5"></input>
 				</div>
@@ -80,6 +72,7 @@
 		
 		<div id="context-menu-wrapper">
 		  <div id="context-menu">
+			<div class="menu-item menu-seperator"></div>
 			<div class="menu-item" id="cm-new">
 				<div class="menu-item-icon">
 					<span class="ui-icon ui-icon-document"></span>
@@ -152,6 +145,10 @@
 					Save
 				</div>				
 			</div>
+			
+		  </div>
+
+		  <div id="new-submenu">
 			
 		  </div>
 		</div>

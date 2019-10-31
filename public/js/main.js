@@ -10,8 +10,10 @@ import { GUI } from './lib/dat.gui.module.js';
 import {data} from './data.js'
 import {create_views, views} from "./view.js"
 import {createFloatLabelManager} from "./floatlabel.js"
-import {vector4to3, vector3_nomalize, psr_to_xyz, matmul, matmul2, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle, obj_type_color_map} from "./util.js"
+import {vector4to3, vector3_nomalize, psr_to_xyz, matmul, matmul2, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle} from "./util.js"
 import {header} from "./header.js"
+import {obj_type_map} from "./obj_cfg.js"
+
 
 var sideview_enabled = true;
 var container;
@@ -50,7 +52,7 @@ render();
 $( "#maincanvas" ).resizable();
 load_data_meta();
 
-
+add_global_obj_type();
 
 function init() {
     document.body.addEventListener('keydown', event => {
@@ -179,6 +181,32 @@ function install_context_menu(){
     document.getElementById("cm-new").onclick = function(event){
         add_bbox();
         header.mark_changed_flag();
+    };
+
+    document.getElementById("cm-new").onmouseenter = function(event){
+        var parent_menu = document.getElementById("cm-new").getClientRects()[0];
+
+        var item = document.getElementById("new-submenu");
+        item.style.display="block";
+        item.style.top = parent_menu.top + "px";
+        item.style.left = parent_menu.left + parent_menu.width + "px";
+
+        console.log("enter  new item");
+    };
+
+    document.getElementById("new-submenu").onmouseenter=function(event){
+        var item = document.getElementById("new-submenu");
+        item.style.display="block";
+    }
+
+    document.getElementById("new-submenu").onmouseleave=function(event){
+        var item = document.getElementById("new-submenu");
+        item.style.display="none";
+    }
+
+    document.getElementById("cm-new").onmouseleave = function(event){
+        document.getElementById("new-submenu").style.display="none";
+        console.log("leave  new item");
     };
 
     document.getElementById("cm-paste").onclick = function(event){
@@ -1317,7 +1345,7 @@ function unselect_bbox(new_object, keep_lock){
         }else{
             //unselect second time
             if (selected_box){
-                selected_box.material.color = new THREE.Color(parseInt(obj_type_color_map[selected_box.obj_type]));
+                selected_box.material.color = new THREE.Color(parseInt("0x"+obj_type_map[selected_box.obj_type].color.slice(1)));
                 floatLabelManager.unselect_box(selected_box.obj_local_id, selected_box.obj_type);
                 floatLabelManager.update_position(selected_box, true);
             }
@@ -1336,7 +1364,7 @@ function unselect_bbox(new_object, keep_lock){
 
         
         if (selected_box){
-            selected_box.material.color = new THREE.Color(parseInt(obj_type_color_map[selected_box.obj_type]));
+            selected_box.material.color = new THREE.Color(parseInt("0x"+obj_type_map[selected_box.obj_type].color.slice(1)));
             floatLabelManager.unselect_box(selected_box.obj_local_id);
             floatLabelManager.update_position(selected_box, true);
         }
@@ -1567,23 +1595,10 @@ function switch_bbox_type(target_type){
     }
 
     selected_box.obj_type = target_type;
-    switch (selected_box.obj_type){
-        case "Bus":
-            selected_box.scale.x=2.8;
-            selected_box.scale.y=10;
-            selected_box.scale.z=3.0;
-            break;
-        case "Pedestrian":
-            selected_box.scale.x=0.5;
-            selected_box.scale.y=0.4;
-            selected_box.scale.z=1.7;
-            break;
-        case "Car":
-            selected_box.scale.x=1.8;
-            selected_box.scale.y=4.5;
-            selected_box.scale.z=1.5;
-            break;
-    }
+    
+    selected_box.scale.x=obj_type_map[target_type].size[0];
+    selected_box.scale.y=obj_type_map[target_type].size[1];
+    selected_box.scale.z=obj_type_map[target_type].size[2];           
 
     
     floatLabelManager.set_object_type(selected_box.obj_local_id, selected_box.obj_type);
@@ -2095,19 +2110,13 @@ function render_2d_image(){
 function draw_box_on_image(ctx, box, box_corners, trans_ratio, selected){
     var imgfinal = box_corners;
 
-    function vtostyple(p){
-        return "#"+p.slice(2);
-    }
-
-
     if (!selected){
-        //ctx.strokeStyle="#00ff00";
-        ctx.strokeStyle = vtostyple(obj_type_color_map[box.obj_type]);
+        ctx.strokeStyle = obj_type_map[box.obj_type].color;
 
-        var c = obj_type_color_map[box.obj_type];
-        var r ="0x"+c.slice(2,4);
-        var g ="0x"+c.slice(4,6);
-        var b ="0x"+c.slice(6,8);
+        var c = obj_type_map[box.obj_type].color;
+        var r ="0x"+c.slice(1,3);
+        var g ="0x"+c.slice(3,5);
+        var b ="0x"+c.slice(5,7);
 
         ctx.fillStyle="rgba("+parseInt(r)+","+parseInt(g)+","+parseInt(b)+",0.2)";
     }
@@ -2385,4 +2394,41 @@ function calibrate(ax, value){
 
     if (selected_box)
         update_image_box_projection(selected_box);
+}
+
+
+
+
+function add_global_obj_type(){
+    var sheet = window.document.styleSheets[1];
+
+    for (var o in obj_type_map){
+        var rule = '.'+o+ '{ color: '+obj_type_map[o].color+'; }';
+        sheet.insertRule(rule, sheet.cssRules.length);
+    }
+
+    //
+    var options = "";
+    for (var o in obj_type_map){
+        options += '<option value="'+o+'" class="' +o+ '">'+o+ '</option>';        
+    }
+
+    document.getElementById("object-category-selector").innerHTML = options;
+
+
+    var items = "";
+    for (var o in obj_type_map){
+        items += '<div class="menu-item cm-new-item ' + o + '" id="cm-new-'+o+'" uservalue="' +o+ '"><div class="menu-item-text">'+o+ '</div></div>';        
+    }
+
+    document.getElementById("new-submenu").innerHTML = items;
+
+    for (var o in obj_type_map){
+        
+        document.getElementById("cm-new-"+o).onclick = function(event){
+            add_bbox();
+            switch_bbox_type(event.currentTarget.getAttribute("uservalue"));
+        }
+    }
+
 }

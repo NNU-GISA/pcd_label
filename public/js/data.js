@@ -2,8 +2,7 @@
 
 import * as THREE from './lib/three.module.js';
 import { PCDLoader } from './lib/PCDLoader.js';
-//import { GeometryUtils } from './examples/jsm/utils/GeometryUtils.js';
-import {obj_type_color_map} from "./util.js"
+import { obj_type_map } from './obj_cfg.js';
 
 var data = {
     
@@ -446,7 +445,7 @@ var data = {
                 
                 function create_bboxs(annotations){
                     return annotations.map(function(b){
-                        var mesh = _self.new_bbox_cube(parseInt(obj_type_color_map[b.obj_type]));
+                        var mesh = _self.new_bbox_cube(parseInt("0x"+obj_type_map[b.obj_type].color.slice(1)));
 
                         mesh.position.x = b.position.x;
                         mesh.position.y = b.position.y;

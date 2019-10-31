@@ -2408,7 +2408,7 @@ function add_global_obj_type(){
         sheet.insertRule(rule, sheet.cssRules.length);
     }
 
-    //
+    // obj type selector
     var options = "";
     for (var o in obj_type_map){
         options += '<option value="'+o+'" class="' +o+ '">'+o+ '</option>';        
@@ -2417,6 +2417,7 @@ function add_global_obj_type(){
     document.getElementById("object-category-selector").innerHTML = options;
 
 
+    // submenu of new
     var items = "";
     for (var o in obj_type_map){
         items += '<div class="menu-item cm-new-item ' + o + '" id="cm-new-'+o+'" uservalue="' +o+ '"><div class="menu-item-text">'+o+ '</div></div>';        
@@ -2424,8 +2425,8 @@ function add_global_obj_type(){
 
     document.getElementById("new-submenu").innerHTML = items;
 
-    for (var o in obj_type_map){
-        
+    // install click actions
+    for (var o in obj_type_map){        
         document.getElementById("cm-new-"+o).onclick = function(event){
             add_bbox();
             switch_bbox_type(event.currentTarget.getAttribute("uservalue"));

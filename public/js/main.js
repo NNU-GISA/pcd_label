@@ -169,6 +169,11 @@ function install_context_menu(){
         event.preventDefault();
     }
 
+    document.getElementById("cm-new").onclick = function(event){
+        add_bbox();
+        header.mark_changed_flag();
+    };
+
     document.getElementById("cm-paste").onclick = function(event){
         smart_paste();
     };

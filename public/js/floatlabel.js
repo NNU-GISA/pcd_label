@@ -79,6 +79,11 @@ function createFloatLabelManager(view) {
             }
         },
 
+        update_label_editor: function(obj_type, obj_track_id){
+            document.getElementById("object-category-selector").value = obj_type;
+            document.getElementById("object-track-id-editor").value = obj_track_id;
+        },
+        
         set_object_type: function(local_id, obj_type){
             //if (!this.enabled())
             //    return;

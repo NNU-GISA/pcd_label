@@ -559,6 +559,8 @@ function scene_changed(scene_name){
     load_obj_ids_of_scene(scene_name);
 }
 
+
+var obj_id_list = [];
 function load_obj_ids_of_scene(scene){
 
     var xhr = new XMLHttpRequest();
@@ -571,11 +573,18 @@ function load_obj_ids_of_scene(scene){
         if (this.status == 200) {
             var ret = JSON.parse(this.responseText);
             
-            var obj_ids_list = ret.map(function(c){
-                return "<option value="+c.id+">"+c.category+"</option>";
-            }).reduce(function(x,y){return x+y;}, "");
+            ret = ret.sort(function(x, y){
+                return x.id - y.id;
+            });
 
-            document.getElementById("obj-ids-of-scene").innerHTML = obj_ids_list;
+            var obj_id_option_list = ret.map(function(c){
+                return "<option value="+c.id+">"+c.category+"</option>";
+            }).reduce(function(x,y){return x+y;}, 
+            "<option value='auto'></option>");
+
+            obj_id_list = ret.map(function(x){return x.id;});
+
+            document.getElementById("obj-ids-of-scene").innerHTML = obj_id_option_list;
         }
 
     };
@@ -583,6 +592,18 @@ function load_obj_ids_of_scene(scene){
     xhr.open('GET', "/objs_of_scene?scene="+scene, true);
     xhr.send();
 }
+
+
+function generate_new_unique_id(){
+    var id = 1;
+    
+    while (obj_id_list.findIndex(function(x){return x == id;}) >= 0){
+        id++;
+    }
+
+    return id;
+}
+
 
 function frame_changed(event){
     var scene_name = document.getElementById("scene-selector").value;
@@ -987,7 +1008,15 @@ function object_category_changed(event){
 
 function object_track_id_changed(event){
     if (selected_box){
-        selected_box.obj_track_id = event.currentTarget.value;
+        var id = event.currentTarget.value;
+
+
+        if (id == "auto"){
+            id = generate_new_unique_id();
+            floatLabelManager.update_label_editor(selected_box.obj_type, id);
+        }
+
+        selected_box.obj_track_id = id;
         floatLabelManager.set_object_track_id(selected_box.obj_local_id, selected_box.obj_track_id);
         header.mark_changed_flag();
     }
@@ -1338,7 +1367,7 @@ function select_bbox(object){
         lock_obj_track_id = object.obj_track_id;
 
         floatLabelManager.select_box(selected_box.obj_local_id);
-        header.update_label_editor(object.obj_type, object.obj_track_id);
+        floatLabelManager.update_label_editor(object.obj_type, object.obj_track_id);
 
         selected_box.material.color.r=1;
         selected_box.material.color.g=0;
@@ -1558,7 +1587,7 @@ function switch_bbox_type(target_type){
 
     
     floatLabelManager.set_object_type(selected_box.obj_local_id, selected_box.obj_type);
-    header.update_label_editor(selected_box.obj_type, selected_box.obj_track_id);
+    floatLabelManager.update_label_editor(selected_box.obj_type, selected_box.obj_track_id);
 
     on_box_changed(selected_box);
     

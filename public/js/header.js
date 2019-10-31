@@ -22,10 +22,7 @@ var header={
         //document.getElementById("object-track-id-editor").hidden=false;
     },
 
-    update_label_editor: function(obj_type, obj_track_id){
-        document.getElementById("object-category-selector").value = obj_type;
-        document.getElementById("object-track-id-editor").value = obj_track_id;
-    },
+    
 
 
     set_ref_obj: function(marked_object){

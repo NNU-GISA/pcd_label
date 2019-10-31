@@ -154,6 +154,13 @@ function init() {
         
     }
 
+    document.getElementById("label-reset").onclick = function(event){
+        event.currentTarget.blur();
+        if (selected_box){
+            switch_bbox_type(selected_box.obj_type);
+        }        
+    }
+
 
     install_context_menu();
 }
@@ -970,11 +977,14 @@ function init_gui(){
 
 function object_category_changed(event){
     if (selected_box){
+        
         selected_box.obj_type = event.currentTarget.value;
         floatLabelManager.set_object_type(selected_box.obj_local_id, selected_box.obj_type);
         header.mark_changed_flag();
     }
 }
+
+
 function object_track_id_changed(event){
     if (selected_box){
         selected_box.obj_track_id = event.currentTarget.value;
@@ -1509,25 +1519,37 @@ function transform_bbox(command){
 }
 
 
-function switch_bbox_type(){
+function switch_bbox_type(target_type){
     if (!selected_box)
         return;
 
+    if (!target_type){
+        switch (selected_box.obj_type){
+            case "Car":
+                target_type = "Bus";
+                break;
+            case "Bus":
+                target_type = "Pedestrian";
+                break;
+            case "Pedestrian":
+                target_type = "Car";
+                break;
+        }
+    }
+
+    selected_box.obj_type = target_type;
     switch (selected_box.obj_type){
-        case "Car":
-            selected_box.obj_type = "Bus";
+        case "Bus":
             selected_box.scale.x=2.8;
             selected_box.scale.y=10;
             selected_box.scale.z=3.0;
             break;
-        case "Bus":
-            selected_box.obj_type = "Pedestrian";
+        case "Pedestrian":
             selected_box.scale.x=0.5;
             selected_box.scale.y=0.4;
             selected_box.scale.z=1.7;
             break;
-        case "Pedestrian":
-            selected_box.obj_type = "Car";
+        case "Car":
             selected_box.scale.x=1.8;
             selected_box.scale.y=4.5;
             selected_box.scale.z=1.5;

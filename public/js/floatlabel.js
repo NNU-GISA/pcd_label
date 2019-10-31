@@ -56,7 +56,7 @@ function createFloatLabelManager(view) {
                     label.selected = true;                
                     
                     document.getElementById("obj-editor").style.display = "inline-block";
-                    
+
                     document.getElementById("category-id-editor").style.display = "inherit";//"none";
                     document.getElementById("obj-label").style.display = "none";
                     document.getElementById("obj-label").innerText = label.innerText;
@@ -223,8 +223,8 @@ function createFloatLabelManager(view) {
             var widthHalf = width / 2, heightHalf = height / 2;
 
             var ret={
-                x: ( p.x * widthHalf ) + widthHalf + 5,
-                y: - ( p.y * heightHalf ) + heightHalf - 5,
+                x: ( p.x * widthHalf ) + widthHalf + 10,
+                y: - ( p.y * heightHalf ) + heightHalf - 10,
                 out_view: p.x>0.9 || p.x<-0.9 || p.y<-0.9 || p.y>0.9 || p.z< -1 || p.z > 1,
             }
 

@@ -2,7 +2,7 @@
 
 import {vector4to3, vector3_nomalize, psr_to_xyz, matmul, matmul2, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle} from "./util.js"
 import {
-	Vector3
+	Vector3, Int8Attribute
 } from "./lib/three.module.js";
 
 
@@ -11,12 +11,42 @@ function createFloatLabelManager(view) {
     var manager = 
     {
         view : view,  //access camera by view, since camera is dynamic
-        enabled: function(){return this.id_enabled || this.category_enabled;},
-
+        
         id_enabled: true,
         category_enabled: true,
         html_labels: document.getElementById("2Dlabels"),
 
+        style: document.createElement('style'),
+
+        init: function(){
+            document.head.appendChild(this.style);            
+        },
+
+        toggle_id: function(){
+            
+            if (this.id_enabled){
+                this.style.sheet.insertRule(".label-obj-id-text {display: none}");
+            }
+            else{
+                this.style.sheet.removeRule(".label-obj-id-text");
+            }
+
+            this.id_enabled = !this.id_enabled;
+            
+        },
+
+        toggle_category: function(){
+            
+            if (this.category_enabled){
+                this.style.sheet.insertRule(".label-obj-type-text {display: none}");
+            }
+            else{
+                this.style.sheet.removeRule(".label-obj-type-text");
+            }
+
+            this.category_enabled = !this.category_enabled;
+            
+        },
 
         remove_all_labels: function(){
             
@@ -29,6 +59,7 @@ function createFloatLabelManager(view) {
             }
         },
 
+        
         update_all_position: function(){
             if (this.html_labels.children.length>0){
                 for (var c=0; c < this.html_labels.children.length; c++){
@@ -40,8 +71,11 @@ function createFloatLabelManager(view) {
                     element.style.top = Math.round(pos.y) + 'px';
                     element.style.left = Math.round(pos.x) + 'px';
 
-                    element.hidden = pos.out_view;
 
+                    element.className = "float-label "+element.obj_type;
+                    if (pos.out_view){
+                        element.className += " label-out-view";                         
+                    }
                 }
             }
         },
@@ -84,9 +118,6 @@ function createFloatLabelManager(view) {
         },
         
         set_object_type: function(local_id, obj_type){
-            //if (!this.enabled())
-            //    return;
-                
             var label = document.getElementById("obj-local-"+local_id);
             if (label){
                 label.obj_type = obj_type;
@@ -96,9 +127,6 @@ function createFloatLabelManager(view) {
 
         
         set_object_track_id: function(local_id, track_id){
-            //if (!this.enabled())
-            //    return;
-                
             var label = document.getElementById("obj-local-"+local_id);
 
             if (label){
@@ -108,19 +136,9 @@ function createFloatLabelManager(view) {
         },
 
         update_position: function(box, refresh){
-            //if (!this.enabled())
-            //    return;
-                
             var label = document.getElementById("obj-local-"+box.obj_local_id);
             
             if (label){
-                /*
-                label.pos = box.position.clone();
-                label.pos.z += box.scale.z + 2;
-
-                var pos = this.toXYCoords(label.pos);
-                */
-
                label.vertices = psr_to_xyz(box.position, box.scale, box.rotation);  //vector 4
 
                if (refresh){
@@ -129,15 +147,16 @@ function createFloatLabelManager(view) {
 
                     label.style.top = Math.round(pos.y) + 'px';
                     label.style.left = Math.round(pos.x) + 'px';
-                    label.hidden = pos.out_view;
+
+                    label.className = "float-label "+label.obj_type;
+                    if (pos.out_view){
+                        label.className += " label-out-view";                         
+                    }
                }
             }
         },
 
         remove_box: function(box){
-            //if (!this.enabled())
-            //    return;
-                
             var label = document.getElementById("obj-local-"+box.obj_local_id);
 
             if (label)
@@ -145,32 +164,23 @@ function createFloatLabelManager(view) {
         },
 
         add_label: function(box, on_click){
-            if (!this.enabled())
-                return;
             
             var label = document.createElement('div');
             label.className = "float-label "+box.obj_type;
             label.id = "obj-local-"+box.obj_local_id;
-            //label.style.zIndex = 1;    // if you still don't see the label, try uncommenting this
-            //label.style.width = 100;
-            //label.style.height = 100;
-            //label.style.backgroundColor = "blue";
-            
+
             var _self =this;
 
             label.update_text = function(){
-                var label_text = "";
-                if (_self.category_enabled){
-                    label_text += this.obj_type;
-                }
+                var label_text = '<div class="label-obj-type-text">';                
+                label_text += this.obj_type;
+                label_text += '</div>';
+
+                label_text += '<div class="label-obj-id-text">';                
+                label_text += this.obj_track_id;                
+                label_text += '</div>';
                 
-                if (_self.id_enabled){
-                    if (_self.category_enabled){
-                        label_text += "-";
-                    }
-                    label_text += this.obj_track_id;
-                }
-                this.innerText = label_text; 
+                this.innerHTML = label_text; 
             }
             
             label.obj_type = box.obj_type;
@@ -183,18 +193,15 @@ function createFloatLabelManager(view) {
             var best_pos = this.compute_best_position(label.vertices);
             best_pos = this.coord_to_pixel(best_pos);
             
-            /*
-            label.pos = box.position.clone();
-            label.pos.z += box.scale.z + 2;
-            
-            //var pos = this.toXYCoords(label.pos);
-            */
             var pos = best_pos;
             
             label.style.top = Math.round(pos.y) + 'px';
             label.style.left = Math.round(pos.x) + 'px';
 
-            label.hidden = pos.out_view;
+            if (pos.out_view){
+                label.className += " label-out-view";
+            }
+
             label.selected = false;
 
             document.getElementById("2Dlabels").appendChild(label);
@@ -210,8 +217,7 @@ function createFloatLabelManager(view) {
             var widthHalf = width / 2, heightHalf = height / 2;
 
             var p = pos.clone().project(this.view.camera);
-            //p.x = p.x/p.z;
-            //p.y = p.y/p.z;
+
             var ret={
                 x: ( p.x * widthHalf ) + widthHalf,
                 y: - ( p.y * heightHalf ) + heightHalf,
@@ -245,15 +251,6 @@ function createFloatLabelManager(view) {
                 x.project(_self.view.camera);
             });
             
-            /*
-            var visible_p = camera_p.filter(function(p){
-                return !(p.x>0.9 || p.x<-0.9 || p.y<-0.9 || p.y>0.9 || p.z< 0);
-            });
-
-            if (visible_p.length==0){
-                return null;
-            } 
-            */
             var visible_p = camera_p;
 
             var best_p = {x:-1, y: -1, z: -2};
@@ -277,9 +274,9 @@ function createFloatLabelManager(view) {
 
     };
 
+    manager.init();
+
     return manager;
-
-
 }
 
 

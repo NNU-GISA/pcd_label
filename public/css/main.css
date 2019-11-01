@@ -186,9 +186,17 @@ canvas {
 .float-label {
 	color: #0000ff;
 	position: absolute;
+	display:inline-flex;
 	/* background-color: #403b3b99; */
 }
 
+.label-obj-id-text, .label-obj-type-text {
+	padding-left: 5px;
+}
+
+.label-out-view {
+	display: none;
+}
 
 .selected-float-label {
 	color: #ff00ff;

@@ -872,13 +872,14 @@ function init_gui(){
         render_2d_image();
     },
 
+    
     params["toggle id"] = function(){
-        floatLabelManager.id_enabled = !floatLabelManager.id_enabled;
-        render_2d_labels();
+        floatLabelManager.toggle_id();
+        
     };
     params["toggle category"] = function(){
-        floatLabelManager.category_enabled = !floatLabelManager.category_enabled;
-        render_2d_labels();
+        floatLabelManager.toggle_category();
+        
     };
 
     

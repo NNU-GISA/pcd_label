@@ -3,7 +3,7 @@
 import * as THREE from './lib/three.module.js';
 import { PCDLoader } from './lib/PCDLoader.js';
 import { obj_type_map } from './obj_cfg.js';
-
+import {matmul} from "./util.js"
 var data = {
     
     // point_size: 1.5,
@@ -22,6 +22,7 @@ var data = {
 
     point_size: 1,
     point_brightness: 0.6,
+    box_opacity: 1,
 
     scale_point_size: function(v){
         this.point_size *= v;
@@ -276,8 +277,19 @@ var data = {
 
             },
 
+            color_points: function(){
+                // color all points inside these boxes
+                var _self = this;
+                this.boxes.map(function(b){
+                    _self.set_box_points_color(b);
+                })
+
+                this.update_points_color();
+            },
+
             on_image_loaded: function(){
                 if (this.complete()){
+                    this.color_points();
                     if (this.on_preload_finished){
                         this.on_preload_finished(this);
                     }
@@ -320,21 +332,33 @@ var data = {
                         var geometry = new THREE.BufferGeometry();
                         if ( position.length > 0 ) geometry.addAttribute( 'position', new THREE.Float32BufferAttribute( position, 3 ) );
                         if ( normal.length > 0 ) geometry.addAttribute( 'normal', new THREE.Float32BufferAttribute( normal, 3 ) );
-                        if ( color.length > 0 ) geometry.addAttribute( 'color', new THREE.Float32BufferAttribute( color, 3 ) );
+                        if ( color.length > 0 ) {
+                            geometry.addAttribute( 'color', new THREE.Float32BufferAttribute(color, 3 ) );
+                        }
+                        else {
+                            color = []
+                            for (var i =0; i< position.length; ++i){                                
+                                color.push(0.6);                                
+                            }
+                            geometry.addAttribute( 'color', new THREE.Float32BufferAttribute(color, 3 ) );
+                        }
 
                         geometry.computeBoundingSphere();
                         // build material
 
-                        var material = new THREE.PointsMaterial( { size: _self.data.point_size } );
+                        var material = new THREE.PointsMaterial( { size: _self.data.point_size, vertexColors: THREE.VertexColors } );
 
+                        /*
+                        
                         if ( color.length > 0 ) {
-                            material.vertexColors = VertexColors;
+                            material.vertexColors = color;
                         } else {
                             //material.color.setHex(0xffffff);
                             material.color.r = 0.6;
                             material.color.g = 0.6;
                             material.color.b = 0.6;
                         }
+                        */
 
                         //material.size = 2;
                         material.sizeAttenuation = false;
@@ -354,6 +378,7 @@ var data = {
                         console.log(_self.points_load_time, _self.file_info.scene, _self.file_info.frame, "loaded pionts ", _self.points_load_time - _self.create_time, "ms");
 
                         if (_self.complete()){
+                            _self.color_points();
                             if (_self.on_preload_finished)
                                 _self.on_preload_finished(_self);
                         }
@@ -381,6 +406,7 @@ var data = {
                         
                         //go ahead, may load picture
                         if (_self.complete()){
+                            _self.color_points();
                             if (_self.on_preload_finished)
                                 _self.on_preload_finished(_self);
                         }
@@ -418,14 +444,16 @@ var data = {
                             //var boxes = JSON.parse(this.responseText);
                             //console.log(ret);
 
-                            _self.boxes = create_bboxs(ret);  //create in future world
+                            _self.boxes = create_bboxs(ret);  //create in future world                        
                         }
+
                         _self.boxes_load_time = new Date().getTime();
                         console.log(_self.boxes_load_time, _self.file_info.scene, _self.file_info.frame, "loaded boxes ", _self.boxes_load_time - _self.create_time, "ms");
                         
                         _self.sort_boxes();
 
                         if (_self.complete()){
+                            _self.color_points();
                             if (_self.on_preload_finished)
                                 _self.on_preload_finished(_self);
                         }
@@ -433,7 +461,7 @@ var data = {
                         if (_self.active){
                             _self.go();
                         }
-                        //add_raw_boxes(ret[1]);            
+                        
                     }
                 
                     // end of state change: it can be after some time (async)
@@ -470,6 +498,60 @@ var data = {
             },
             
 
+            set_box_points_color: function(box, target_color){
+                var pos = this.points.geometry.getAttribute("position");
+                var color = this.points.geometry.getAttribute("color");
+
+                if (!target_color){
+                    var target_color_hex = parseInt("0x"+obj_type_map[box.obj_type].color.slice(1));
+                    target_color = {
+                        x: (target_color_hex/256/256)/255.0,
+                        y: (target_color_hex/256 % 256)/255.0,
+                        z: (target_color_hex % 256)/255.0,
+                    }
+                }
+
+                var r = box.rotation;
+                var trans = 
+                    [Math.cos(r.z),  Math.sin(r.z),  0,
+                    -Math.sin(r.z), Math.cos(r.z),  0, 
+                    0,               0,               1];
+
+                
+
+            
+                for (var i  = 0; i < pos.count; i++){
+                    var p = pos.array.slice(i*3, i*3+3);
+
+                    p = [p[0]-box.position.x, p[1]-box.position.y, p[2]-box.position.z ];
+
+                    var tp = matmul(trans, p, 3);
+
+                    if ((Math.abs(tp[0]) > box.scale.x/2) 
+                        || (Math.abs(tp[1]) > box.scale.y/2)
+                        || (Math.abs(tp[2]) > box.scale.z/2)){
+                        continue;
+                    }
+                    
+                    color.array[i*3] = target_color.x;
+                    color.array[i*3+1] = target_color.y;
+                    color.array[i*3+2] = target_color.z;
+                }
+
+                //data.world.points.geometry.removeAttribute("color");
+                //data.world.points.geometry.addAttribute("color", new THREE.Float32BufferAttribute(color.array, 3 ));
+                //data.world.points.material.needsUpdate=true;
+                //data.world.points.geometry.colorsNeedUpdate = true;
+                //render();
+
+            },
+
+            update_points_color: function(){
+                var color = this.points.geometry.getAttribute("color");
+                this.points.geometry.removeAttribute("color");
+                this.points.geometry.addAttribute("color", new THREE.Float32BufferAttribute(color.array, 3 ));
+            },
+
             scene: null,
             destroy_old_world: null,
             on_finished: null,
@@ -505,6 +587,7 @@ var data = {
     
                     
                     var _self=this;
+                    
                     this.boxes.forEach(function(b){
                         _self.scene.add(b);
                     })
@@ -582,7 +665,10 @@ var data = {
                 https://threejs.org/docs/index.html#api/en/materials/LineBasicMaterial
                 linewidth is 1, regardless of set value.
                 */
-                var box = new THREE.LineSegments( bbox, new THREE.LineBasicMaterial( { color: color, linewidth: 1 } ) );
+
+                
+                var material = new THREE.LineBasicMaterial( { color: color, linewidth: 1, opacity: this.data.box_opacity, transparent: true } );
+                var box = new THREE.LineSegments( bbox, material );
                 
                 box.scale.x=1.8;
                 box.scale.y=4.5;

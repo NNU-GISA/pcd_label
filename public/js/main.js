@@ -51,7 +51,6 @@ animate();
 render();
 $( "#maincanvas" ).resizable();
 load_data_meta();
-
 add_global_obj_type();
 
 function init() {
@@ -133,9 +132,17 @@ function init() {
     document.getElementById("camera-selector").onchange = camera_changed;
 
 
+    
+    install_fast_tool();
+
+    install_context_menu();
+}
+
+function install_fast_tool(){
     document.getElementById("label-del").onclick = function(){
         remove_selected_box();
         header.mark_changed_flag();
+        event.currentTarget.blur();
     };
 
     document.getElementById("label-copy").onclick = function(event){
@@ -163,9 +170,12 @@ function init() {
         }        
     }
 
-
-    install_context_menu();
+    document.getElementById("label-rotate").onclick = function(event){
+        event.currentTarget.blur();
+        transform_bbox("z_rotate_reverse");        
+    }
 }
+
 
 function install_context_menu(){
 
@@ -179,8 +189,10 @@ function install_context_menu(){
     }
 
     document.getElementById("cm-new").onclick = function(event){
-        add_bbox();
-        header.mark_changed_flag();
+        //add_bbox();
+        //header.mark_changed_flag();
+        event.preventDefault();
+        event.stopPropagation();
     };
 
     document.getElementById("cm-new").onmouseenter = function(event){
@@ -194,6 +206,12 @@ function install_context_menu(){
         console.log("enter  new item");
     };
 
+    document.getElementById("cm-new").onmouseleave = function(event){
+        document.getElementById("new-submenu").style.display="none";
+        console.log("leave  new item");
+    };
+
+
     document.getElementById("new-submenu").onmouseenter=function(event){
         var item = document.getElementById("new-submenu");
         item.style.display="block";
@@ -204,10 +222,7 @@ function install_context_menu(){
         item.style.display="none";
     }
 
-    document.getElementById("cm-new").onmouseleave = function(event){
-        document.getElementById("new-submenu").style.display="none";
-        console.log("leave  new item");
-    };
+
 
     document.getElementById("cm-paste").onclick = function(event){
         smart_paste();
@@ -424,6 +439,7 @@ function auto_adjust_bbox(done){
                     z: -trans_mat[11],
                 }
 
+                save_box_info(selected_box);
                 
                 /*
                 cos  sin    x 
@@ -907,6 +923,7 @@ function init_gui(){
     //cfgFolder.add( params, "side view width");
     cfgFolder.add( params, "bird's eye view");
     cfgFolder.add( params, "hide image");
+    cfgFolder.add( data, "box_opacity");
     cfgFolder.add( params, "left image");
     cfgFolder.add( params, "right image");
     cfgFolder.add( params, "front image");
@@ -1347,6 +1364,7 @@ function unselect_bbox(new_object, keep_lock){
             //unselect second time
             if (selected_box){
                 selected_box.material.color = new THREE.Color(parseInt("0x"+obj_type_map[selected_box.obj_type].color.slice(1)));
+                selected_box.material.opacity = data.opacity;                
                 floatLabelManager.unselect_box(selected_box.obj_local_id, selected_box.obj_type);
                 floatLabelManager.update_position(selected_box, true);
             }
@@ -1401,6 +1419,7 @@ function select_bbox(object){
         selected_box.material.color.r=1;
         selected_box.material.color.g=0;
         selected_box.material.color.b=1;
+        selected_box.material.opacity=1;
 
           
     }
@@ -1469,16 +1488,6 @@ function change_transform_control_view(){
     }
 }
 
-function add_raw_boxes(boxes){
-    boxes.forEach(function(b){
-        var geo = new THREE.BufferGeometry();
-        geo.addAttribute( 'position', new THREE.Float32BufferAttribute(b, 3 ) );
-        
-        var box = new THREE.LineSegments( geo, new THREE.LineBasicMaterial( { color: 0xff0000 } ) );    
-        scene.add(box);
-    });
-}
-
 
 
 function add_bbox(){
@@ -1500,11 +1509,34 @@ function add_bbox(){
     return box;
 }
 
+function save_box_info(box){
+    box.last_info = {
+        //obj_type: box.obj_type,
+        position: {
+            x: box.position.x,
+            y: box.position.y,
+            z: box.position.z,
+        },
+        rotation: {
+            x: box.rotation.x,
+            y: box.rotation.y,
+            z: box.rotation.z,
+        },
+        scale: {
+            x: box.scale.x,
+            y: box.scale.y,
+            z: box.scale.z,
+        }
+    }
+}
+
 // axix, xyz, action: scale, move, direction, up/down
 function transform_bbox(command){
     if (!selected_box)
         return;
     
+    save_box_info(selected_box);
+
     switch (command){
         case 'x_move_up':
             selected_box.position.x += 0.05*Math.cos(selected_box.rotation.z);
@@ -1967,7 +1999,16 @@ function on_box_changed(box){
     update_image_box_projection(box);
     render_2d_image();
     //floatLabelManager.update_position(box, false);
-    header.mark_changed_flag();  
+    header.mark_changed_flag();
+    update_box_points_color(box);
+}
+
+
+function update_box_points_color(box){
+    data.world.set_box_points_color(box.last_info, {x: data.point_brightness, y: data.point_brightness, z: data.point_brightness});
+    data.world.set_box_points_color(box);
+    data.world.update_points_color();
+    render();
 }
 
 function on_selected_box_changed(box){

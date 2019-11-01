@@ -1364,7 +1364,7 @@ function unselect_bbox(new_object, keep_lock){
             //unselect second time
             if (selected_box){
                 selected_box.material.color = new THREE.Color(parseInt("0x"+obj_type_map[selected_box.obj_type].color.slice(1)));
-                selected_box.material.opacity = data.opacity;                
+                selected_box.material.opacity = data.box_opacity;                
                 floatLabelManager.unselect_box(selected_box.obj_local_id, selected_box.obj_type);
                 floatLabelManager.update_position(selected_box, true);
             }
@@ -1384,6 +1384,7 @@ function unselect_bbox(new_object, keep_lock){
         
         if (selected_box){
             selected_box.material.color = new THREE.Color(parseInt("0x"+obj_type_map[selected_box.obj_type].color.slice(1)));
+            selected_box.material.opacity = data.box_opacity;                
             floatLabelManager.unselect_box(selected_box.obj_local_id);
             floatLabelManager.update_position(selected_box, true);
         }

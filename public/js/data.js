@@ -599,9 +599,11 @@ var data = {
             },
 
             update_points_color: function(){
-                var color = this.points.geometry.getAttribute("color");
-                this.points.geometry.removeAttribute("color");
-                this.points.geometry.addAttribute("color", new THREE.Float32BufferAttribute(color.array, 3 ));
+                if (this.points){ //some time points may fail to load.
+                    var color = this.points.geometry.getAttribute("color");
+                    this.points.geometry.removeAttribute("color");
+                    this.points.geometry.addAttribute("color", new THREE.Float32BufferAttribute(color.array, 3 ));
+                }
             },
 
             scene: null,

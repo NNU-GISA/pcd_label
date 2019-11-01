@@ -5,6 +5,7 @@ var obj_type_map = {
     Pedestrian: {color: '#ff0000',  size:[0.5, 0.4, 1.7]},
     Rider:      {color: '#ff8800',  size:[0.6, 1.6, 1.6]},
     Bicycle:    {color: '#88ff00',  size:[0.6, 1.6, 1.2]},
+    BicycleGroup: {color: '#88ff00',  size:[0.6, 1.6, 1.2]},
     Motor:      {color: '#aaaa00',  size:[0.6, 1.6, 1.2]},
     Truck:      {color: '#00ffff',  size:[2.8, 10, 3]},
     Animal:     {color: '#00aaff',  size:[0.6, 1.6, 1.2]},

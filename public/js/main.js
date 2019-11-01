@@ -1048,6 +1048,7 @@ function object_category_changed(event){
         selected_box.obj_type = event.currentTarget.value;
         floatLabelManager.set_object_type(selected_box.obj_local_id, selected_box.obj_type);
         header.mark_changed_flag();
+        update_box_points_color(selected_box);
     }
 }
 
@@ -1939,6 +1940,9 @@ function remove_selected_box(){
         unselect_bbox(null);
         unselect_bbox(null); //twice to safely unselect.
         //transform_control.detach();
+        
+        // restroe color
+        restore_box_points_color(target_box);
 
         floatLabelManager.remove_box(target_box);
         scene.remove(target_box);        
@@ -2005,8 +2009,17 @@ function on_box_changed(box){
 }
 
 
+function restore_box_points_color(box){
+    data.world.set_box_points_color(box, {x: data.point_brightness, y: data.point_brightness, z: data.point_brightness});
+    data.world.update_points_color();
+    render();
+}
+
 function update_box_points_color(box){
-    data.world.set_box_points_color(box.last_info, {x: data.point_brightness, y: data.point_brightness, z: data.point_brightness});
+    if (box.last_info){
+        data.world.set_box_points_color(box.last_info, {x: data.point_brightness, y: data.point_brightness, z: data.point_brightness});
+    }
+
     data.world.set_box_points_color(box);
     data.world.update_points_color();
     render();

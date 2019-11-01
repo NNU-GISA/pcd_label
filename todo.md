@@ -30,3 +30,5 @@
 26.  redraw 2d-image after delete a box
 27.  use 3 rotation algles to select points of a box, rather than only z-axis angle.
 28.  alg to do intersection of box and points
+29.  let image follow selected box.
+30.  for hiding floating labels, just hide the uis, don't stop adding them into the html.

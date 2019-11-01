@@ -65,7 +65,6 @@ function createFloatLabelManager(view) {
 
                 document.getElementById("obj-editor").style.top = label.style.top;
                 document.getElementById("obj-editor").style.left = label.style.left;
-                
             }
         },
 

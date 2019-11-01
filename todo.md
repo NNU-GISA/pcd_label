@@ -29,3 +29,4 @@
 25.  some objects are soft-body, the shape may change over time.
 26.  redraw 2d-image after delete a box
 27.  use 3 rotation algles to select points of a box, rather than only z-axis angle.
+28.  alg to do intersection of box and points

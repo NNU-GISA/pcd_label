@@ -7,7 +7,7 @@ var obj_type_map = {
     Bicycle:    {color: '#88ff00',  size:[0.6, 1.6, 1.2]},
     Motor:      {color: '#aaaa00',  size:[0.6, 1.6, 1.2]},
     Truck:      {color: '#00ffff',  size:[2.8, 10, 3]},
-    Animal:     {color: '#0000ff',  size:[0.6, 1.6, 1.2]},
+    Animal:     {color: '#00aaff',  size:[0.6, 1.6, 1.2]},
     Unknown:    {color: '#008888',  size:[1.8, 4.5, 1.5]},
 }
 

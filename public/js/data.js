@@ -547,6 +547,78 @@ var data = {
                 return indices;
             },
 
+            highlight_points: {point:[], color:[], orig_points:null},
+            highlight_box_points: function(box){
+                var _self = this;
+                var pos = this.points.geometry.getAttribute("position");
+                var color = this.points.geometry.getAttribute("color");
+
+                                
+                var r = box.rotation;
+                
+                                
+                var trans = transpose(euler_angle_to_rotate_matrix(r, {x:0, y:0, z:0}), 4);
+
+                var cand_point_indices = this.get_position_indices(box.position, box.scale);
+
+
+                this.highlight_points.points=[];
+                this.highlight_points.color=[];
+                cand_point_indices.forEach(function(i){
+                //for (var i  = 0; i < pos.count; i++){
+                    var p = pos.array.slice(i*3, i*3+3);
+
+                    var p_t = [p[0]-box.position.x, p[1]-box.position.y, p[2]-box.position.z, 1];
+
+                    var p_rt = matmul(trans, p_t, 4);
+
+                    if ((Math.abs(p_rt[0]) > box.scale.x/2) 
+                        || (Math.abs(p_rt[1]) > box.scale.y/2)
+                        || (Math.abs(p_rt[2]) > box.scale.z/2)){
+                        return;
+                    }
+                    
+                    // valid indices
+                    _self.highlight_points.point.push(p[0]);
+                    _self.highlight_points.point.push(p[1]);
+                    _self.highlight_points.point.push(p[2]);
+
+                    _self.highlight_points.color.push(color.array[i*3]);
+                    _self.highlight_points.color.push(color.array[i*3+1]);
+                    _self.highlight_points.color.push(color.array[i*3+2]);
+                    
+                });
+
+                // build new geometry
+                var geometry = new THREE.BufferGeometry();
+                
+                if ( this.highlight_points.point.length > 0 ) {
+                    geometry.addAttribute( 'position', new THREE.Float32BufferAttribute(this.highlight_points.point, 3 ) );
+                    geometry.addAttribute( 'color', new THREE.Float32BufferAttribute(this.highlight_points.color, 3 ) );
+                }
+                
+                
+                geometry.computeBoundingSphere();
+                
+
+                var material = new THREE.PointsMaterial( { size: _self.data.point_size, vertexColors: THREE.VertexColors } );
+
+                material.sizeAttenuation = false;
+
+                var mesh = new THREE.Points( geometry, material );                        
+                mesh.name = "pcd";
+
+                this.highlight_points.orig_points = _self.points; //save it.
+                
+
+                //swith geometry
+                _self.scene.remove(_self.points);
+
+                _self.points = mesh;
+                _self.build_points_index();
+                _self.scene.add(_self.points);
+            },
+
             set_box_points_color: function(box, target_color){
                 var pos = this.points.geometry.getAttribute("position");
                 var color = this.points.geometry.getAttribute("color");

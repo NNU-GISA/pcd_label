@@ -882,6 +882,9 @@ function init_gui(){
         
     };
 
+    params["test"] = function(){
+        data.world.highlight_box_points(selected_box);
+    };
     
     params["reset main view"] = function(){
         views[0].reset_camera();
@@ -918,7 +921,7 @@ function init_gui(){
 
     cfgFolder.add( params, "increase point size");
     cfgFolder.add( params, "decrease point size");
-
+    cfgFolder.add( params, "test");
 
     cfgFolder.add( params, "toggle side views");
     //cfgFolder.add( params, "side view width");

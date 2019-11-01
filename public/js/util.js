@@ -135,6 +135,20 @@ function mat(m, s, x, y){
     return m[x*s+y];
 }
 
+// m; matrix, vl: column vector length
+function transpose(m, cl){
+    var rl = m.length/cl;
+    for (var i = 0; i<cl; i++){
+        for(var j=i+1; j<rl; j++){
+            var t = m[i*rl + j];
+            m[i*rl + j] = m[j*cl+i];
+            m[j*cl+i] = t;
+        }
+    }
+
+    return m;
+}
+
 function euler_angle_to_rotate_matrix(eu, tr){
     var theta = [eu.x, eu.y, eu.z];
     // Calculate rotation about x axis
@@ -232,4 +246,4 @@ function rotation_matrix_to_euler_angle(m){ //m is 4* 4
 }
 
 
-export {vector4to3, vector3_nomalize, psr_to_xyz, matmul, matmul2, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle}
+export {vector4to3, vector3_nomalize, psr_to_xyz, matmul, matmul2, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle, transpose}

@@ -3,7 +3,7 @@
 import * as THREE from './lib/three.module.js';
 import { PCDLoader } from './lib/PCDLoader.js';
 import { obj_type_map } from './obj_cfg.js';
-import {matmul, euler_angle_to_rotate_matrix} from "./util.js"
+import {matmul, euler_angle_to_rotate_matrix, transpose} from "./util.js"
 var data = {
     
     // point_size: 1.5,
@@ -560,24 +560,26 @@ var data = {
                     }
                 }
 
+                
                 var r = box.rotation;
                 
+                /*
                 var trans = 
                     [Math.cos(r.z),  Math.sin(r.z),  0,
                     -Math.sin(r.z), Math.cos(r.z),  0, 
                     0,               0,               1];
-
+                */
                 
-                //var trans = euler_angle_to_rotate_matrix({x:r:z, y:r}, {x:0, y:0, z:0})
+                var trans = transpose(euler_angle_to_rotate_matrix(r, {x:0, y:0, z:0}), 4);
 
                 var cand_point_indices = this.get_position_indices(box.position, box.scale);
                 cand_point_indices.forEach(function(i){
                 //for (var i  = 0; i < pos.count; i++){
                     var p = pos.array.slice(i*3, i*3+3);
 
-                    p = [p[0]-box.position.x, p[1]-box.position.y, p[2]-box.position.z];
+                    p = [p[0]-box.position.x, p[1]-box.position.y, p[2]-box.position.z, 1];
 
-                    var tp = matmul(trans, p, 3);
+                    var tp = matmul(trans, p, 4);
 
                     if ((Math.abs(tp[0]) > box.scale.x/2) 
                         || (Math.abs(tp[1]) > box.scale.y/2)

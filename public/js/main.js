@@ -439,7 +439,7 @@ function auto_adjust_bbox(done){
                     z: -trans_mat[11],
                 }
 
-                save_box_info(selected_box);
+                
                 
                 /*
                 cos  sin    x 
@@ -1437,6 +1437,7 @@ function select_bbox(object){
         }
     }
 
+    save_box_info(object);
     on_selected_box_changed(object);
     
 }
@@ -1538,8 +1539,6 @@ function transform_bbox(command){
     if (!selected_box)
         return;
     
-    save_box_info(selected_box);
-
     switch (command){
         case 'x_move_up':
             selected_box.position.x += 0.05*Math.cos(selected_box.rotation.z);
@@ -2007,6 +2006,7 @@ function on_box_changed(box){
     //floatLabelManager.update_position(box, false);
     header.mark_changed_flag();
     update_box_points_color(box);
+    save_box_info(box);
 }
 
 

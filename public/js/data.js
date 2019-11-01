@@ -372,6 +372,7 @@ var data = {
 
                         
                         _self.points = mesh;
+                        _self.build_points_index();
                         _self.points_load_time = new Date().getTime();
                         _self.pcd_loaded = true;
 
@@ -497,6 +498,54 @@ var data = {
 
             },
             
+            points_index: {},
+
+            build_points_index: function(){
+                var ps = this.points.geometry.getAttribute("position");
+
+                for (var i = 0; i<ps.count; i++){
+                    var k = this.get_position_key(ps.array[i*3], ps.array[i*3+1], ps.array[i*3+2]);
+                    k = this.key_to_str(k);
+
+                    if (this.points_index[k]){
+                        this.points_index[k].push(i);
+                    } else {
+                        this.points_index[k]=[i];
+                    }                    
+                }
+            },
+
+            points_index_grid_size: 2,
+
+            get_position_key:function(x,y,z){
+                var grid_size = 2;
+                return [Math.round(x/this.points_index_grid_size),
+                        Math.round(y/this.points_index_grid_size),
+                        Math.round(z/this.points_index_grid_size),];
+            },
+            key_to_str: function(k){
+                return k[0]+","+k[1]+","+k[2];
+            },
+
+            get_position_indices: function(center, scale){
+                var ck = this.get_position_key(center.x, center.y, center.z);
+                var radius = Math.sqrt(scale.x*scale.x + scale.y*scale.y + scale.z*scale.z)/2;
+                var radius_grid = Math.ceil(radius/this.points_index_grid_size);// + 1;
+
+                var indices = [];
+                for(var x = -radius_grid; x <= radius_grid; x++){
+                    for(var y = -radius_grid; y <= radius_grid; y++){
+                        for(var z = -radius_grid; z <= radius_grid; z++){
+                            var temp = this.points_index[this.key_to_str([ck[0]+x, ck[1]+y, ck[2]+z])];
+                            if (temp)
+                                indices = indices.concat(temp);
+                        }
+                    }
+                }
+
+                console.log("found indices: " + indices.length);
+                return indices;
+            },
 
             set_box_points_color: function(box, target_color){
                 var pos = this.points.geometry.getAttribute("position");
@@ -521,8 +570,9 @@ var data = {
                 
                 //var trans = euler_angle_to_rotate_matrix({x:r:z, y:r}, {x:0, y:0, z:0})
 
-            
-                for (var i  = 0; i < pos.count; i++){
+                var cand_point_indices = this.get_position_indices(box.position, box.scale);
+                cand_point_indices.forEach(function(i){
+                //for (var i  = 0; i < pos.count; i++){
                     var p = pos.array.slice(i*3, i*3+3);
 
                     p = [p[0]-box.position.x, p[1]-box.position.y, p[2]-box.position.z];
@@ -532,13 +582,13 @@ var data = {
                     if ((Math.abs(tp[0]) > box.scale.x/2) 
                         || (Math.abs(tp[1]) > box.scale.y/2)
                         || (Math.abs(tp[2]) > box.scale.z/2)){
-                        continue;
+                        return;
                     }
                     
                     color.array[i*3] = target_color.x;
                     color.array[i*3+1] = target_color.y;
                     color.array[i*3+2] = target_color.z;
-                }
+                });
 
                 //data.world.points.geometry.removeAttribute("color");
                 //data.world.points.geometry.addAttribute("color", new THREE.Float32BufferAttribute(color.array, 3 ));

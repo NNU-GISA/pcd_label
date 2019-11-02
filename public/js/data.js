@@ -949,8 +949,7 @@ var data = {
                 box.scale.y=4.5;
                 box.scale.z=1.5;
                 box.name="bbox";
-                box.obj_type="car";
-                box.obj_id="1";
+                box.obj_type="car";                
 
                 box.computeLineDistances();
 

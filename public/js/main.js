@@ -291,6 +291,16 @@ function install_context_menu(){
     document.getElementById("cm-pause").onclick = function(event){      
         pause_resume_play();
     };
+
+
+    document.getElementById("cm-prev-object").onclick = function(event){      
+        select_previous_object();
+    };
+
+    document.getElementById("cm-next-object").onclick = function(event){      
+        select_previous_object();
+    };
+
 }
 
 function add_range_box(){
@@ -1714,6 +1724,8 @@ function switch_bbox_type(target_type){
     
 }
 
+
+
 function keydown( ev ) {
     key_pressed = true;
 
@@ -1725,25 +1737,10 @@ function keydown( ev ) {
             //data.decrease_point_size();
             break;
         case '1': 
+            select_previous_object();
+            break;
         case '2':
-            {
-                //transform_control.setSpace( transform_control.space === "local" ? "world" : "local" );
-
-                //select current index
-                if (data.world.boxes[box_navigate_index]!= selected_box){
-
-                }
-                else {
-                    if (ev.key== '1')
-                        box_navigate_index += 1;
-                    else 
-                        box_navigate_index += (data.world.boxes.length-1);
-                    
-                    box_navigate_index %= data.world.boxes.length;
-                }
-                console.log(box_navigate_index);
-                select_bbox(data.world.boxes[box_navigate_index]);
-            }
+            select_next_object();
             break;
         case '3':
             previous_frame();
@@ -1957,6 +1954,53 @@ function previous_frame(){
 
 }
 
+function next_frame(){
+
+    if (!data.meta)
+        return;
+        
+    var scene_meta = data.get_current_world_scene_meta();
+
+    var num_frames = scene_meta.frames.length;
+
+    var frame_index = (data.world.file_info.frame_index +1) % num_frames;
+
+    load_world(scene_meta.scene, scene_meta.frames[frame_index]);
+}
+
+function select_next_object(){
+
+    if (data.world.boxes.length<=0)
+        return;
+        
+    if (selected_box){
+        box_navigate_index = data.world.boxes.findIndex(function(x){
+            return selected_box == x;
+        });
+    }
+    
+    box_navigate_index += 1;            
+    box_navigate_index %= data.world.boxes.length;    
+    
+    select_bbox(data.world.boxes[box_navigate_index]);
+
+}
+
+function select_previous_object(){
+    if (data.world.boxes.length<=0)
+        return;
+
+    if (selected_box){
+        box_navigate_index = data.world.boxes.findIndex(function(x){
+            return selected_box == x;
+        });
+    }
+    
+    box_navigate_index += data.world.boxes.length-1;            
+    box_navigate_index %= data.world.boxes.length;    
+    
+    select_bbox(data.world.boxes[box_navigate_index]);
+}
 function load_world(scene_name, frame){
 
     //stop if current world is not ready!
@@ -1986,19 +2030,7 @@ function load_world(scene_name, frame){
     );
 }
 
-function next_frame(){
 
-    if (!data.meta)
-        return;
-        
-    var scene_meta = data.get_current_world_scene_meta();
-
-    var num_frames = scene_meta.frames.length;
-
-    var frame_index = (data.world.file_info.frame_index +1) % num_frames;
-
-    load_world(scene_meta.scene, scene_meta.frames[frame_index]);
-}
 
 function remove_selected_box(){
     if (selected_box){

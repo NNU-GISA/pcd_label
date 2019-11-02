@@ -23,6 +23,7 @@ var data = {
     point_size: 1,
     point_brightness: 0.6,
     box_opacity: 1,
+    show_background: true,
 
     scale_point_size: function(v){
         this.point_size *= v;
@@ -38,6 +39,17 @@ var data = {
     toggle_box_opacity: function(){
         this.box_opacity = 1- this.box_opacity;
         this.world.set_box_opacity(this.box_opacity);
+    },
+
+    toggle_background: function(){
+        this.show_background = !this.show_background;
+
+        if (this.show_background){
+            this.world.cancel_highlight();
+        }
+        else{
+            this.world.hide_background();
+        }
     },
 
     active_image_name: "image",
@@ -560,6 +572,16 @@ var data = {
                 return indices;
             },
 
+            toggle_background: function(){
+                if (this.points_backup != this.points){
+                    this.cancel_highlight();
+                    return;
+                } 
+                else{
+                    this.hide_background();
+                }
+            },
+
             // hide all points not inside any box
             hide_background: function(){
                 if (this.points_backup != this.points){
@@ -636,7 +658,8 @@ var data = {
                     //switch
                     this.remove_all_points();
                     this.points = this.points_backup;
-                    this.set_box_points_color(box);
+                    if (box)
+                        this.set_box_points_color(box);
                     this.update_points_color();
                     this.build_points_index();
                     this.scene.add(this.points);
@@ -801,11 +824,17 @@ var data = {
                         _self.scene.add(b);
                     })
 
+                    if (!_self.data.show_background){
+                        _self.hide_background();
+                    }
+
+                    // render is called in on_finished() callback
                     if (this.on_finished){
                         _self.finish_time = new Date().getTime();
                         console.log(_self.finish_time, scene_name, frame, "loaded in ", _self.finish_time - _self.create_time, "ms");
                         this.on_finished();
                     }
+                    
                     
                 }
             },

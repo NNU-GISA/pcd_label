@@ -877,8 +877,8 @@ function init_gui(){
         
     };
 
-    params["test"] = function(){
-        data.world.hide_background();
+    params["toggle background"] = function(){
+        data.toggle_background();
         render();
     };
 
@@ -931,15 +931,16 @@ function init_gui(){
     cfgFolder.add( params, "point brightness-");
 
 
-    cfgFolder.add( params, "test");
+    
     cfgFolder.add( params, "test2");
 
     cfgFolder.add( params, "toggle side views");
     //cfgFolder.add( params, "side view width");
     cfgFolder.add( params, "bird's eye view");
     cfgFolder.add( params, "hide image");
-    cfgFolder.add( params, "toggle box");
-    
+
+    cfgFolder.add( params, "toggle background");
+    cfgFolder.add( params, "toggle box");    
     cfgFolder.add( params, "toggle id");
     cfgFolder.add( params, "toggle category");
 

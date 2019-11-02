@@ -867,20 +867,7 @@ function init_gui(){
 
     params["bird's eye view"] = false;
     params["hide image"] = false;
-    params["left image"] = function(){
-        data.set_active_image("left");
-        render_2d_image();
-    },
-    params["right image"] = function(){
-        data.set_active_image("right");
-        render_2d_image();
-    },
-    params["front image"] = function(){
-        data.set_active_image("image");
-        render_2d_image();
-    },
-
-    
+        
     params["toggle id"] = function(){
         floatLabelManager.toggle_id();
         
@@ -913,28 +900,37 @@ function init_gui(){
     
     //params["side view width"] = 0.2;
 
-    params["increase point size"] = function(){
+    params["point size+"] = function(){
         data.scale_point_size(1.2);
         render();
     };
     
-    params["decrease point size"] = function(){
+    params["point size-"] = function(){
         data.scale_point_size(0.8);
         render();
     };
 
-    params["point birghtness+"] = function(){
-        data.scale_point_size(1.2);
-        render();
+    params["point brightness+"] = function(){
+        data.scale_point_brightness(1.2);
+        load_world(data.world.file_info.scene, data.world.file_info.frame);
     };
     
-    params["point birghtness-"] = function(){
-        data.scale_point_size(0.8);
-        render();
+    params["point brightness-"] = function(){
+        data.scale_point_brightness(0.8);
+        load_world(data.world.file_info.scene, data.world.file_info.frame);
     };
 
-    cfgFolder.add( params, "increase point size");
-    cfgFolder.add( params, "decrease point size");
+    params["toggle box"] = function(){
+        data.toggle_box_opacity();
+        render();
+    }
+
+    cfgFolder.add( params, "point size+");
+    cfgFolder.add( params, "point size-");
+    cfgFolder.add( params, "point brightness+");
+    cfgFolder.add( params, "point brightness-");
+
+
     cfgFolder.add( params, "test");
     cfgFolder.add( params, "test2");
 
@@ -942,11 +938,8 @@ function init_gui(){
     //cfgFolder.add( params, "side view width");
     cfgFolder.add( params, "bird's eye view");
     cfgFolder.add( params, "hide image");
-    cfgFolder.add( data, "box_opacity");
-    cfgFolder.add( params, "left image");
-    cfgFolder.add( params, "right image");
-    cfgFolder.add( params, "front image");
-
+    cfgFolder.add( params, "toggle box");
+    
     cfgFolder.add( params, "toggle id");
     cfgFolder.add( params, "toggle category");
 
@@ -963,9 +956,6 @@ function init_gui(){
     cfgFolder.add( params, "stop");
     cfgFolder.add( params, "previous frame");
     cfgFolder.add( params, "next frame");
-
-
-
 
     //edit
     var editFolder = gui.addFolder( 'Edit' );

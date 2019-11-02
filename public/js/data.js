@@ -31,6 +31,15 @@ var data = {
         }
     },
 
+    scale_point_brightness: function(v){
+        this.point_brightness *= v;        
+    },
+
+    toggle_box_opacity: function(){
+        this.box_opacity = 1- this.box_opacity;
+        this.world.set_box_opacity(this.box_opacity);
+    },
+
     active_image_name: "image",
     set_active_image: function(name){
         this.active_image_name = name;
@@ -339,7 +348,7 @@ var data = {
                         else {
                             color = []
                             for (var i =0; i< position.length; ++i){                                
-                                color.push(0.6);                                
+                                color.push(_self.data.point_brightness);                                
                             }
                             geometry.addAttribute( 'color', new THREE.Float32BufferAttribute(color, 3 ) );
                         }
@@ -651,7 +660,7 @@ var data = {
                 var hl_point=[];
                 var hl_color=[];
 
-                this.highlight_points.index= this._get_points_of_box(pos.array, box, 2);
+                this.highlight_points.index= this._get_points_of_box(pos.array, box, 3);
 
                 this.highlight_points.index.forEach(function(i){
                     hl_point.push(pos.array[i*3]);
@@ -799,6 +808,12 @@ var data = {
                     }
                     
                 }
+            },
+
+            set_box_opacity: function(box_opacity){
+                this.boxes.forEach(function(x){
+                    x.material.opacity = box_opacity;
+                });
             },
 
             add_box: function(x,y,z){

@@ -28,7 +28,13 @@ function createFloatLabelManager(view) {
                 this.style.sheet.insertRule(".label-obj-id-text {display: none}");
             }
             else{
-                this.style.sheet.removeRule(".label-obj-id-text");
+                for (var i in this.style.sheet.cssRules){
+                    var r = this.style.sheet.cssRules[i];
+                    if (r.selectorText === ".label-obj-id-text"){
+                        this.style.sheet.deleteRule(i);
+                    }
+                }
+                
             }
 
             this.id_enabled = !this.id_enabled;
@@ -41,7 +47,12 @@ function createFloatLabelManager(view) {
                 this.style.sheet.insertRule(".label-obj-type-text {display: none}");
             }
             else{
-                this.style.sheet.removeRule(".label-obj-type-text");
+                for (var i in this.style.sheet.cssRules){
+                    var r = this.style.sheet.cssRules[i];
+                    if (r.selectorText === ".label-obj-type-text"){
+                        this.style.sheet.deleteRule(i);
+                    }
+                }
             }
 
             this.category_enabled = !this.category_enabled;

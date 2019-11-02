@@ -12,7 +12,7 @@ import {create_views, views} from "./view.js"
 import {createFloatLabelManager} from "./floatlabel.js"
 import {vector4to3, vector3_nomalize, psr_to_xyz, matmul, matmul2, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle} from "./util.js"
 import {header} from "./header.js"
-import {obj_type_map} from "./obj_cfg.js"
+import {get_obj_cfg_by_type, obj_type_map} from "./obj_cfg.js"
 
 
 var sideview_enabled = true;
@@ -1383,7 +1383,7 @@ function unselect_bbox(new_object, keep_lock){
         }else{
             //unselect second time
             if (selected_box){
-                selected_box.material.color = new THREE.Color(parseInt("0x"+obj_type_map[selected_box.obj_type].color.slice(1)));
+                selected_box.material.color = new THREE.Color(parseInt("0x"+get_obj_cfg_by_type(selected_box.obj_type).color.slice(1)));
                 selected_box.material.opacity = data.box_opacity;                
                 floatLabelManager.unselect_box(selected_box.obj_local_id, selected_box.obj_type);
                 floatLabelManager.update_position(selected_box, true);
@@ -1404,7 +1404,7 @@ function unselect_bbox(new_object, keep_lock){
 
         
         if (selected_box){
-            selected_box.material.color = new THREE.Color(parseInt("0x"+obj_type_map[selected_box.obj_type].color.slice(1)));
+            selected_box.material.color = new THREE.Color(parseInt("0x"+get_obj_cfg_by_type(selected_box.obj_type).color.slice(1)));
             selected_box.material.opacity = data.box_opacity;                
             floatLabelManager.unselect_box(selected_box.obj_local_id);
             floatLabelManager.update_position(selected_box, true);
@@ -1650,10 +1650,10 @@ function switch_bbox_type(target_type){
     }
 
     selected_box.obj_type = target_type;
-    
-    selected_box.scale.x=obj_type_map[target_type].size[0];
-    selected_box.scale.y=obj_type_map[target_type].size[1];
-    selected_box.scale.z=obj_type_map[target_type].size[2];           
+    var obj_cfg = get_obj_cfg_by_type(target_type);
+    selected_box.scale.x=obj_cfg.size[0];
+    selected_box.scale.y=obj_cfg.size[1];
+    selected_box.scale.z=obj_cfg.size[2];           
 
     
     floatLabelManager.set_object_type(selected_box.obj_local_id, selected_box.obj_type);
@@ -2188,9 +2188,9 @@ function draw_box_on_image(ctx, box, box_corners, trans_ratio, selected){
     var imgfinal = box_corners;
 
     if (!selected){
-        ctx.strokeStyle = obj_type_map[box.obj_type].color;
+        ctx.strokeStyle = get_obj_cfg_by_type(box.obj_type).color;
 
-        var c = obj_type_map[box.obj_type].color;
+        var c = get_obj_cfg_by_type(box.obj_type).color;
         var r ="0x"+c.slice(1,3);
         var g ="0x"+c.slice(3,5);
         var b ="0x"+c.slice(5,7);

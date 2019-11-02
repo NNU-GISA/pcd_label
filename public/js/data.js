@@ -2,7 +2,7 @@
 
 import * as THREE from './lib/three.module.js';
 import { PCDLoader } from './lib/PCDLoader.js';
-import { obj_type_map } from './obj_cfg.js';
+import { get_obj_cfg_by_type } from './obj_cfg.js';
 import {matmul, euler_angle_to_rotate_matrix, transpose} from "./util.js"
 var data = {
     
@@ -477,7 +477,7 @@ var data = {
                 
                 function create_bboxs(annotations){
                     return annotations.map(function(b){
-                        var mesh = _self.new_bbox_cube(parseInt("0x"+obj_type_map[b.obj_type].color.slice(1)));
+                        var mesh = _self.new_bbox_cube(parseInt("0x"+get_obj_cfg_by_type(b.obj_type).color.slice(1)));
 
                         mesh.position.x = b.position.x;
                         mesh.position.y = b.position.y;
@@ -530,7 +530,8 @@ var data = {
                 return k[0]+","+k[1]+","+k[2];
             },
 
-            get_position_indices: function(center, scale){
+            // candidate pionts, covering the box(center, scale), but larger.
+            get_covering_position_indices: function(center, scale){
                 var ck = this.get_position_key(center.x, center.y, center.z);
                 var radius = Math.sqrt(scale.x*scale.x + scale.y*scale.y + scale.z*scale.z)/2;
                 var radius_grid = Math.ceil(radius/this.points_index_grid_size);// + 1;
@@ -587,42 +588,23 @@ var data = {
                 var color = this.points.geometry.getAttribute("color");
 
                                 
-                var r = box.rotation;
-                
-                                
-                var trans = transpose(euler_angle_to_rotate_matrix(r, {x:0, y:0, z:0}), 4);
-
-                var cand_point_indices = this.get_position_indices(box.position, box.scale);
 
 
                 this.highlight_points.point=[];
                 this.highlight_points.color=[];
-                this.highlight_points.index=[];
-                cand_point_indices.forEach(function(i){
-                //for (var i  = 0; i < pos.count; i++){
-                    var p = pos.array.slice(i*3, i*3+3);
 
-                    var p_t = [p[0]-box.position.x, p[1]-box.position.y, p[2]-box.position.z, 1];
+                this.highlight_points.index= this._get_points_of_box(pos.array, box, 2);
 
-                    var p_rt = matmul(trans, p_t, 4);
-
-                    if ((Math.abs(p_rt[0]) > box.scale.x/2*1.5) 
-                        || (Math.abs(p_rt[1]) > box.scale.y/2*1.5)
-                        || (Math.abs(p_rt[2]) > box.scale.z/2*1.5)){
-                        return;
-                    }
-                    
-                    // valid indices
-                    _self.highlight_points.point.push(p[0]);
-                    _self.highlight_points.point.push(p[1]);
-                    _self.highlight_points.point.push(p[2]);
+                this.highlight_points.index.forEach(function(i){
+                    _self.highlight_points.point.push(pos.array[i*3]);
+                    _self.highlight_points.point.push(pos.array[i*3+1]);
+                    _self.highlight_points.point.push(pos.array[i*3+2]);
 
                     _self.highlight_points.color.push(color.array[i*3]);
                     _self.highlight_points.color.push(color.array[i*3+1]);
                     _self.highlight_points.color.push(color.array[i*3+2]);
-                    
-                    _self.highlight_points.index.push(i);
-                });
+                })
+                
 
                 // build new geometry
                 var geometry = new THREE.BufferGeometry();
@@ -633,8 +615,7 @@ var data = {
                 }
                 
                 
-                geometry.computeBoundingSphere();
-                
+                geometry.computeBoundingSphere();               
 
                 var material = new THREE.PointsMaterial( { size: _self.data.point_size, vertexColors: THREE.VertexColors } );
 
@@ -651,12 +632,45 @@ var data = {
                 _self.scene.add(_self.points);
             },
 
+            _get_points_of_box: function(pos_array, box, scale_ratio){
+
+                if (!scale_ratio){
+                    scale_ratio = 1;
+                }
+
+                var indices=[];
+                var r = box.rotation;
+                var trans = transpose(euler_angle_to_rotate_matrix(r, {x:0, y:0, z:0}), 4);
+
+                var cand_point_indices = this.get_covering_position_indices(box.position, box.scale);
+                cand_point_indices.forEach(function(i){
+                //for (var i  = 0; i < pos.count; i++){
+                    var x = pos_array[i*3];
+                    var y = pos_array[i*3+1];
+                    var z = pos_array[i*3+2];
+
+                    var p = [x-box.position.x, y-box.position.y, z-box.position.z, 1];
+
+                    var tp = matmul(trans, p, 4);
+
+                    if ((Math.abs(tp[0]) > box.scale.x/2 * scale_ratio) 
+                        || (Math.abs(tp[1]) > box.scale.y/2 * scale_ratio)
+                        || (Math.abs(tp[2]) > box.scale.z/2 *scale_ratio) ){
+                        return;
+                    }
+                    
+                    indices.push(i);
+                });
+
+                return indices;
+            },
+
             set_box_points_color: function(box, target_color){
                 var pos = this.points.geometry.getAttribute("position");
                 var color = this.points.geometry.getAttribute("color");
 
                 if (!target_color){
-                    var target_color_hex = parseInt("0x"+obj_type_map[box.obj_type].color.slice(1));
+                    var target_color_hex = parseInt("0x"+get_obj_cfg_by_type(box.obj_type).color.slice(1));
                     target_color = {
                         x: (target_color_hex/256/256)/255.0,
                         y: (target_color_hex/256 % 256)/255.0,
@@ -664,44 +678,12 @@ var data = {
                     }
                 }
 
-                
-                var r = box.rotation;
-                
-                /*
-                var trans = 
-                    [Math.cos(r.z),  Math.sin(r.z),  0,
-                    -Math.sin(r.z), Math.cos(r.z),  0, 
-                    0,               0,               1];
-                */
-                
-                var trans = transpose(euler_angle_to_rotate_matrix(r, {x:0, y:0, z:0}), 4);
-
-                var cand_point_indices = this.get_position_indices(box.position, box.scale);
-                cand_point_indices.forEach(function(i){
-                //for (var i  = 0; i < pos.count; i++){
-                    var p = pos.array.slice(i*3, i*3+3);
-
-                    p = [p[0]-box.position.x, p[1]-box.position.y, p[2]-box.position.z, 1];
-
-                    var tp = matmul(trans, p, 4);
-
-                    if ((Math.abs(tp[0]) > box.scale.x/2) 
-                        || (Math.abs(tp[1]) > box.scale.y/2)
-                        || (Math.abs(tp[2]) > box.scale.z/2)){
-                        return;
-                    }
-                    
+                var indices = this._get_points_of_box(pos.array, box, 1.0);
+                indices.forEach(function(i){
                     color.array[i*3] = target_color.x;
                     color.array[i*3+1] = target_color.y;
                     color.array[i*3+2] = target_color.z;
                 });
-
-                //data.world.points.geometry.removeAttribute("color");
-                //data.world.points.geometry.addAttribute("color", new THREE.Float32BufferAttribute(color.array, 3 ));
-                //data.world.points.material.needsUpdate=true;
-                //data.world.points.geometry.colorsNeedUpdate = true;
-                //render();
-
             },
 
             update_points_color: function(){

@@ -32,3 +32,6 @@
 28.  alg to do intersection of box and points
 29.  let image follow selected box.
 30.  for hiding floating labels, just hide the uis, don't stop adding them into the html.
+31.  reset: reset rotation angle of x/y/z
+32.  cancel hight: restore color of points changed in highlight mode
+33.  prevent highlighting multi-times

@@ -179,6 +179,7 @@ var data = {
 
 
             points: null,
+            points_backup: null, //for restore from highlight
             boxes: null,
             
             images:{
@@ -372,6 +373,8 @@ var data = {
 
                         
                         _self.points = mesh;
+                        _self.points_backup = mesh;
+
                         _self.build_points_index();
                         _self.points_load_time = new Date().getTime();
                         _self.pcd_loaded = true;
@@ -547,7 +550,32 @@ var data = {
                 return indices;
             },
 
-            highlight_points: {point:[], color:[], orig_points:null},
+            cancel_highlight: function(box){
+                if (this.points_backup != this.points){
+                    
+
+                    //copy colors, maybe changed.
+                    var highlight_point_color = this.points.geometry.getAttribute("color");
+                    var backup_point_color = this.points_backup.geometry.getAttribute("color");                    
+                    
+                    this.highlight_points.index.forEach(function(n, i){
+                        backup_point_color.array[n*3] = highlight_point_color.array[i*3];
+                        backup_point_color.array[n*3+1] = highlight_point_color.array[i*3+1];
+                        backup_point_color.array[n*3+2] = highlight_point_color.array[i*3+2];
+                    });
+
+
+                    //switch
+                    this.remove_all_points();
+                    this.points = this.points_backup;
+                    this.set_box_points_color(box);
+                    this.update_points_color();
+                    this.build_points_index();
+                    this.scene.add(this.points);
+                }
+            },
+
+            highlight_points: {point:[], color:[], index:[]},
             highlight_box_points: function(box){
                 var _self = this;
                 var pos = this.points.geometry.getAttribute("position");
@@ -562,8 +590,9 @@ var data = {
                 var cand_point_indices = this.get_position_indices(box.position, box.scale);
 
 
-                this.highlight_points.points=[];
+                this.highlight_points.point=[];
                 this.highlight_points.color=[];
+                this.highlight_points.index=[];
                 cand_point_indices.forEach(function(i){
                 //for (var i  = 0; i < pos.count; i++){
                     var p = pos.array.slice(i*3, i*3+3);
@@ -572,9 +601,9 @@ var data = {
 
                     var p_rt = matmul(trans, p_t, 4);
 
-                    if ((Math.abs(p_rt[0]) > box.scale.x/2) 
-                        || (Math.abs(p_rt[1]) > box.scale.y/2)
-                        || (Math.abs(p_rt[2]) > box.scale.z/2)){
+                    if ((Math.abs(p_rt[0]) > box.scale.x/2*1.5) 
+                        || (Math.abs(p_rt[1]) > box.scale.y/2*1.5)
+                        || (Math.abs(p_rt[2]) > box.scale.z/2*1.5)){
                         return;
                     }
                     
@@ -587,6 +616,7 @@ var data = {
                     _self.highlight_points.color.push(color.array[i*3+1]);
                     _self.highlight_points.color.push(color.array[i*3+2]);
                     
+                    _self.highlight_points.index.push(i);
                 });
 
                 // build new geometry
@@ -607,9 +637,6 @@ var data = {
 
                 var mesh = new THREE.Points( geometry, material );                        
                 mesh.name = "pcd";
-
-                this.highlight_points.orig_points = _self.points; //save it.
-                
 
                 //swith geometry
                 _self.scene.remove(_self.points);
@@ -811,6 +838,19 @@ var data = {
             },
 
             destroyed: false,
+
+            remove_all_points: function(){
+                if (this.points){
+                    this.scene.remove(this.points);
+                    this.points.geometry.dispose();
+                    this.points.material.dispose();
+                    this.points = null;
+                }
+                else{
+                    console.error("destroy empty world!")
+                }
+            },
+
             destroy: function(){
                 var _self= this;
 
@@ -820,23 +860,13 @@ var data = {
 
                 this.destroyed = true;
                 remove_all_boxes();
-                remove_all_points();
+                this.remove_all_points();
                 console.log(this.file_info.scene, this.file_info.frame, "destroyed");
                 
                 // remove me from buffer
                 
 
-                function remove_all_points(){
-                    if (_self.points){
-                        _self.scene.remove(_self.points);
-                        _self.points.geometry.dispose();
-                        _self.points.material.dispose();
-                        _self.points = null;
-                    }
-                    else{
-                        console.error("destroy empty world!")
-                    }
-                }
+                
 
                 function remove_all_boxes(){
                     if (_self.boxes){

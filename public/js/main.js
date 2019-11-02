@@ -170,6 +170,14 @@ function install_fast_tool(){
         }        
     }
 
+    document.getElementById("label-highlight").onclick = function(event){
+        event.currentTarget.blur();
+        if (selected_box){
+            data.world.highlight_box_points(selected_box);
+            render();
+        }        
+    }
+
     document.getElementById("label-rotate").onclick = function(event){
         event.currentTarget.blur();
         transform_bbox("z_rotate_reverse");        
@@ -884,6 +892,12 @@ function init_gui(){
 
     params["test"] = function(){
         data.world.highlight_box_points(selected_box);
+        render();
+    };
+
+    params["test2"] = function(){
+        data.world.cancel_highlight();
+        render();
     };
     
     params["reset main view"] = function(){
@@ -922,6 +936,7 @@ function init_gui(){
     cfgFolder.add( params, "increase point size");
     cfgFolder.add( params, "decrease point size");
     cfgFolder.add( params, "test");
+    cfgFolder.add( params, "test2");
 
     cfgFolder.add( params, "toggle side views");
     //cfgFolder.add( params, "side view width");
@@ -1372,6 +1387,7 @@ function unselect_bbox(new_object, keep_lock){
                 selected_box.material.opacity = data.box_opacity;                
                 floatLabelManager.unselect_box(selected_box.obj_local_id, selected_box.obj_type);
                 floatLabelManager.update_position(selected_box, true);
+                data.world.cancel_highlight(selected_box);
             }
 
             
@@ -1392,6 +1408,7 @@ function unselect_bbox(new_object, keep_lock){
             selected_box.material.opacity = data.box_opacity;                
             floatLabelManager.unselect_box(selected_box.obj_local_id);
             floatLabelManager.update_position(selected_box, true);
+            data.world.cancel_highlight(selected_box);
         }
         
         selected_box = null;

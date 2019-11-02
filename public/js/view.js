@@ -237,6 +237,41 @@ function create_main_view(scene, dom, render, on_box_changed){
         this.transform_control.detach();
     }
 
+    view.target0 = view.orbit.target.clone();
+	view.position0 = view.camera.position.clone();
+    view.zoom0 = view.camera.zoom;
+    view.scale0 = null;
+    
+    view.save_orbit_state = function(highlight_obj_scale){
+        this.target0.copy( this.orbit.target );
+		this.position0.copy( this.camera.position );
+        this.zoom0 = this.camera.zoom;
+        this.scale0 = {x: highlight_obj_scale.x, y: highlight_obj_scale.y, z: highlight_obj_scale.z};
+    }
+
+    view.restore_relative_orbit_state = function(highlight_obj_scale){
+
+        if (view.scale0){
+            
+            var obj_size = Math.sqrt(view.scale0.x*view.scale0.x + view.scale0.y*view.scale0.y + view.scale0.z*view.scale0.z);
+            var target_obj_size = Math.sqrt(highlight_obj_scale.x*highlight_obj_scale.x + highlight_obj_scale.y*highlight_obj_scale.y + highlight_obj_scale.z*highlight_obj_scale.z);
+            var ratio  = target_obj_size/obj_size;
+
+
+            this.camera.position.x = this.orbit.target.x + (this.position0.x - this.target0.x)*ratio;
+            this.camera.position.y = this.orbit.target.y + (this.position0.y - this.target0.y)*ratio;
+            this.camera.position.z = this.orbit.target.z + (this.position0.z - this.target0.z)*ratio;
+
+            this.camera.zoom = this.zoom0;
+        } else {
+            views[0].camera.position.set(
+                this.orbit.target.x + highlight_obj_scale.x*3, 
+                this.orbit.target.y + highlight_obj_scale.y*3, 
+                this.orbit.target.z + highlight_obj_scale.z*3);
+        }
+        // target is set 
+    }
+
     return view;
 }
 

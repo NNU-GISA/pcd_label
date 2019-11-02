@@ -173,18 +173,12 @@ function install_fast_tool(){
 
     document.getElementById("label-highlight").onclick = function(event){
         event.currentTarget.blur();
-        if (selected_box){
-            data.world.highlight_box_points(selected_box);
-            
-            floatLabelManager.hide_all();
-            views[0].orbit.saveState();
-            views[0].orbit.target.x = selected_box.position.x;
-            views[0].orbit.target.y = selected_box.position.y;
-            views[0].orbit.target.z = selected_box.position.z;
-            views[0].orbit.update();
-            render();
-            selected_box.in_highlight=true;
-        }        
+        if (selected_box.in_highlight){
+            cancel_highlight_selected_box(selected_box);
+        }
+        else {
+            highlight_selected_box();
+        }
     }
 
     document.getElementById("label-rotate").onclick = function(event){
@@ -192,7 +186,37 @@ function install_fast_tool(){
         transform_bbox("z_rotate_reverse");        
     }
 }
+function cancel_highlight_selected_box(box){
+    
+    box.in_highlight = false;
+    data.world.cancel_highlight(box);
+    floatLabelManager.restore_all();
+    views[0].save_orbit_state(box.scale);
+    views[0].orbit.reset();
+}
 
+function highlight_selected_box(){
+    if (selected_box){
+        data.world.highlight_box_points(selected_box);
+        
+        floatLabelManager.hide_all();
+        views[0].orbit.saveState();
+
+        //views[0].camera.position.set(selected_box.position.x+selected_box.scale.x*3, selected_box.position.y+selected_box.scale.y*3, selected_box.position.z+selected_box.scale.z*3);
+
+        views[0].orbit.target.x = selected_box.position.x;
+        views[0].orbit.target.y = selected_box.position.y;
+        views[0].orbit.target.z = selected_box.position.z;
+
+        views[0].restore_relative_orbit_state(selected_box.scale);
+
+
+        views[0].orbit.update();
+
+        render();
+        selected_box.in_highlight=true;
+    }
+}
 
 function install_context_menu(){
 
@@ -929,6 +953,10 @@ function init_gui(){
 
     params["toggle box"] = function(){
         data.toggle_box_opacity();
+        if (selected_box){
+            selected_box.material.opacity = 1;                
+        }
+
         render();
     }
 
@@ -1386,15 +1414,12 @@ function unselect_bbox(new_object, keep_lock){
                 
                 // restore from highlight
                 if (selected_box.in_highlight){
-                    selected_box.in_highlight = false;
-                    data.world.cancel_highlight(selected_box);
-                    floatLabelManager.restore_all();
-                    views[0].orbit.reset();
+                    cancel_highlight_selected_box(selected_box);    
                 } else{
 
                     // unselected finally
                     selected_box.material.color = new THREE.Color(parseInt("0x"+get_obj_cfg_by_type(selected_box.obj_type).color.slice(1)));
-                    selected_box.material.opacity = data.box_opacity;                
+                    selected_box.material.opacity = data.box_opacity;
                     floatLabelManager.unselect_box(selected_box.obj_local_id, selected_box.obj_type);
                     floatLabelManager.update_position(selected_box, true);
 
@@ -1421,10 +1446,7 @@ function unselect_bbox(new_object, keep_lock){
             // restore from highlight
             
             if (selected_box.in_highlight){
-                selected_box.in_highlight = false;
-                data.world.cancel_highlight(selected_box);
-                floatLabelManager.restore_all();
-                views[0].orbit.reset();
+                cancel_highlight_selected_box(selected_box); 
             }
 
             selected_box.material.color = new THREE.Color(parseInt("0x"+get_obj_cfg_by_type(selected_box.obj_type).color.slice(1)));
@@ -1449,7 +1471,14 @@ function select_bbox(object){
 
     if (selected_box != object){
         // unselect old bbox
-        unselect_bbox(object);
+        
+
+        var in_highlight = false;
+
+        if (selected_box){
+            in_highlight = selected_box.in_highlight;
+            unselect_bbox(selected_box);
+        }
 
         // select me, the first time
         selected_box = object;
@@ -1463,6 +1492,9 @@ function select_bbox(object){
         selected_box.material.color.b=1;
         selected_box.material.opacity=1;
 
+        if (in_highlight){
+            highlight_selected_box();
+        }
           
     }
     else {
@@ -1478,7 +1510,7 @@ function select_bbox(object){
 
     save_box_info(object);
     on_selected_box_changed(object);
-    
+
 }
 
 
@@ -1711,11 +1743,6 @@ function keydown( ev ) {
                 }
                 console.log(box_navigate_index);
                 select_bbox(data.world.boxes[box_navigate_index]);
-                
-                //views[0].look_at(data.world.boxes[box_navigate_index].position);
-                
-                
-                
             }
             break;
         case '3':

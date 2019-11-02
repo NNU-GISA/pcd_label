@@ -200,7 +200,7 @@ var data = {
 
 
             points: null,
-            points_backup: null, //for restore from highlight
+            //points_backup: null, //for restore from highlight
             boxes: null,
             
             images:{
@@ -283,8 +283,12 @@ var data = {
                     this.points.material.size = v;
                 }
 
-                if (this.points_backup){
-                    this.points_backup.material.size = v;
+                if (this.points.points_backup){
+                    this.points.points_backup.material.size = v;
+
+                    if (this.points.points_backup.points_backup){
+                        this.points.points_backup.points_backup.material.size = v;
+                    }
                 }
             },
 
@@ -398,7 +402,7 @@ var data = {
 
                         
                         _self.points = mesh;
-                        _self.points_backup = mesh;
+                        //_self.points_backup = mesh;
 
                         _self.build_points_index();
                         _self.points_load_time = new Date().getTime();
@@ -526,21 +530,23 @@ var data = {
 
             },
             
-            points_index: {},
-
+            
             build_points_index: function(){
                 var ps = this.points.geometry.getAttribute("position");
+                var points_index = {};
 
                 for (var i = 0; i<ps.count; i++){
                     var k = this.get_position_key(ps.array[i*3], ps.array[i*3+1], ps.array[i*3+2]);
                     k = this.key_to_str(k);
 
-                    if (this.points_index[k]){
-                        this.points_index[k].push(i);
+                    if (points_index[k]){
+                        points_index[k].push(i);
                     } else {
-                        this.points_index[k]=[i];
+                        points_index[k]=[i];
                     }                    
                 }
+
+                this.points.points_index = points_index;
             },
 
             points_index_grid_size: 2,
@@ -556,7 +562,7 @@ var data = {
             },
 
             // candidate pionts, covering the box(center, scale), but larger.
-            get_covering_position_indices: function(center, scale){
+            get_covering_position_indices: function(points, center, scale){
                 var ck = this.get_position_key(center.x, center.y, center.z);
                 var radius = Math.sqrt(scale.x*scale.x + scale.y*scale.y + scale.z*scale.z)/2;
                 var radius_grid = Math.ceil(radius/this.points_index_grid_size);// + 1;
@@ -565,7 +571,7 @@ var data = {
                 for(var x = -radius_grid; x <= radius_grid; x++){
                     for(var y = -radius_grid; y <= radius_grid; y++){
                         for(var z = -radius_grid; z <= radius_grid; z++){
-                            var temp = this.points_index[this.key_to_str([ck[0]+x, ck[1]+y, ck[2]+z])];
+                            var temp = points.points_index[this.key_to_str([ck[0]+x, ck[1]+y, ck[2]+z])];
                             if (temp)
                                 indices = indices.concat(temp);
                         }
@@ -577,7 +583,7 @@ var data = {
             },
 
             toggle_background: function(){
-                if (this.points_backup != this.points){
+                if (this.points.points_backup){ // cannot differentiate highlighted-scene and no-background-whole-scene
                     this.cancel_highlight();
                     return;
                 } 
@@ -588,8 +594,8 @@ var data = {
 
             // hide all points not inside any box
             hide_background: function(){
-                if (this.points_backup != this.points){
-                    //already highlighted
+                if (this.points.points_backup){
+                    //already hidden, or in highlight mode
                     return;
                 }
 
@@ -602,11 +608,11 @@ var data = {
 
                 var hl_point=[];
                 var hl_color=[];
-
+                var highlight_point_indices = [];
                 this.boxes.forEach(function(box){
-                    _self.highlight_points.index= _self._get_points_of_box(pos.array, box, 1);
+                    var indices= _self._get_points_of_box(_self.points, box, 1);
 
-                    _self.highlight_points.index.forEach(function(i){
+                    indices.forEach(function(i){
                         hl_point.push(pos.array[i*3]);
                         hl_point.push(pos.array[i*3+1]);
                         hl_point.push(pos.array[i*3+2]);
@@ -615,6 +621,8 @@ var data = {
                         hl_color.push(color.array[i*3+1]);
                         hl_color.push(color.array[i*3+2]);
                     })
+
+                    highlight_point_indices = highlight_point_indices.concat(indices);
                 });
                 
 
@@ -635,25 +643,27 @@ var data = {
 
                 var mesh = new THREE.Points( geometry, material );                        
                 mesh.name = "pcd";
+                mesh.points_backup = this.points;
+                mesh.highlight_point_indices = highlight_point_indices;
 
                 //swith geometry
-                _self.scene.remove(_self.points);
+                this.scene.remove(this.points);
 
-                _self.points = mesh;
-                _self.build_points_index();
-                _self.scene.add(_self.points);
+                this.points = mesh;       
+                this.build_points_index();         
+                this.scene.add(mesh);
             },
 
             cancel_highlight: function(box){
-                if (this.points_backup != this.points){
+                if (this.points.points_backup){
                     
                     this.set_box_opacity(this.data.box_opacity);
-                    
+
                     //copy colors, maybe changed.
                     var highlight_point_color = this.points.geometry.getAttribute("color");
-                    var backup_point_color = this.points_backup.geometry.getAttribute("color");                    
+                    var backup_point_color = this.points.points_backup.geometry.getAttribute("color");                    
                     
-                    this.highlight_points.index.forEach(function(n, i){
+                    this.points.highlight_point_indices.forEach(function(n, i){
                         backup_point_color.array[n*3] = highlight_point_color.array[i*3];
                         backup_point_color.array[n*3+1] = highlight_point_color.array[i*3+1];
                         backup_point_color.array[n*3+2] = highlight_point_color.array[i*3+2];
@@ -661,23 +671,28 @@ var data = {
 
 
                     //switch
-                    this.remove_all_points();
-                    this.points = this.points_backup;
-                    if (box)
+                    var points_backup = this.points.points_backup;
+                    this.remove_all_points(); //this.points is null now
+                    this.points = points_backup;
+                    
+                    if (box){
+                        // in highlighted mode, the box my be moved outof the highlighted area, so 
+                        // we need to color them again.
                         this.set_box_points_color(box);
+                    }
+
                     this.update_points_color();
-                    this.build_points_index();
                     this.scene.add(this.points);
                 }
             },
 
-            highlight_points: {index:[]},
             highlight_box_points: function(box){
-                if (this.points_backup != this.points){
+                if (this.points.highlighted_box){
                     //already highlighted.
                     return;
                 }
 
+                
                 // hide all other boxes
                 this.set_box_opacity(0);
 
@@ -695,9 +710,9 @@ var data = {
                 var hl_point=[];
                 var hl_color=[];
 
-                this.highlight_points.index= this._get_points_of_box(pos.array, box, 3);
+                var highlight_point_indices= this._get_points_of_box(this.points, box, 3);
 
-                this.highlight_points.index.forEach(function(i){
+                highlight_point_indices.forEach(function(i){
                     hl_point.push(pos.array[i*3]);
                     hl_point.push(pos.array[i*3+1]);
                     hl_point.push(pos.array[i*3+2]);
@@ -727,24 +742,28 @@ var data = {
                 mesh.name = "pcd";
 
                 //swith geometry
-                _self.scene.remove(_self.points);
+                this.scene.remove(this.points);
 
-                _self.points = mesh;
-                _self.build_points_index();
-                _self.scene.add(_self.points);
+                mesh.points_backup = this.points;
+                mesh.highlight_point_indices = highlight_point_indices;
+                mesh.highlighted_box = box;
+
+                this.points = mesh;
+                this.build_points_index();
+                this.scene.add(mesh);
             },
 
-            _get_points_of_box: function(pos_array, box, scale_ratio){
+            _get_points_of_box: function(points, box, scale_ratio){
 
                 if (!scale_ratio){
                     scale_ratio = 1;
                 }
-
+                var pos_array = points.geometry.getAttribute("position").array;
                 var indices=[];
                 var r = box.rotation;
                 var trans = transpose(euler_angle_to_rotate_matrix(r, {x:0, y:0, z:0}), 4);
 
-                var cand_point_indices = this.get_covering_position_indices(box.position, box.scale);
+                var cand_point_indices = this.get_covering_position_indices(points, box.position, box.scale);
                 cand_point_indices.forEach(function(i){
                 //for (var i  = 0; i < pos.count; i++){
                     var x = pos_array[i*3];
@@ -780,7 +799,7 @@ var data = {
                     }
                 }
 
-                var indices = this._get_points_of_box(pos.array, box, 1.0);
+                var indices = this._get_points_of_box(this.points, box, 1.0);
                 indices.forEach(function(i){
                     color.array[i*3] = target_color.x;
                     color.array[i*3+1] = target_color.y;

@@ -891,7 +891,7 @@ function init_gui(){
     };
 
     params["test"] = function(){
-        data.world.highlight_box_points(selected_box);
+        data.world.hide_background();
         render();
     };
 

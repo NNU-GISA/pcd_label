@@ -551,6 +551,64 @@ var data = {
                 return indices;
             },
 
+            // hide all points not inside any box
+            hide_background: function(){
+                if (this.points_backup != this.points){
+                    //already highlighted
+                    return;
+                }
+
+                var _self = this;
+                var pos = this.points.geometry.getAttribute("position");
+                var color = this.points.geometry.getAttribute("color");
+
+                                
+
+
+                var hl_point=[];
+                var hl_color=[];
+
+                this.boxes.forEach(function(box){
+                    _self.highlight_points.index= _self._get_points_of_box(pos.array, box, 1);
+
+                    _self.highlight_points.index.forEach(function(i){
+                        hl_point.push(pos.array[i*3]);
+                        hl_point.push(pos.array[i*3+1]);
+                        hl_point.push(pos.array[i*3+2]);
+
+                        hl_color.push(color.array[i*3]);
+                        hl_color.push(color.array[i*3+1]);
+                        hl_color.push(color.array[i*3+2]);
+                    })
+                });
+                
+
+                // build new geometry
+                var geometry = new THREE.BufferGeometry();
+                
+                if (hl_point.length > 0 ) {
+                    geometry.addAttribute( 'position', new THREE.Float32BufferAttribute(hl_point, 3 ) );
+                    geometry.addAttribute( 'color', new THREE.Float32BufferAttribute(hl_color, 3 ) );
+                }
+                
+                
+                geometry.computeBoundingSphere();               
+
+                var material = new THREE.PointsMaterial( { size: _self.data.point_size, vertexColors: THREE.VertexColors } );
+
+                material.sizeAttenuation = false;
+
+                var mesh = new THREE.Points( geometry, material );                        
+                mesh.name = "pcd";
+
+                //swith geometry
+                _self.scene.remove(_self.points);
+
+                _self.points = mesh;
+                _self.build_points_index();
+                _self.scene.add(_self.points);
+            },
+
             cancel_highlight: function(box){
                 if (this.points_backup != this.points){
                     
@@ -576,7 +634,7 @@ var data = {
                 }
             },
 
-            highlight_points: {point:[], color:[], index:[]},
+            highlight_points: {index:[]},
             highlight_box_points: function(box){
                 if (this.points_backup != this.points){
                     //already highlighted.
@@ -590,28 +648,28 @@ var data = {
                                 
 
 
-                this.highlight_points.point=[];
-                this.highlight_points.color=[];
+                var hl_point=[];
+                var hl_color=[];
 
                 this.highlight_points.index= this._get_points_of_box(pos.array, box, 2);
 
                 this.highlight_points.index.forEach(function(i){
-                    _self.highlight_points.point.push(pos.array[i*3]);
-                    _self.highlight_points.point.push(pos.array[i*3+1]);
-                    _self.highlight_points.point.push(pos.array[i*3+2]);
+                    hl_point.push(pos.array[i*3]);
+                    hl_point.push(pos.array[i*3+1]);
+                    hl_point.push(pos.array[i*3+2]);
 
-                    _self.highlight_points.color.push(color.array[i*3]);
-                    _self.highlight_points.color.push(color.array[i*3+1]);
-                    _self.highlight_points.color.push(color.array[i*3+2]);
+                    hl_color.push(color.array[i*3]);
+                    hl_color.push(color.array[i*3+1]);
+                    hl_color.push(color.array[i*3+2]);
                 })
                 
 
                 // build new geometry
                 var geometry = new THREE.BufferGeometry();
                 
-                if ( this.highlight_points.point.length > 0 ) {
-                    geometry.addAttribute( 'position', new THREE.Float32BufferAttribute(this.highlight_points.point, 3 ) );
-                    geometry.addAttribute( 'color', new THREE.Float32BufferAttribute(this.highlight_points.color, 3 ) );
+                if (hl_point.length > 0 ) {
+                    geometry.addAttribute( 'position', new THREE.Float32BufferAttribute(hl_point, 3 ) );
+                    geometry.addAttribute( 'color', new THREE.Float32BufferAttribute(hl_color, 3 ) );
                 }
                 
                 

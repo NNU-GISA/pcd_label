@@ -577,6 +577,11 @@ var data = {
 
             highlight_points: {point:[], color:[], index:[]},
             highlight_box_points: function(box){
+                if (this.points_backup != this.points){
+                    //already highlighted.
+                    return;
+                }
+
                 var _self = this;
                 var pos = this.points.geometry.getAttribute("position");
                 var color = this.points.geometry.getAttribute("color");

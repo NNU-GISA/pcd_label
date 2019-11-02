@@ -17,9 +17,11 @@ function createFloatLabelManager(view) {
         html_labels: document.getElementById("2Dlabels"),
 
         style: document.createElement('style'),
+        temp_style: document.createElement('style'),
 
         init: function(){
             document.head.appendChild(this.style);            
+            document.head.appendChild(this.temp_style);            
         },
 
         toggle_id: function(){
@@ -59,6 +61,20 @@ function createFloatLabelManager(view) {
             
         },
 
+        hide_all: function(){
+            if (this.temp_style.sheet.cssRules.length == 0){
+                this.temp_style.sheet.insertRule(".label-obj-id-text {display: none}");
+                this.temp_style.sheet.insertRule(".label-obj-type-text {display: none}");
+            }
+        },
+
+        restore_all: function(){
+            if (this.temp_style.sheet.cssRules.length>0){
+                this.temp_style.sheet.deleteRule(0);
+                this.temp_style.sheet.deleteRule(0);    
+            }    
+        },
+
         remove_all_labels: function(){
             
             var _self = this;
@@ -90,6 +106,16 @@ function createFloatLabelManager(view) {
                 }
             }
         },
+
+        update_obj_editor_position: function(local_id){
+            var label = document.getElementById("obj-local-"+local_id);
+            
+            if (label){
+                document.getElementById("obj-editor").style.top = label.style.top;
+                document.getElementById("obj-editor").style.left = label.style.left;
+            }
+        },
+
         select_box: function(local_id){
             var label = document.getElementById("obj-local-"+local_id);
 
@@ -107,9 +133,6 @@ function createFloatLabelManager(view) {
                     document.getElementById("obj-label").innerText = label.innerText;
                     
                 }
-
-                document.getElementById("obj-editor").style.top = label.style.top;
-                document.getElementById("obj-editor").style.left = label.style.left;
             }
         },
 

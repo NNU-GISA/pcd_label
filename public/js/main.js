@@ -166,7 +166,8 @@ function install_fast_tool(){
     document.getElementById("label-reset").onclick = function(event){
         event.currentTarget.blur();
         if (selected_box){
-            switch_bbox_type(selected_box.obj_type);
+            //switch_bbox_type(selected_box.obj_type);
+            transform_bbox("reset");
         }        
     }
 
@@ -174,7 +175,15 @@ function install_fast_tool(){
         event.currentTarget.blur();
         if (selected_box){
             data.world.highlight_box_points(selected_box);
+            
+            floatLabelManager.hide_all();
+            views[0].orbit.saveState();
+            views[0].orbit.target.x = selected_box.position.x;
+            views[0].orbit.target.y = selected_box.position.y;
+            views[0].orbit.target.z = selected_box.position.z;
+            views[0].orbit.update();
             render();
+            selected_box.in_highlight=true;
         }        
     }
 
@@ -351,12 +360,10 @@ function render(){
 
     
     floatLabelManager.update_all_position();
-    
     if (selected_box){
-        floatLabelManager.select_box(selected_box.obj_local_id);
+        floatLabelManager.update_obj_editor_position(selected_box.obj_local_id);
     }
-    
-    
+
 }
 
 var marked_object = null;
@@ -1374,41 +1381,62 @@ function unselect_bbox(new_object, keep_lock){
         }else{
             //unselect second time
             if (selected_box){
-                selected_box.material.color = new THREE.Color(parseInt("0x"+get_obj_cfg_by_type(selected_box.obj_type).color.slice(1)));
-                selected_box.material.opacity = data.box_opacity;                
-                floatLabelManager.unselect_box(selected_box.obj_local_id, selected_box.obj_type);
-                floatLabelManager.update_position(selected_box, true);
-                data.world.cancel_highlight(selected_box);
+                
+                
+                
+                // restore from highlight
+                if (selected_box.in_highlight){
+                    selected_box.in_highlight = false;
+                    data.world.cancel_highlight(selected_box);
+                    floatLabelManager.restore_all();
+                    views[0].orbit.reset();
+                } else{
+
+                    // unselected finally
+                    selected_box.material.color = new THREE.Color(parseInt("0x"+get_obj_cfg_by_type(selected_box.obj_type).color.slice(1)));
+                    selected_box.material.opacity = data.box_opacity;                
+                    floatLabelManager.unselect_box(selected_box.obj_local_id, selected_box.obj_type);
+                    floatLabelManager.update_position(selected_box, true);
+
+                    if (!keep_lock)
+                        lock_obj_track_id = "";
+
+                    selected_box = null;
+                    on_selected_box_changed(null);
+                }
             }
 
             
-            if (!keep_lock)
-                lock_obj_track_id = "";
-
-            selected_box = null;
-            on_selected_box_changed(null);
+            
         }
     }
     else{
+        // selected other box
         //unselect all
         views[0].transform_control.detach();
 
         
         if (selected_box){
+            
+            // restore from highlight
+            
+            if (selected_box.in_highlight){
+                selected_box.in_highlight = false;
+                data.world.cancel_highlight(selected_box);
+                floatLabelManager.restore_all();
+                views[0].orbit.reset();
+            }
+
             selected_box.material.color = new THREE.Color(parseInt("0x"+get_obj_cfg_by_type(selected_box.obj_type).color.slice(1)));
             selected_box.material.opacity = data.box_opacity;                
             floatLabelManager.unselect_box(selected_box.obj_local_id);
             floatLabelManager.update_position(selected_box, true);
-            data.world.cancel_highlight(selected_box);
-        }
-        
-        selected_box = null;
-        
-        if (!keep_lock)
+
+            selected_box = null;
+    
+            if (!keep_lock)
                 lock_obj_track_id = "";
-
-        //on_selected_box_changed(null);
-
+        }
     }
 
 

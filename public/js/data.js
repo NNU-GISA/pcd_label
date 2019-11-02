@@ -282,6 +282,10 @@ var data = {
                 if (this.points){
                     this.points.material.size = v;
                 }
+
+                if (this.points_backup){
+                    this.points_backup.material.size = v;
+                }
             },
 
             preload: function(on_preload_finished){
@@ -643,7 +647,8 @@ var data = {
             cancel_highlight: function(box){
                 if (this.points_backup != this.points){
                     
-
+                    this.set_box_opacity(this.data.box_opacity);
+                    
                     //copy colors, maybe changed.
                     var highlight_point_color = this.points.geometry.getAttribute("color");
                     var backup_point_color = this.points_backup.geometry.getAttribute("color");                    
@@ -672,6 +677,13 @@ var data = {
                     //already highlighted.
                     return;
                 }
+
+                // hide all other boxes
+                this.set_box_opacity(0);
+
+                // keep myself
+                box.material.opacity = 1;
+
 
                 var _self = this;
                 var pos = this.points.geometry.getAttribute("position");

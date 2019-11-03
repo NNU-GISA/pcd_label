@@ -482,6 +482,10 @@ function init_gui(){
         data.toggle_background();
         render();
     };
+    params["toggle obj color"] = function(){
+        data.toggle_background();
+        render();
+    };
 
     params["test2"] = function(){
         data.world.cancel_highlight();
@@ -530,6 +534,11 @@ function init_gui(){
         render();
     }
 
+    params["toggle obj color"] = function(){
+        data.toggle_color_obj();
+        render();
+    }
+
     cfgFolder.add( params, "point size+");
     cfgFolder.add( params, "point size-");
     cfgFolder.add( params, "point brightness+");
@@ -545,7 +554,8 @@ function init_gui(){
     cfgFolder.add( params, "hide image");
 
     cfgFolder.add( params, "toggle background");
-    cfgFolder.add( params, "toggle box");    
+    cfgFolder.add( params, "toggle box");
+    cfgFolder.add( params, "toggle obj color");
     cfgFolder.add( params, "toggle id");
     cfgFolder.add( params, "toggle category");
 
@@ -1488,12 +1498,11 @@ function update_frame_info(scene, frame){
 
 //box edited
 function on_box_changed(box){
-    //var box = event.target.object;
-    //console.log("bbox rotation z", mesh.rotation.z);
+
     update_subview_by_bbox(box);      
     update_image_box_projection(box);
     render_2d_image();
-    //floatLabelManager.update_position(box, false);
+    //floatLabelManager.update_position(box, false);  don't update position, or the ui is annoying.
     header.mark_changed_flag();
     update_box_points_color(box);
     save_box_info(box);
@@ -1501,19 +1510,23 @@ function on_box_changed(box){
 
 
 function restore_box_points_color(box){
-    data.world.set_box_points_color(box, {x: data.point_brightness, y: data.point_brightness, z: data.point_brightness});
-    data.world.update_points_color();
-    render();
+    if (data.color_obj){
+        data.world.set_box_points_color(box, {x: data.point_brightness, y: data.point_brightness, z: data.point_brightness});
+        data.world.update_points_color();
+        render();
+    }
 }
 
 function update_box_points_color(box){
-    if (box.last_info){
-        data.world.set_box_points_color(box.last_info, {x: data.point_brightness, y: data.point_brightness, z: data.point_brightness});
-    }
+    if (data.color_obj){
+        if (box.last_info){
+            data.world.set_box_points_color(box.last_info, {x: data.point_brightness, y: data.point_brightness, z: data.point_brightness});
+        }
 
-    data.world.set_box_points_color(box);
-    data.world.update_points_color();
-    render();
+        data.world.set_box_points_color(box);
+        data.world.update_points_color();
+        render();
+    }
 }
 
 function on_selected_box_changed(box){

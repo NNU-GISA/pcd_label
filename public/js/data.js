@@ -24,7 +24,8 @@ var data = {
     point_brightness: 0.6,
     box_opacity: 1,
     show_background: true,
-
+    color_obj: false,
+    
     scale_point_size: function(v){
         this.point_size *= v;
         if (this.world){
@@ -50,6 +51,21 @@ var data = {
         else{
             this.world.hide_background();
         }
+    },
+
+    toggle_color_obj: function(){
+        this.color_obj = !this.color_obj;
+        if (this.color_obj){
+            this.world.color_points();
+        } else {
+            this.world.set_points_color({
+                x: this.point_brightness,
+                y: this.point_brightness,
+                z: this.point_brightness,
+            });            
+        }
+
+        this.world.update_points_color();
     },
 
     active_image_name: "image",
@@ -307,14 +323,18 @@ var data = {
 
             },
 
+            // color points according to object category
             color_points: function(){
                 // color all points inside these boxes
                 var _self = this;
-                this.boxes.map(function(b){
-                    _self.set_box_points_color(b);
-                })
 
-                this.update_points_color();
+                if (this.data.color_obj){
+                    this.boxes.map(function(b){
+                        _self.set_box_points_color(b);
+                    })
+
+                    this.update_points_color();
+                }
             },
 
             on_image_loaded: function(){
@@ -662,14 +682,16 @@ var data = {
                     this.set_box_opacity(this.data.box_opacity);
 
                     //copy colors, maybe changed.
-                    var highlight_point_color = this.points.geometry.getAttribute("color");
-                    var backup_point_color = this.points.points_backup.geometry.getAttribute("color");                    
-                    
-                    this.points.highlight_point_indices.forEach(function(n, i){
-                        backup_point_color.array[n*3] = highlight_point_color.array[i*3];
-                        backup_point_color.array[n*3+1] = highlight_point_color.array[i*3+1];
-                        backup_point_color.array[n*3+2] = highlight_point_color.array[i*3+2];
-                    });
+                    if (this.data.color_obj){
+                        var highlight_point_color = this.points.geometry.getAttribute("color");
+                        var backup_point_color = this.points.points_backup.geometry.getAttribute("color");                    
+                        
+                        this.points.highlight_point_indices.forEach(function(n, i){
+                            backup_point_color.array[n*3] = highlight_point_color.array[i*3];
+                            backup_point_color.array[n*3+1] = highlight_point_color.array[i*3+1];
+                            backup_point_color.array[n*3+2] = highlight_point_color.array[i*3+2];
+                        });
+                    }
 
 
                     //switch
@@ -680,10 +702,13 @@ var data = {
                     if (box){
                         // in highlighted mode, the box my be moved outof the highlighted area, so 
                         // we need to color them again.
-                        this.set_box_points_color(box);
+                        if (this.data.color_obj)
+                            this.set_box_points_color(box);
                     }
 
-                    this.update_points_color();
+                    if (this.data.color_obj)
+                        this.update_points_color();
+                        
                     this.scene.add(this.points);
                 }
             },
@@ -789,7 +814,7 @@ var data = {
             },
 
             set_box_points_color: function(box, target_color){
-                var pos = this.points.geometry.getAttribute("position");
+                //var pos = this.points.geometry.getAttribute("position");
                 var color = this.points.geometry.getAttribute("color");
 
                 if (!target_color){
@@ -807,6 +832,16 @@ var data = {
                     color.array[i*3+1] = target_color.y;
                     color.array[i*3+2] = target_color.z;
                 });
+            },
+
+            // set all points to specified color
+            set_points_color: function(target_color){
+                var color = this.points.geometry.getAttribute("color");
+                for (var i = 0; i<color.count; i++){
+                    color.array[i*3] = target_color.x;
+                    color.array[i*3+1] = target_color.y;
+                    color.array[i*3+2] = target_color.z;
+                }
             },
 
             update_points_color: function(){

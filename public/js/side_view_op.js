@@ -38,13 +38,15 @@ function init_side_view_operation(){
 
 
     document.getElementById("z-view-manipulator").onmouseenter = function(){
-        document.getElementById("z-v-table-t").style.display="inherit";
-        document.getElementById("z-v-table-s").style.display="inherit";
+        document.getElementById("z-v-table-translate").style.display="inherit";
+        document.getElementById("z-v-table-scale").style.display="inherit";
+        document.getElementById("z-v-table-shrink").style.display="inherit";
     }
 
     document.getElementById("z-view-manipulator").onmouseleave = function(){
-        document.getElementById("z-v-table-t").style.display="none";
-        document.getElementById("z-v-table-s").style.display="none";
+        document.getElementById("z-v-table-translate").style.display="none";
+        document.getElementById("z-v-table-scale").style.display="none";
+        document.getElementById("z-v-table-shrink").style.display="none";
     }
 }
 

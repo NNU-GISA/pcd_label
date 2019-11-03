@@ -16,6 +16,9 @@ import {get_obj_cfg_by_type, obj_type_map} from "./obj_cfg.js"
 
 import {render_2d_image, update_image_box_projection, clear_image_box_projection} from "./image.js"
 import {save_calibration, calibrate, reset_calibration}  from "./calib.js"
+import {mark_bbox, paste_bbox, auto_adjust_bbox, smart_paste} from "./auto-adjust.js"
+import {save_annotation} from "./save.js"
+import {load_obj_ids_of_scene, generate_new_unique_id} from "./obj_id_list.js"
 
 var sideview_enabled = true;
 var container;
@@ -189,6 +192,8 @@ function install_fast_tool(){
         transform_bbox("z_rotate_reverse");        
     }
 }
+
+
 function cancel_highlight_selected_box(box){
     
     box.in_highlight = false;
@@ -311,29 +316,8 @@ function install_context_menu(){
 function add_range_box(){
     
     var h = 1;
-    
-                
+                    
     var body = [
-        
-        /*
-        -h,h,h,  h,h,h,
-        h,h,h,   h,-h,h,
-        h,-h,h,  -h,-h,h,
-        -h,-h,h, -h, h, h, 
-
-        
-        //botom
-        -h,h,-h,  h,h,-h,
-        h,h,-h,   h,-h,-h,
-        h,-h,-h,  -h,-h,-h,
-        -h,-h,-h, -h, h, -h, 
-
-        // vertical lines
-        -h,h,h, -h,h,-h,
-        h,h,h,   h,h,-h,
-        h,-h,h,  h,-h,-h,
-        -h,-h,h, -h,-h,-h,
-        */
     ];
     
     var segments=64;
@@ -404,209 +388,9 @@ function render(){
     }
 
 }
-
-var marked_object = null;
-
-// mark bbox, which will be used as reference-bbox of an object.
-function mark_bbox(){
-    if (selected_box){
-        marked_object = {
-            frame: data.world.file_info.frame,
-            scene: data.world.file_info.scene,
-            obj_type: selected_box.obj_type,
-            obj_track_id: selected_box.obj_track_id,
-            position: selected_box.position,  //todo, copy x,y,z, not object
-            scale: selected_box.scale,
-            rotation: selected_box.rotation,
-        }
-
-        console.log(marked_object);
-
-        header.set_ref_obj(marked_object);
-    }
-}
-
-function paste_bbox(pos){
-
-    if (!pos)
-       pos = marked_object.position;
-    else
-       pos.z = marked_object.position.z;
-
-    var box = data.world.add_box(pos.x, pos.y, pos.z);
-
-    box.obj_track_id = marked_object.obj_track_id;
-    box.obj_type = marked_object.obj_type;
-
-
-    box.scale.x = marked_object.scale.x;
-    box.scale.y = marked_object.scale.y;
-    box.scale.z = marked_object.scale.z;
-
-    box.rotation.x = marked_object.rotation.x;
-    box.rotation.y = marked_object.rotation.y;
-    box.rotation.z = marked_object.rotation.z;
-
-
-    scene.add(box);
-
-    floatLabelManager.add_label(box, function(){on_label_clicked(box);});
-    
-    select_bbox(box);
-    
-    return box;
-}
-
 function on_label_clicked(box){
     select_bbox(box);
 }
-
-function auto_adjust_bbox(done){
-
-    save_annotation(function(){
-        do_adjust();
-    });
-
-    function do_adjust(){
-        console.log("auto adjust highlighted bbox");
-
-        var xhr = new XMLHttpRequest();
-        // we defined the xhr
-        var _self = this;
-        xhr.onreadystatechange = function () {
-            if (this.readyState != 4) return;
-        
-            if (this.status == 200) {
-                console.log(this.responseText)
-                console.log(selected_box.position);
-                console.log(selected_box.rotation);
-
-
-                var trans_mat = JSON.parse(this.responseText);
-
-                var rotation = Math.atan2(trans_mat[4], trans_mat[0]) + selected_box.rotation.z;
-                var transform = {
-                    x: -trans_mat[3],
-                    y: -trans_mat[7],
-                    z: -trans_mat[11],
-                }
-
-                
-                
-                /*
-                cos  sin    x 
-                -sin cos    y 
-                */
-                var new_pos = {
-                    x: Math.cos(-rotation) * transform.x + Math.sin(-rotation) * transform.y,
-                    y: -Math.sin(-rotation) * transform.x + Math.cos(-rotation) * transform.y,
-                    z: transform.z,
-                };
-
-
-                selected_box.position.x += new_pos.x;
-                selected_box.position.y += new_pos.y;
-                selected_box.position.z += new_pos.z;
-                
-                
-
-                selected_box.scale.x = marked_object.scale.x;
-                selected_box.scale.y = marked_object.scale.y;
-                selected_box.scale.z = marked_object.scale.z;
-
-                selected_box.rotation.z -= Math.atan2(trans_mat[4], trans_mat[0]);
-
-                console.log(selected_box.position);
-                console.log(selected_box.rotation);
-
-                on_box_changed(selected_box);
-        
-                header.mark_changed_flag();
-
-                if (done){
-                    done();
-                }
-            }
-        
-            // end of state change: it can be after some time (async)
-        };
-        
-        xhr.open('GET', 
-                "/auto_adjust"+"?scene="+marked_object.scene + "&"+
-                            "ref_frame=" + marked_object.frame + "&" +
-                            "object_id=" + marked_object.obj_track_id + "&" +                           
-                            "adj_frame=" + data.world.file_info.frame, 
-                true);
-        xhr.send();
-    }
-
-
-}
-
-function save_annotation(done){
-    var bbox_annotations=[];
-    console.log(data.world.boxes.length, "boxes");
-    data.world.boxes.forEach(function(b){
-        var vertices = psr_to_xyz(b.position, b.scale, b.rotation);
-
-        var b = {
-            psr: {
-                position:b.position,
-                scale:b.scale,
-                rotation:{
-                    x:b.rotation.x,
-                    y:b.rotation.y,
-                    z:b.rotation.z,
-                },
-            },
-            
-            position:b.position,
-            scale:b.scale,
-            rotation:{
-                x:b.rotation.x,
-                y:b.rotation.y,
-                z:b.rotation.z,
-            },
-
-            obj_type: b.obj_type,
-            obj_id: b.obj_track_id,
-            vertices: vertices,
-        };
-
-        bbox_annotations.push(b);
-        
-    });
-
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST", "/save" +"?scene="+data.world.file_info.scene+"&frame="+data.world.file_info.frame, true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-
-    xhr.onreadystatechange = function () {
-        if (this.readyState != 4) return;
-    
-        if (this.status == 200) {
-            console.log("save annotation finished.");
-            if(done){
-                done();
-            }
-
-            //reload obj-ids of the scene
-            load_obj_ids_of_scene(data.world.file_info.scene);
-        }
-    
-        // end of state change: it can be after some time (async)
-    };
-
-    var b = JSON.stringify(bbox_annotations);
-    //console.log(b);
-    xhr.send(b);
-
-    // unmark changed flag
-    //document.getElementById("frame").innerHTML = data.world.file_info.scene+"/"+data.world.file_info.frame;
-    header.unmark_changed_flag();
-}
-
-
 
 
 function load_data_meta(){    
@@ -655,51 +439,6 @@ function scene_changed(scene_name){
     load_obj_ids_of_scene(scene_name);
 }
 
-
-var obj_id_list = [];
-function load_obj_ids_of_scene(scene){
-
-    var xhr = new XMLHttpRequest();
-    // we defined the xhr
-    
-    xhr.onreadystatechange = function () {
-        if (this.readyState != 4) 
-            return;
-    
-        if (this.status == 200) {
-            var ret = JSON.parse(this.responseText);
-            
-            ret = ret.sort(function(x, y){
-                return x.id - y.id;
-            });
-
-            var obj_id_option_list = ret.map(function(c){
-                return "<option value="+c.id+">"+c.category+"</option>";
-            }).reduce(function(x,y){return x+y;}, 
-            "<option value='auto'></option>");
-
-            obj_id_list = ret.map(function(x){return x.id;});
-
-            document.getElementById("obj-ids-of-scene").innerHTML = obj_id_option_list;
-        }
-
-    };
-    
-    xhr.open('GET', "/objs_of_scene?scene="+scene, true);
-    xhr.send();
-}
-
-
-function generate_new_unique_id(){
-    var id = 1;
-    var objs_of_current_frame = data.world.boxes.map(function(b){return b.obj_track_id;});
-    var allobjs = objs_of_current_frame.concat(obj_id_list);
-    while (allobjs.findIndex(function(x){return x == id;}) >= 0){
-        id++;
-    }
-
-    return id;
-}
 
 
 function frame_changed(event){
@@ -1930,21 +1669,7 @@ function keydown( ev ) {
     }
 }
 
-function smart_paste(){
-    if (!selected_box){
-        paste_bbox(get_mouse_location_in_world(mouse));
-        auto_adjust_bbox(function(){
-            save_annotation();
-        });
-    }
-    else{
-        auto_adjust_bbox(function(){
-            save_annotation();
-        });
-    }
 
-    header.mark_changed_flag();
-}
 
 function previous_frame(){
 
@@ -2204,4 +1929,4 @@ function add_global_obj_type(){
 
 
 
-export {selected_box, params}
+export {selected_box, params, on_box_changed}

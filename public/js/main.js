@@ -26,25 +26,25 @@ var onDownPosition = new THREE.Vector2();
 var onUpPosition = new THREE.Vector2();
 
 var selected_box;
-var box_navigate_index=0;
-
-var sideview_mesh=null;
 
 
 var windowWidth, windowHeight;
 
 var params={};
 
-var g_text;
-var g_pos;
-
 var floatLabelManager;
 
-var lock_obj_track_id;
+var view_state ={
+    lock_obj_track_id : "",
+    lock_obj_in_highlight : false,
+};
 
+var operation_state = {
+    mouse_right_down : false,
+    key_pressed : false,
+    box_navigate_index:0,
+}; 
 
-var mouse_right_down = false;
-var key_pressed = false;
 
 init();
 animate();
@@ -175,6 +175,7 @@ function install_fast_tool(){
         event.currentTarget.blur();
         if (selected_box.in_highlight){
             cancel_highlight_selected_box(selected_box);
+            view_state.lock_obj_in_highlight = false
         }
         else {
             highlight_selected_box();
@@ -189,6 +190,7 @@ function install_fast_tool(){
 function cancel_highlight_selected_box(box){
     
     box.in_highlight = false;
+    //view_state.lock_obj_in_highlight = false; // when user unhighlight explicitly, set it to false
     data.world.cancel_highlight(box);
     floatLabelManager.restore_all();
     views[0].save_orbit_state(box.scale);
@@ -215,6 +217,7 @@ function highlight_selected_box(){
 
         render();
         selected_box.in_highlight=true;
+        view_state.lock_obj_in_highlight = true;
     }
 }
 
@@ -444,8 +447,6 @@ function paste_bbox(pos){
 
 
     scene.add(box);
-
-    sideview_mesh=box;
 
     floatLabelManager.add_label(box, function(){on_label_clicked(box);});
     
@@ -1126,13 +1127,10 @@ function object_track_id_changed(event){
 
 
 
-function update_subview_by_windowsize(){
+function update_subview_by_windowsize(box){
 
-    if (sideview_mesh === null)
+    if (box === null)
         return;
-
-    //update cfg
-    
 
     // side views
     var exp_camera_width, exp_camera_height, exp_camera_clip;
@@ -1147,20 +1145,20 @@ function update_subview_by_windowsize(){
         var view_height = Math.floor( window.innerHeight * view.height );
 
         if (ii==1){
-            exp_camera_width = sideview_mesh.scale.x*1.5;
-            exp_camera_height = sideview_mesh.scale.y*1.5;
+            exp_camera_width = box.scale.x*1.5;
+            exp_camera_height = box.scale.y*1.5;
 
-            exp_camera_clip = sideview_mesh.scale.z+0.8;
+            exp_camera_clip = box.scale.z+0.8;
         } else if (ii==2){
-            exp_camera_width = sideview_mesh.scale.x*1.5;
-            exp_camera_height = sideview_mesh.scale.z*1.5;
+            exp_camera_width = box.scale.x*1.5;
+            exp_camera_height = box.scale.z*1.5;
 
-            exp_camera_clip = sideview_mesh.scale.y*1.2;
+            exp_camera_clip = box.scale.y*1.2;
         }else if (ii==3){
-            exp_camera_width = sideview_mesh.scale.y*1.5;
-            exp_camera_height = sideview_mesh.scale.z*1.5;
+            exp_camera_width = box.scale.y*1.5;
+            exp_camera_height = box.scale.z*1.5;
 
-            exp_camera_clip = sideview_mesh.scale.x*1.2;
+            exp_camera_clip = box.scale.x*1.2;
         }
 
 
@@ -1191,12 +1189,10 @@ function update_subview_by_windowsize(){
     render();
 }
 
-function update_subview_by_bbox(mesh){
-    var p = mesh.position;
-    var r = mesh.rotation;
+function update_subview_by_bbox(box){
+    var p = box.position;
+    var r = box.rotation;
     //console.log(r);
-    sideview_mesh = mesh;
-
     //
     views[1].camera.rotation.x= r.x;
     views[1].camera.rotation.y= r.y;
@@ -1255,7 +1251,7 @@ function update_subview_by_bbox(mesh){
     views[3].camera.updateProjectionMatrix();
     views[3].cameraHelper.update();        
 
-    update_subview_by_windowsize();  // render() is called inside this func
+    update_subview_by_windowsize(box);  // render() is called inside this func
 }
 
 
@@ -1283,8 +1279,8 @@ function get_mouse_location_in_world(mouse){
 function onDocumentMouseDown( event ) {    
     
     if (event.which==3){
-        mouse_right_down = true;
-        key_pressed = false;
+        operation_state.mouse_right_down = true;
+        operation_state.key_pressed = false;
     }
     
 
@@ -1299,7 +1295,7 @@ function onDocumentMouseDown( event ) {
 function onMouseUp( event ) {
 
     if (event.which==3){
-        mouse_right_down = false;
+        operation_state.mouse_right_down = false;
     }
     
     var array = getMousePosition( renderer.domElement, event.clientX, event.clientY );
@@ -1309,7 +1305,7 @@ function onMouseUp( event ) {
         if (event.which == 3){
             //right click
             // if no other key pressed, we consider this as a right click
-            if (!key_pressed){
+            if (!operation_state.key_pressed){
                 console.log("right clicked.");
                 handleRightClick(event);
             }
@@ -1398,13 +1394,18 @@ function handleClick(event) {
 
 
 function select_locked_object(){
-    if (lock_obj_track_id != ""){
+    if (view_state.lock_obj_track_id != ""){
         var box = data.world.boxes.find(function(x){
-            return x.obj_track_id == lock_obj_track_id;
+            return x.obj_track_id == view_state.lock_obj_track_id;
         })
 
-        if (box)
-            select_bbox(box);            
+        if (box){
+            select_bbox(box);
+
+            if (view_state.lock_obj_in_highlight){
+                highlight_selected_box();
+            }
+        }
     }
 }
 
@@ -1425,6 +1426,10 @@ function unselect_bbox(new_object, keep_lock){
                 // restore from highlight
                 if (selected_box.in_highlight){
                     cancel_highlight_selected_box(selected_box);    
+
+                    if (!keep_lock){
+                        view_state.lock_obj_in_highlight = false;
+                    }
                 } else{
 
                     // unselected finally
@@ -1433,8 +1438,9 @@ function unselect_bbox(new_object, keep_lock){
                     floatLabelManager.unselect_box(selected_box.obj_local_id, selected_box.obj_type);
                     floatLabelManager.update_position(selected_box, true);
 
-                    if (!keep_lock)
-                        lock_obj_track_id = "";
+                    if (!keep_lock){
+                        view_state.lock_obj_track_id = "";
+                    }
 
                     selected_box = null;
                     on_selected_box_changed(null);
@@ -1457,6 +1463,9 @@ function unselect_bbox(new_object, keep_lock){
             
             if (selected_box.in_highlight){
                 cancel_highlight_selected_box(selected_box); 
+                if (!keep_lock){
+                    view_state.lock_obj_in_highlight = false;
+                }
             }
 
             selected_box.material.color = new THREE.Color(parseInt("0x"+get_obj_cfg_by_type(selected_box.obj_type).color.slice(1)));
@@ -1467,7 +1476,7 @@ function unselect_bbox(new_object, keep_lock){
             selected_box = null;
     
             if (!keep_lock)
-                lock_obj_track_id = "";
+                view_state.lock_obj_track_id = "";
         }
     }
 
@@ -1492,7 +1501,7 @@ function select_bbox(object){
 
         // select me, the first time
         selected_box = object;
-        lock_obj_track_id = object.obj_track_id;
+        view_state.lock_obj_track_id = object.obj_track_id;
 
         floatLabelManager.select_box(selected_box.obj_local_id);
         floatLabelManager.update_label_editor(object.obj_type, object.obj_track_id);
@@ -1535,7 +1544,9 @@ function onWindowResize() {
         //update_mainview();
         views[0].onWindowResize();
 
-        update_subview_by_windowsize();
+        if (selected_box){
+            update_subview_by_windowsize(selected_box);
+        }
 
         windowWidth = window.innerWidth;
         windowHeight = window.innerHeight;
@@ -1584,8 +1595,6 @@ function add_bbox(){
     var box = data.world.add_box(pos.x, pos.y, pos.z);
 
     scene.add(box);
-
-    sideview_mesh=box;
 
     floatLabelManager.add_label(box, function(){on_label_clicked(box);});
     
@@ -1727,7 +1736,7 @@ function switch_bbox_type(target_type){
 
 
 function keydown( ev ) {
-    key_pressed = true;
+    operation_state.key_pressed = true;
 
     switch ( ev.key) {
         case '+':
@@ -1801,7 +1810,7 @@ function keydown( ev ) {
 
         case 'a':
             if (selected_box){
-                if (!mouse_right_down){
+                if (!operation_state.mouse_right_down){
                     transform_bbox("x_move_down");
                 }
                 else{
@@ -1814,7 +1823,7 @@ function keydown( ev ) {
             break;
         case 'q':
             if (selected_box){
-                if (!mouse_right_down){
+                if (!operation_state.mouse_right_down){
                     transform_bbox("x_move_up");
                 }
                 else{
@@ -1831,7 +1840,7 @@ function keydown( ev ) {
                 save_annotation();
             }
             else if (selected_box){
-                if (!mouse_right_down){
+                if (!operation_state.mouse_right_down){
                     transform_bbox("y_move_down");
                 }else{
                     transform_bbox("y_scale_down");
@@ -1848,7 +1857,7 @@ function keydown( ev ) {
             break;
         case 'w':
             if (selected_box){
-                if (!mouse_right_down)
+                if (!operation_state.mouse_right_down)
                     transform_bbox("y_move_up");
                 else
                     transform_bbox("y_scale_up");                
@@ -1863,7 +1872,7 @@ function keydown( ev ) {
 
         case 'd':
             if (selected_box){
-                if (mouse_right_down){
+                if (operation_state.mouse_right_down){
                     transform_bbox("z_scale_down");                    
                 }
                 else if (ev.ctrlKey){
@@ -1882,7 +1891,7 @@ function keydown( ev ) {
             break;        
         case 'e':
                 if (selected_box){
-                    if (!mouse_right_down)
+                    if (!operation_state.mouse_right_down)
                         transform_bbox("z_move_up");
                     else
                         transform_bbox("z_scale_up");                    
@@ -1972,17 +1981,17 @@ function select_next_object(){
 
     if (data.world.boxes.length<=0)
         return;
-        
+
     if (selected_box){
-        box_navigate_index = data.world.boxes.findIndex(function(x){
+        operation_state.box_navigate_index = data.world.boxes.findIndex(function(x){
             return selected_box == x;
         });
     }
     
-    box_navigate_index += 1;            
-    box_navigate_index %= data.world.boxes.length;    
+    operation_state.box_navigate_index += 1;            
+    operation_state.box_navigate_index %= data.world.boxes.length;    
     
-    select_bbox(data.world.boxes[box_navigate_index]);
+    select_bbox(data.world.boxes[operation_state.box_navigate_index]);
 
 }
 
@@ -1991,15 +2000,15 @@ function select_previous_object(){
         return;
 
     if (selected_box){
-        box_navigate_index = data.world.boxes.findIndex(function(x){
+        operation_state.box_navigate_index = data.world.boxes.findIndex(function(x){
             return selected_box == x;
         });
     }
     
-    box_navigate_index += data.world.boxes.length-1;            
-    box_navigate_index %= data.world.boxes.length;    
+    operation_state.box_navigate_index += data.world.boxes.length-1;            
+    operation_state.box_navigate_index %= data.world.boxes.length;    
     
-    select_bbox(data.world.boxes[box_navigate_index]);
+    select_bbox(data.world.boxes[operation_state.box_navigate_index]);
 }
 function load_world(scene_name, frame){
 
@@ -2049,7 +2058,7 @@ function remove_selected_box(){
         //selected_box.dispose();
         data.world.boxes = data.world.boxes.filter(function(x){return x !=target_box;});
         selected_box = null;
-        sideview_mesh = null;
+        
 
         render();
         render_2d_image();

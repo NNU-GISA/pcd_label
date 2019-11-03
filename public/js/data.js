@@ -535,15 +535,17 @@ var data = {
                 var ps = this.points.geometry.getAttribute("position");
                 var points_index = {};
 
-                for (var i = 0; i<ps.count; i++){
-                    var k = this.get_position_key(ps.array[i*3], ps.array[i*3+1], ps.array[i*3+2]);
-                    k = this.key_to_str(k);
+                if (ps){ // points may be empty
+                    for (var i = 0; i<ps.count; i++){
+                        var k = this.get_position_key(ps.array[i*3], ps.array[i*3+1], ps.array[i*3+2]);
+                        k = this.key_to_str(k);
 
-                    if (points_index[k]){
-                        points_index[k].push(i);
-                    } else {
-                        points_index[k]=[i];
-                    }                    
+                        if (points_index[k]){
+                            points_index[k].push(i);
+                        } else {
+                            points_index[k]=[i];
+                        }                    
+                    }
                 }
 
                 this.points.points_index = points_index;

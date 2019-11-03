@@ -214,3 +214,33 @@ canvas {
 	color: yellow;
 }
 
+
+
+#z-view-manipulator {
+	position: absolute;
+	top: 0%;
+	left: 0%;
+	width: 20%;
+	height: 30%;
+	background-color: #00000000;
+	border-color: #00000000;
+	border-width: 1px;
+	border-style: solid;
+	display: inline-flex;
+    align-items: flex-end;
+}
+
+#z-view-manipulator:hover{
+	border-color: yellow;
+}
+
+.v-table-wrapper {
+	display: none;
+}
+
+.v-m-item-icon {
+	background-color: #00008822;
+}
+td {
+	padding: 0px;
+}

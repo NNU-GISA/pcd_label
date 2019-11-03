@@ -16,6 +16,9 @@ import {load_obj_ids_of_scene, generate_new_unique_id} from "./obj_id_list.js"
 import {stop_play, pause_resume_play, play_current_scene_with_buffer} from "./play.js"
 import {init_mouse, onUpPosition, getIntersects, getMousePosition, get_mouse_location_in_world} from "./mouse.js"
 
+import {init_side_view_operation}  from "./side_view_op.js"
+
+
 var sideview_enabled = true;
 var container;
 
@@ -132,6 +135,8 @@ function init() {
     install_fast_tool();
 
     install_context_menu();
+
+    init_side_view_operation();
 }
 
 function install_fast_tool(){
@@ -1599,4 +1604,4 @@ function add_global_obj_type(){
 
 
 
-export {selected_box, params, on_box_changed, select_bbox, scene, floatLabelManager, on_load_world_finished, operation_state}
+export {selected_box, params, on_box_changed, select_bbox, scene, floatLabelManager, on_load_world_finished, operation_state, transform_bbox}

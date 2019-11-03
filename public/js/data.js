@@ -24,7 +24,7 @@ var data = {
     point_brightness: 0.6,
     box_opacity: 1,
     show_background: true,
-    color_obj: false,
+    color_obj: true,
     
     scale_point_size: function(v){
         this.point_size *= v;

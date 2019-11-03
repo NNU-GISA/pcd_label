@@ -1338,6 +1338,11 @@ function keydown( ev ) {
             remove_selected_box();
             header.mark_changed_flag();
             break;
+        case 'Escape':
+            if (selected_box){
+                unselect_bbox(null);
+            }
+            break;
     }
 }
 

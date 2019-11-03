@@ -12,13 +12,15 @@ import {create_views, views} from "./view.js"
 import {createFloatLabelManager} from "./floatlabel.js"
 import {psr_to_xyz, matmul2, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle} from "./util.js"
 import {header} from "./header.js"
-import {get_obj_cfg_by_type, obj_type_map} from "./obj_cfg.js"
+import {get_obj_cfg_by_type, obj_type_map, get_next_obj_type_name} from "./obj_cfg.js"
 
 import {render_2d_image, update_image_box_projection, clear_image_box_projection} from "./image.js"
 import {save_calibration, calibrate, reset_calibration}  from "./calib.js"
 import {mark_bbox, paste_bbox, auto_adjust_bbox, smart_paste} from "./auto-adjust.js"
 import {save_annotation} from "./save.js"
 import {load_obj_ids_of_scene, generate_new_unique_id} from "./obj_id_list.js"
+import {stop_play, pause_resume_play, play_current_scene_with_buffer} from "./play.js"
+
 
 var sideview_enabled = true;
 var container;
@@ -462,175 +464,6 @@ function camera_changed(event){
 }
 
 
-
-
-var stop_play_flag=true;
-var pause_play_flag=false;
-
-function pause_resume_play(){
-    pause_play_flag=!pause_play_flag;
-
-    if (!pause_play_flag && !stop_play_flag){
-        play_current_scene_with_buffer(true);
-    }
-}
-
-
-function stop_play(){
-    stop_play_flag=true;
-    pause_play_flag=false;
-}
-
-function play_current_scene_with_buffer(resume){
-    
-    if (!data.meta){
-        console.log("no meta data! cannot play");
-        return;
-    }
-
-    if (stop_play_flag== false && !resume){
-        return;
-    }
-
-    stop_play_flag = false;
-    pause_play_flag = false;
-
-    var scene_meta = data.get_current_world_scene_meta();
-
-    var scene_name= scene_meta.scene;
-    
-    data.reset_world_buffer();
-
-    //var start_frame_index = scene_meta.frames.findIndex(function(x){return x == data.world.file_info.frame;})
-
-    preload_frame(scene_meta, data.world.file_info.frame);
-    play_frame(scene_meta, data.world.file_info.frame);
-
-
-    function preload_frame(meta, frame){
-        //if (frame_index < scene_meta.frames.length && !stop_play_flag)
-        {
-            var new_world = data.make_new_world(meta.scene,
-                frame, 
-                function(world){
-                    data.put_world_into_buffer(world);  //put new world into buffer.
-
-                    // continue next frmae
-                    if (!stop_play_flag && !pause_play_flag){
-                        var frame_index = meta.frames.findIndex(function(x){return x == frame;});
-                        if (frame_index+1 < meta.frames.length){
-                            preload_frame(meta, meta.frames[frame_index+1]);
-                        }
-                    }
-                });
-            
-        }
-        
-    };
-    
-
-    function play_frame(scene_meta, frame){
-        if (!stop_play_flag && !pause_play_flag)
-        {
-            var world = data.future_world_buffer.find(function(w){return w.file_info.frame == frame; });
-
-            if (world)  //found, data ready
-            {
-                data.activate_world(scene,  //this is webgl scene
-                    world, 
-                    function(){//on load finished
-                        //views[0].detach_control();
-                        unselect_bbox(null, true);
-                        unselect_bbox(null, true);
-                        render();
-                        render_2d_image();
-                        render_2d_labels();
-                        update_frame_info(scene_meta.scene, frame);
-                        select_locked_object();
-                        header.unmark_changed_flag();
-                        load_obj_ids_of_scene(scene_name);
-
-                        next_frame();
-                        
-                        function next_frame(){
-                            var frame_index = scene_meta.frames.findIndex(function(x){return x == frame;});
-                            if (frame_index+1 < scene_meta.frames.length)
-                            {
-                                var next_frame = scene_meta.frames[frame_index+1];
-                                setTimeout(
-                                    function(){                    
-                                        play_frame(scene_meta, next_frame);
-                                    }, 
-                                    500);
-                            } 
-                            else{
-                                stop_play_flag = true;
-                                pause_play_flag = false;
-                            }
-                        }
-                });
-           
-            }
-            else{
-                //not ready.
-                console.log("wait buffer!", frame);   
-
-                setTimeout(
-                    function(){                    
-                        play_frame(scene_meta, frame);
-                    }, 
-                    100);
-            } 
-            
-            
-        }
-    };
-}
-
-
-
-function play_current_scene_without_buffer(){
-    
-    if (!data.meta){
-        console.log("no meta data! cannot play");
-        return;
-    }
-
-    if (stop_play_flag== false){
-        return;
-    }
-
-    stop_play_flag = false;
-
-    var scene_meta = data.get_current_world_scene_meta();
-    var scene_name= scene_meta.scene;
-    
-    play_frame(scene_meta, data.world.file_info.frame);
-
-
-    function play_frame(scene_meta, frame){
-        load_world(scene_name, frame);
-
-
-        if (!stop_play_flag)
-        {   
-            var frame_index = scene_meta.frames.findIndex(function(x){return x == frame;});
-            if (frame_index+1 < scene_meta.frames.length)
-            {
-                next_frame = scene_meta.frames[frame_index+1];
-                setTimeout(
-                    function(){    
-                        play_frame(scene_meta, next_frame);                       
-                    }, 
-                    100);                   
-            } 
-            else{
-                stop_play_flag = true;
-            } 
-        
-        }
-    };
-}
 
 
 function init_gui(){
@@ -1443,17 +1276,7 @@ function switch_bbox_type(target_type){
         return;
 
     if (!target_type){
-        switch (selected_box.obj_type){
-            case "Car":
-                target_type = "Bus";
-                break;
-            case "Bus":
-                target_type = "Pedestrian";
-                break;
-            case "Pedestrian":
-                target_type = "Car";
-                break;
-        }
+        target_type = get_next_obj_type_name(selected_box.obj_type);
     }
 
     selected_box.obj_type = target_type;
@@ -1476,10 +1299,13 @@ function keydown( ev ) {
 
     switch ( ev.key) {
         case '+':
-            //data.increase_point_size();
+        case '=':
+            data.scale_point_size(1.2);
+            render();
             break;
         case '-':
-            //data.decrease_point_size();
+            data.scale_point_size(0.8);
+            render();
             break;
         case '1': 
             select_previous_object();
@@ -1510,14 +1336,6 @@ function keydown( ev ) {
         case 'b':
             switch_bbox_type();
             header.mark_changed_flag();
-            break;
-        case '+':
-        case '=': // +, =, num+
-            //transform_control.setSize( transform_control.size + 0.1 );
-            break;
-        case '-':
-            //case 109: // -, _, num-
-            //transform_control.setSize( Math.max( transform_control.size - 0.1, 0.1 ) );
             break;
         case 'z': // X
             views[0].transform_control.showX = ! views[0].transform_control.showX;
@@ -1733,6 +1551,18 @@ function select_previous_object(){
     select_bbox(data.world.boxes[operation_state.box_navigate_index]);
 }
 
+function on_load_world_finished(scene_name, frame){
+    unselect_bbox(null, true);
+    unselect_bbox(null, true);
+    render();
+    render_2d_image();
+    render_2d_labels();
+    update_frame_info(scene_name, frame);
+
+    select_locked_object();
+    header.unmark_changed_flag();
+    load_obj_ids_of_scene(scene_name);
+}
 
 function load_world(scene_name, frame){
 
@@ -1747,19 +1577,7 @@ function load_world(scene_name, frame){
         frame);
     data.activate_world(scene, 
         world, 
-        function(){
-            //views[0].detach_control();
-            unselect_bbox(null, true);
-            unselect_bbox(null, true);
-            render();
-            render_2d_image();
-            render_2d_labels();
-            update_frame_info(scene_name, frame);
-
-            select_locked_object();
-            header.unmark_changed_flag();
-            load_obj_ids_of_scene(scene_name);
-        }
+        function(){on_load_world_finished(scene_name, frame);}
     );
 }
 
@@ -1777,10 +1595,10 @@ function remove_selected_box(){
 
         floatLabelManager.remove_box(target_box);
         scene.remove(target_box);        
-        target_box.geometry.dispose();
-        target_box.material.dispose();
+        
         //selected_box.dispose();
-        data.world.boxes = data.world.boxes.filter(function(x){return x !=target_box;});
+        data.world.remove_box(target_box);
+
         selected_box = null;
         
 
@@ -1909,4 +1727,4 @@ function add_global_obj_type(){
 
 
 
-export {selected_box, params, on_box_changed, get_mouse_location_in_world, select_bbox, mouse, scene, floatLabelManager}
+export {selected_box, params, on_box_changed, get_mouse_location_in_world, select_bbox, mouse, scene, floatLabelManager, on_load_world_finished}

@@ -21,5 +21,26 @@ function get_obj_cfg_by_type(name){
     }
 }
 
+var name_array = []
 
-export {obj_type_map, get_obj_cfg_by_type}
+function build_name_array(){
+    for (var n in obj_type_map){
+        name_array.push(n);
+    }
+}
+
+
+function get_next_obj_type_name(name){
+
+    if (name_array.length == 0)    {
+        build_name_array();
+    }
+
+    var idx = name_array.findIndex(function(n){return n==name;})
+    idx+=1;
+    idx %= name_array.length;
+
+    return name_array[idx];
+}
+
+export {obj_type_map, get_obj_cfg_by_type, get_next_obj_type_name}

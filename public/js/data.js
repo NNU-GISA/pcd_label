@@ -894,6 +894,12 @@ var data = {
                 return mesh;
             },
 
+            remove_box: function(box){
+                box.geometry.dispose();
+                box.material.dispose();
+                //selected_box.dispose();
+                this.boxes = this.boxes.filter(function(x){return x !=box;});
+            },
 
             new_bbox_cube: function(color){
 

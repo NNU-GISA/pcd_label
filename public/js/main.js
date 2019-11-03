@@ -482,10 +482,6 @@ function init_gui(){
         data.toggle_background();
         render();
     };
-    params["toggle obj color"] = function(){
-        data.toggle_background();
-        render();
-    };
 
     params["test2"] = function(){
         data.world.cancel_highlight();

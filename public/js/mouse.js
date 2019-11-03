@@ -12,9 +12,9 @@ var onUpPosition;
 var handleLeftClick;
 var handleRightClick;
 
-var renderer_dom_element;
+var dom_element;
 
-function init_mouse(container, render_dom_element, on_left_click, on_right_click){
+function init_mouse(container, on_left_click, on_right_click){
     raycaster = new THREE.Raycaster();
     onDownPosition = new THREE.Vector2();
     onUpPosition = new THREE.Vector2();
@@ -23,7 +23,7 @@ function init_mouse(container, render_dom_element, on_left_click, on_right_click
     container.addEventListener( 'mousemove', onMouseMove, false );
     container.addEventListener( 'mousedown', onMouseDown, true );
     set_mouse_handler(on_left_click, on_right_click);
-    renderer_dom_element = container;
+    dom_element = container;
 }
 
 function set_mouse_handler(on_left_click, on_right_click){
@@ -61,7 +61,7 @@ function onMouseDown( event ) {
     }
     
 
-    var array = getMousePosition(renderer_dom_element, event.clientX, event.clientY );
+    var array = getMousePosition(dom_element, event.clientX, event.clientY );
     onDownPosition.fromArray( array );        
     
 
@@ -75,7 +75,7 @@ function onMouseUp( event ) {
         operation_state.mouse_right_down = false;
     }
     
-    var array = getMousePosition(renderer_dom_element, event.clientX, event.clientY );
+    var array = getMousePosition(dom_element, event.clientX, event.clientY );
     onUpPosition.fromArray( array );
 
     if ( onDownPosition.distanceTo( onUpPosition ) === 0 ) {

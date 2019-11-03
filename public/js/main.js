@@ -20,11 +20,7 @@ var sideview_enabled = true;
 var container;
 
 var scene, renderer;
-
-
 var selected_box;
-
-
 var windowWidth, windowHeight;
 
 var params={};
@@ -102,7 +98,7 @@ function init() {
     container.addEventListener( 'mousedown', onMouseDown, true );
     set_mouse_handler(handleLeftClick, handleRightClick);
     */
-    init_mouse(container, renderer.domElement, handleLeftClick, handleRightClick);
+    init_mouse(container, handleLeftClick, handleRightClick);
 
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
@@ -817,12 +813,8 @@ function handleRightClick(event){
 
 function handleLeftClick(event) {
 
-    
-    
-
         if (event.ctrlKey){
             //Ctrl+left click to smart paste!
-
             smart_paste();
         }
         else{

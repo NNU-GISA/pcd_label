@@ -1475,7 +1475,6 @@ function switch_bbox_type(target_type){
 }
 
 
-
 function keydown( ev ) {
     operation_state.key_pressed = true;
 
@@ -1737,6 +1736,8 @@ function select_previous_object(){
     
     select_bbox(data.world.boxes[operation_state.box_navigate_index]);
 }
+
+
 function load_world(scene_name, frame){
 
     //stop if current world is not ready!
@@ -1793,9 +1794,7 @@ function remove_selected_box(){
 }
 
 function clear(){
-    //remove boxinfo
-    //remove frameinfo
-    //remove image
+
     header.clear_box_info();
     document.getElementById("image").innerHTML = '';
     
@@ -1813,21 +1812,6 @@ function clear(){
 
 function update_frame_info(scene, frame){
     header.set_frame_info(scene, frame, scene_changed);
-
-    /*
-    if (params["hide image"]){
-        document.getElementById("image").innerHTML = '';
-        //document.getElementById("image").innerHTML = '<img id="camera" display="none" src="/static/data/'+data.world.file_info.scene+'/image/'+ data.world.file_info.frame+'.jpg" alt="img">';
-    } else{
-        if (data.world.image_front.naturalHeight){
-            document.getElementById("image").innerHTML = '<img id="camera" src="/static/data/'+scene+'/image/'+ frame+'.jpg" alt="img">';
-        }
-        else{
-            // image preload failed. don't try again.
-            document.getElementById("image").innerHTML = 'no image';
-        }
-    }
-    */
 }
 
 //box edited
@@ -1929,4 +1913,4 @@ function add_global_obj_type(){
 
 
 
-export {selected_box, params, on_box_changed}
+export {selected_box, params, on_box_changed, get_mouse_location_in_world, select_bbox, mouse, scene, floatLabelManager}

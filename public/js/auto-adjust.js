@@ -1,5 +1,5 @@
 
-import {selected_box, on_box_changed} from "./main.js"
+import {selected_box, on_box_changed, get_mouse_location_in_world, mouse, select_bbox, scene, floatLabelManager} from "./main.js"
 import {data} from "./data.js"
 import {header} from "./header.js"
 import {save_annotation} from "./save.js"

@@ -360,6 +360,8 @@ var data = {
                         var color = pcd.color;
                         var normal = pcd.normal;
 
+                        _self.points_parse_time = new Date().getTime();
+                        console.log(_self.points_load_time, _self.file_info.scene, _self.file_info.frame, "parse pionts ", _self.points_parse_time - _self.create_time, "ms");
 
                         if (_self.file_info.transform_matrix){
 
@@ -470,6 +472,12 @@ var data = {
                         
 
                     },
+
+                    // on file loaded
+                    function(){
+                        _self.points_readfile_time = new Date().getTime();
+                        console.log(_self.points_load_time, _self.file_info.scene, _self.file_info.frame, "read file ", _self.points_readfile_time - _self.create_time, "ms");
+                    }
                 );
             },
 

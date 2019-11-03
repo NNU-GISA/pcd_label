@@ -26,7 +26,7 @@ PCDLoader.prototype = {
 
 	constructor: PCDLoader,
 
-	load: function ( url, onLoad, onProgress, onError ) {
+	load: function ( url, onLoad, onProgress, onError, onFileLoaded ) {
 
 		var scope = this;
 
@@ -36,6 +36,7 @@ PCDLoader.prototype = {
 		loader.load( url, function ( data ) {
 
 			try {
+				onFileLoaded();
 				onLoad( scope.parse( data, url) );
 			} catch ( e ) {
 

@@ -1,5 +1,6 @@
 
-import {selected_box, on_box_changed, get_mouse_location_in_world, mouse, select_bbox, scene, floatLabelManager} from "./main.js"
+import {selected_box, on_box_changed, select_bbox, scene, floatLabelManager} from "./main.js"
+import {get_mouse_location_in_world} from "./mouse.js"
 import {data} from "./data.js"
 import {header} from "./header.js"
 import {save_annotation} from "./save.js"
@@ -139,7 +140,7 @@ function auto_adjust_bbox(done){
 
 function smart_paste(){
     if (!selected_box){
-        paste_bbox(get_mouse_location_in_world(mouse));
+        paste_bbox(get_mouse_location_in_world());
         auto_adjust_bbox(function(){
             save_annotation();
         });

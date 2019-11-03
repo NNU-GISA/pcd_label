@@ -1,16 +1,10 @@
 import * as THREE from './lib/three.module.js';
-//import Stats from './build/stats.module.js';
-//import { TrackballControls } from './TrackballControls.js';
-//import { PCDLoader } from './lib/PCDLoader.js';
-//import { GeometryUtils } from './examples/jsm/utils/GeometryUtils.js';
-//import {BBoxBufferGeometry } from './BBoxGeometry.js';
-//import { ShadowMapViewer } from './examples/jsm/utils/ShadowMapViewer.js';
 import { GUI } from './lib/dat.gui.module.js';
 
 import {data} from './data.js'
 import {create_views, views} from "./view.js"
 import {createFloatLabelManager} from "./floatlabel.js"
-import {psr_to_xyz, matmul2, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle} from "./util.js"
+import {matmul2, euler_angle_to_rotate_matrix} from "./util.js"
 import {header} from "./header.js"
 import {get_obj_cfg_by_type, obj_type_map, get_next_obj_type_name} from "./obj_cfg.js"
 
@@ -20,17 +14,13 @@ import {mark_bbox, paste_bbox, auto_adjust_bbox, smart_paste} from "./auto-adjus
 import {save_annotation} from "./save.js"
 import {load_obj_ids_of_scene, generate_new_unique_id} from "./obj_id_list.js"
 import {stop_play, pause_resume_play, play_current_scene_with_buffer} from "./play.js"
-
+import {init_mouse, onUpPosition, getIntersects, getMousePosition, get_mouse_location_in_world} from "./mouse.js"
 
 var sideview_enabled = true;
 var container;
 
 var scene, renderer;
 
-var raycaster;
-var mouse;
-var onDownPosition = new THREE.Vector2();
-var onUpPosition = new THREE.Vector2();
 
 var selected_box;
 
@@ -69,8 +59,7 @@ function init() {
 
 
     scene = new THREE.Scene();
-    mouse = new THREE.Vector2();
-    raycaster = new THREE.Raycaster();
+
 
     renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setPixelRatio( window.devicePixelRatio );
@@ -108,9 +97,13 @@ function init() {
 
     //renderer.domElement.addEventListener( 'mousemove', onDocumentMouseMove, false );
     //renderer.domElement.addEventListener( 'mousedown', onDocumentMouseDown, false );
-    container.addEventListener( 'mousemove', onDocumentMouseMove, false );
-    container.addEventListener( 'mousedown', onDocumentMouseDown, true );
-    
+    /*
+    container.addEventListener( 'mousemove', onMouseMove, false );
+    container.addEventListener( 'mousedown', onMouseDown, true );
+    set_mouse_handler(handleLeftClick, handleRightClick);
+    */
+    init_mouse(container, renderer.domElement, handleLeftClick, handleRightClick);
+
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
  
@@ -776,14 +769,7 @@ function update_subview_by_bbox(box){
     
 
     var trans_matrix = euler_angle_to_rotate_matrix(r, p);
-    //var rotate_x = euler_angle_to_rotate_matrix({x:Math.PI/2, y:0, z:0}, {x:0, y:0, z:0});
-    //trans_matrix = matmul2(rotate_x, trans_matrix, 4);
-    //var rotation_angle = rotation_matrix_to_euler_angle(trans_matrix)
-    //var lookat2 = matmul(trans_matrix, [0, -1, 0, 1, 0, 0, 1, 1], 4);
-    //views[2].camera.rotation.x= rotation_angle.x; //+Math.PI/2;
-    //views[2].camera.rotation.y= rotation_angle.y;
-    //views[2].camera.rotation.z= rotation_angle.z;
-    //views[2].camera.updateProjectionMatrix();
+
 
     views[2].camera.position.x= p.x;
     views[2].camera.position.y= p.y;
@@ -793,11 +779,6 @@ function update_subview_by_bbox(box){
     views[2].camera.up.set( up[0], up[1], up[2]);
     var at = matmul2(trans_matrix, [0, 1, 0, 1], 4);
     views[2].camera.lookAt( at[0], at[1], at[2] );
-    
-    //views[2].camera.up.set(lookat2[4], lookat2[5], lookat2[6]);
-    //views[2].camera.lookAt(lookat2[0], lookat2[1], lookat2[2]);
-
-
     
     
     views[2].camera.updateProjectionMatrix();
@@ -814,89 +795,12 @@ function update_subview_by_bbox(box){
     views[3].camera.lookAt( at3[0], at3[1], at3[2] );
     
 
-    //views[3].camera.rotation.x= Math.PI/2;
-    //views[3].camera.rotation.y= Math.PI/2 + r.z;
-   
-
     views[3].camera.updateProjectionMatrix();
     views[3].cameraHelper.update();        
 
     update_subview_by_windowsize(box);  // render() is called inside this func
 }
 
-
-function onDocumentMouseMove( event ) {
-    event.preventDefault();
-    mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-    mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-   
-    //console.log(mouse, x, y);   
-}
-
-function get_mouse_location_in_world(mouse){
-    raycaster.setFromCamera( mouse, views[0].camera );
-    var o = raycaster.ray.origin;
-    var d = raycaster.ray.direction;
-
-    var alpha = - o.z/d.z;
-    var x = o.x + d.x*alpha;
-    var y = o.y + d.y*alpha;
-    return {x:x, y:y, z:0};
-}
-
-
-
-function onDocumentMouseDown( event ) {    
-    
-    if (event.which==3){
-        operation_state.mouse_right_down = true;
-        operation_state.key_pressed = false;
-    }
-    
-
-    var array = getMousePosition( renderer.domElement, event.clientX, event.clientY );
-    onDownPosition.fromArray( array );        
-    
-
-    this.addEventListener( 'mouseup', onMouseUp, false );
-
-}
-
-function onMouseUp( event ) {
-
-    if (event.which==3){
-        operation_state.mouse_right_down = false;
-    }
-    
-    var array = getMousePosition( renderer.domElement, event.clientX, event.clientY );
-    onUpPosition.fromArray( array );
-
-    if ( onDownPosition.distanceTo( onUpPosition ) === 0 ) {
-        if (event.which == 3){
-            //right click
-            // if no other key pressed, we consider this as a right click
-            if (!operation_state.key_pressed){
-                console.log("right clicked.");
-                handleRightClick(event);
-            }
-        }
-        else{
-            // left click
-            handleClick(event);
-        }
-    }
-    
-    this.removeEventListener( 'mouseup', onMouseUp, false );
-
-}
-
-
-function getMousePosition( dom, x, y ) {
-
-    var rect = dom.getBoundingClientRect();
-    return [ ( x - rect.left ) / rect.width, ( y - rect.top ) / rect.height ];
-
-}
 
 
 function handleRightClick(event){
@@ -908,18 +812,10 @@ function handleRightClick(event){
 
 }
 
-function getIntersects( point, objects ) {
-
-    mouse.set( ( point.x * 2 ) - 1, - ( point.y * 2 ) + 1 );
-
-    raycaster.setFromCamera( mouse, views[0].camera );
-
-    return raycaster.intersectObjects( objects, false );  // 2nd argument: recursive.
-
-}
 
 
-function handleClick(event) {
+
+function handleLeftClick(event) {
 
     
     
@@ -1160,7 +1056,7 @@ function add_bbox(){
 
 
     // todo: move to data.world
-    var pos = get_mouse_location_in_world(mouse);
+    var pos = get_mouse_location_in_world();
 
     var box = data.world.add_box(pos.x, pos.y, pos.z);
 
@@ -1727,4 +1623,4 @@ function add_global_obj_type(){
 
 
 
-export {selected_box, params, on_box_changed, get_mouse_location_in_world, select_bbox, mouse, scene, floatLabelManager, on_load_world_finished}
+export {selected_box, params, on_box_changed, select_bbox, scene, floatLabelManager, on_load_world_finished, operation_state}

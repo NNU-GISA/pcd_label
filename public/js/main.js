@@ -388,10 +388,6 @@ function render(){
     }
 
 }
-function on_label_clicked(box){
-    select_bbox(box);
-}
-
 
 function load_data_meta(){    
 
@@ -1337,7 +1333,7 @@ function add_bbox(){
 
     scene.add(box);
 
-    floatLabelManager.add_label(box, function(){on_label_clicked(box);});
+    floatLabelManager.add_label(box, function(){select_bbox(box);});
     
     select_bbox(box);
     
@@ -1865,7 +1861,7 @@ function render_2d_labels(){
     floatLabelManager.remove_all_labels();
 
     data.world.boxes.forEach(function(b){
-        floatLabelManager.add_label(b, function(){on_label_clicked(b);});
+        floatLabelManager.add_label(b, function(){select_bbox(b);});
     })
 
     if (selected_box){

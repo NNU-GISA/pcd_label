@@ -49,7 +49,7 @@ function paste_bbox(pos){
 
     scene.add(box);
 
-    floatLabelManager.add_label(box, function(){on_label_clicked(box);});
+    floatLabelManager.add_label(box, function(){select_bbox(box);});
     
     select_bbox(box);
     

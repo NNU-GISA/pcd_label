@@ -1,4 +1,6 @@
 
+import {data} from "./data.js"
+
 var obj_id_list = [];
 function load_obj_ids_of_scene(scene){
 

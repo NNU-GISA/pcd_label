@@ -8,8 +8,8 @@ import {matmul2, euler_angle_to_rotate_matrix} from "./util.js"
 import {header} from "./header.js"
 import {get_obj_cfg_by_type, obj_type_map, get_next_obj_type_name} from "./obj_cfg.js"
 
-import {render_2d_image, update_image_box_projection, clear_image_box_projection} from "./image.js"
-import {save_calibration, calibrate, reset_calibration}  from "./calib.js"
+import {render_2d_image, update_image_box_projection, clear_canvas, clear_main_canvas} from "./image.js"
+import {add_calib_gui}  from "./calib.js"
 import {mark_bbox, paste_bbox, auto_adjust_bbox, smart_paste} from "./auto-adjust.js"
 import {save_annotation} from "./save.js"
 import {load_obj_ids_of_scene, generate_new_unique_id} from "./obj_id_list.js"
@@ -592,42 +592,7 @@ function init_gui(){
     editFolder.add( params, 'smart-paste');
 
 
-     //calibrate
-     var calibrateFolder = gui.addFolder( 'Calibrate' );
-     params['save cal'] = function () {
-         save_calibration();
-     };
-     calibrateFolder.add( params, 'save cal');
- 
-     params['reset cal'] = function () {
-        reset_calibration();
-    };
-
-    calibrateFolder.add(params, 'reset cal');
-
-     [
-         {name: "x", v: 0.002},
-         {name: "x", v: -0.002},
-         {name: "y", v: 0.002},
-         {name: "y", v: -0.002},
-         {name: "z", v: 0.002},
-         {name: "z", v: -0.002},
-         
-         {name: "tx", v: 0.005},
-         {name: "tx", v: -0.005},
-         {name: "ty", v: 0.005},
-         {name: "ty", v: -0.005},
-         {name: "tz", v: 0.005},
-         {name: "tz", v: -0.005},
-     ].forEach(function(x){
-         var item_name= x.name+","+x.v;
-        params[item_name] = function () {
-            calibrate(x.name, x.v);
-         };
-         calibrateFolder.add(params, item_name);
-     });
-
-     
+     add_calib_gui(gui);
 
     //file
     var fileFolder = gui.addFolder( 'File' );
@@ -1498,15 +1463,20 @@ function remove_selected_box(){
 function clear(){
 
     header.clear_box_info();
-    document.getElementById("image").innerHTML = '';
+    //document.getElementById("image").innerHTML = '';
     
+    unselect_bbox(null);
+    unselect_bbox(null);
+
     header.clear_frame_info();
 
-    clear_image_box_projection();
+    clear_main_canvas();
+    clear_canvas();
 
 
     data.world.destroy();
     data.world= null; //dump it
+    floatLabelManager.remove_all_labels();
     render();
 }
 
@@ -1555,7 +1525,7 @@ function on_selected_box_changed(box){
         update_subview_by_bbox(box);
     } else {
         header.clear_box_info();
-        clear_image_box_projection();
+        clear_canvas();
     }
 
       

@@ -5,8 +5,16 @@ import {vector4to3, vector3_nomalize, psr_to_xyz, matmul} from "./util.js"
 import {get_obj_cfg_by_type} from "./obj_cfg.js"
 
 // all boxes
+function clear_main_canvas(){
+    var c = document.getElementById("maincanvas");
+    var ctx = c.getContext("2d");
+                
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+}
+
+
 function render_2d_image(){
-    clear_canvas();
+    clear_main_canvas();
 
     if (params["hide image"]){
         hide_canvas();
@@ -23,12 +31,7 @@ function render_2d_image(){
         document.getElementsByClassName("ui-wrapper")[0].style.display="inherit";
     }
 
-    function clear_canvas(){
-        var c = document.getElementById("maincanvas");
-        var ctx = c.getContext("2d");
-                    
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    }
+
 
     function draw_canvas(){
         // draw picture
@@ -177,16 +180,14 @@ function draw_box_on_image(ctx, box, box_corners, trans_ratio, selected){
     ctx.stroke();
 }
 
-function clear_image_box_projection(){
-    clear_canvas();
 
-    function clear_canvas(){
-        var c = document.getElementById("canvas");
-        var ctx = c.getContext("2d");
-                    
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
+function clear_canvas(){
+    var c = document.getElementById("canvas");
+    var ctx = c.getContext("2d");
+                
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
+
 
 
 function projected_3d_point_out_of_image_range(p){
@@ -229,7 +230,7 @@ function update_image_box_projection(box){
         var img = data.world.images.active_image(); //document.getElementById("camera");
         if (img.naturalWidth > 0){
 
-            clear_image_box_projection();
+            clear_canvas();
 
 
             var box3d = psr_to_xyz(pos, scale, rotation);
@@ -318,4 +319,4 @@ function vectorsub(vs, v){
 
 
 
-export {render_2d_image, update_image_box_projection, clear_image_box_projection}
+export {render_2d_image, update_image_box_projection, clear_canvas, clear_main_canvas}

@@ -86,4 +86,43 @@ function calibrate(ax, value){
         update_image_box_projection(selected_box);
 }
 
-export {save_calibration, calibrate, reset_calibration}
+
+function add_calib_gui(parent_gui){
+    var params = {};
+
+    //calibrate
+    var calibrateFolder = parent_gui.addFolder( 'Calibrate' );
+    params['save cal'] = function () {
+        save_calibration();
+    };
+    calibrateFolder.add( params, 'save cal');
+
+    params['reset cal'] = function () {
+       reset_calibration();
+   };
+
+   calibrateFolder.add(params, 'reset cal');
+
+   [
+        {name: "x", v: 0.002},
+        {name: "x", v: -0.002},
+        {name: "y", v: 0.002},
+        {name: "y", v: -0.002},
+        {name: "z", v: 0.002},
+        {name: "z", v: -0.002},
+        
+        {name: "tx", v: 0.005},
+        {name: "tx", v: -0.005},
+        {name: "ty", v: 0.005},
+        {name: "ty", v: -0.005},
+        {name: "tz", v: 0.005},
+        {name: "tz", v: -0.005},
+    ].forEach(function(x){
+        var item_name= x.name+","+x.v;
+        params[item_name] = function () {
+           calibrate(x.name, x.v);
+        };
+        calibrateFolder.add(params, item_name);
+    });
+}
+export {add_calib_gui}

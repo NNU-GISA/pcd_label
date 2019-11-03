@@ -35,3 +35,4 @@
 31.  reset: reset rotation angle of x/y/z
 32.  cancel highlight: restore color of points changed in highlight mode
 33.  prevent highlighting multi-times
+34.  crop points in front-end in smart-paste/auto-adjust function

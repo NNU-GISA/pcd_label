@@ -640,7 +640,7 @@ var data = {
                 var hl_color=[];
                 var highlight_point_indices = [];
                 this.boxes.forEach(function(box){
-                    var indices= _self._get_points_of_box(_self.points, box, 1);
+                    var indices= _self._get_points_index_of_box(_self.points, box, 1);
 
                     indices.forEach(function(i){
                         hl_point.push(pos.array[i*3]);
@@ -745,7 +745,7 @@ var data = {
                 var hl_point=[];
                 var hl_color=[];
 
-                var highlight_point_indices= this._get_points_of_box(this.points, box, 3);
+                var highlight_point_indices= this._get_points_index_of_box(this.points, box, 3);
 
                 highlight_point_indices.forEach(function(i){
                     hl_point.push(pos.array[i*3]);
@@ -788,6 +788,15 @@ var data = {
                 this.scene.add(mesh);
             },
 
+            get_points_of_box_in_box_coord: function(box){
+                return this._get_points_of_box(this.points, box, 1).position;
+            },
+
+            _get_points_index_of_box: function(points, box, scale_ratio){
+                return this._get_points_of_box(points, box, scale_ratio).index;
+            },
+
+            // this 
             _get_points_of_box: function(points, box, scale_ratio){
 
                 if (!scale_ratio){
@@ -795,6 +804,7 @@ var data = {
                 }
                 var pos_array = points.geometry.getAttribute("position").array;
                 var indices=[];
+                var relative_position = [];
                 var r = box.rotation;
                 var trans = transpose(euler_angle_to_rotate_matrix(r, {x:0, y:0, z:0}), 4);
 
@@ -816,9 +826,13 @@ var data = {
                     }
                     
                     indices.push(i);
+                    relative_position.push([tp[0],tp[1],tp[2]]);
                 });
 
-                return indices;
+                return {
+                    index: indices,
+                    position: relative_position,
+                }
             },
 
             set_box_points_color: function(box, target_color){
@@ -834,7 +848,7 @@ var data = {
                     }
                 }
 
-                var indices = this._get_points_of_box(this.points, box, 1.0);
+                var indices = this._get_points_index_of_box(this.points, box, 1.0);
                 indices.forEach(function(i){
                     color.array[i*3] = target_color.x;
                     color.array[i*3+1] = target_color.y;

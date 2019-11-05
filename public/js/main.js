@@ -16,7 +16,7 @@ import {load_obj_ids_of_scene, generate_new_unique_id} from "./obj_id_list.js"
 import {stop_play, pause_resume_play, play_current_scene_with_buffer} from "./play.js"
 import {init_mouse, onUpPosition, getIntersects, getMousePosition, get_mouse_location_in_world} from "./mouse.js"
 
-import {init_side_view_operation}  from "./side_view_op.js"
+import {init_side_view_operation, update_top_view_handle}  from "./side_view_op.js"
 
 
 var sideview_enabled = true;
@@ -365,10 +365,19 @@ function render(){
         var view = views[ ii ];
         var camera = view.camera;
         //view.updateCamera( camera, scene, mouseX, mouseY );
+        
         var left = Math.floor( window.innerWidth * view.left );
         var bottom = Math.floor( window.innerHeight * view.bottom );
         var width = Math.ceil( window.innerWidth * view.width );
         var height = Math.ceil( window.innerHeight * view.height );
+
+        view.viewport={
+            left: left,
+            bottom: window.innerHeight-bottom,
+            width:width,
+            height:height,
+        };
+
         renderer.setViewport( left, bottom, width, height );
         renderer.setScissor( left, bottom, width, height );
         renderer.setClearColor(view.background );
@@ -667,6 +676,8 @@ function update_subview_by_windowsize(box){
     if (box === null)
         return;
 
+    update_top_view_handle();
+    
     // side views
     var exp_camera_width, exp_camera_height, exp_camera_clip;
 
@@ -956,7 +967,8 @@ function select_bbox(object){
         if (in_highlight){
             highlight_selected_box();
         }
-          
+        
+        
     }
     else {
         //reselect the same box
@@ -969,7 +981,9 @@ function select_bbox(object){
         }
     }
 
-    save_box_info(object);
+    save_box_info(object); // this is needed since when a frame is loaded, all box haven't saved anything.
+                           // we could move this to when a frame is loaded.
+
     on_selected_box_changed(object);
 
 }
@@ -1045,6 +1059,7 @@ function add_bbox(){
     return box;
 }
 
+// 
 function save_box_info(box){
     box.last_info = {
         //obj_type: box.obj_type,
@@ -1066,6 +1081,20 @@ function save_box_info(box){
     }
 }
 
+
+function translate_box(box, axis, delta){
+    switch (axis){
+        case 'x':
+            box.position.x += delta*Math.cos(box.rotation.z);
+            box.position.y += delta*Math.sin(box.rotation.z);
+            break;
+        case 'y':
+            box.position.x += delta*Math.cos(Math.PI/2 + box.rotation.z);
+            box.position.y += delta*Math.sin(Math.PI/2 + box.rotation.z);  
+            break;
+    }
+}
+
 // axix, xyz, action: scale, move, direction, up/down
 function transform_bbox(command){
     if (!selected_box)
@@ -1073,12 +1102,10 @@ function transform_bbox(command){
     
     switch (command){
         case 'x_move_up':
-            selected_box.position.x += 0.05*Math.cos(selected_box.rotation.z);
-            selected_box.position.y += 0.05*Math.sin(selected_box.rotation.z);
+            translate_box(selected_box, 'x', 0.05);
             break;
         case 'x_move_down':
-            selected_box.position.x -= 0.05*Math.cos(selected_box.rotation.z);
-            selected_box.position.y -= 0.05*Math.sin(selected_box.rotation.z);
+            translate_box(selected_box, 'x', -0.05);
             break;
         case 'x_scale_up':
             selected_box.scale.x *= 1.01;    
@@ -1088,12 +1115,10 @@ function transform_bbox(command){
             break;
         
         case 'y_move_up':
-            selected_box.position.x += 0.05*Math.cos(Math.PI/2 + selected_box.rotation.z);
-            selected_box.position.y += 0.05*Math.sin(Math.PI/2 + selected_box.rotation.z);    
+            translate_box(selected_box, 'y', 0.05);
             break;
         case 'y_move_down':        
-            selected_box.position.x -= 0.05*Math.cos(Math.PI/2 + selected_box.rotation.z);
-            selected_box.position.y -= 0.05*Math.sin(Math.PI/2 + selected_box.rotation.z);
+            translate_box(selected_box, 'y', -0.05);            
             break;
         case 'y_scale_up':
             selected_box.scale.y *= 1.01;    
@@ -1513,13 +1538,17 @@ function update_frame_info(scene, frame){
 //box edited
 function on_box_changed(box){
 
-    update_subview_by_bbox(box);      
+    update_subview_by_bbox(box);
+    update_top_view_handle();
     update_image_box_projection(box);
     render_2d_image();
+    header.update_box_info(box);
     //floatLabelManager.update_position(box, false);  don't update position, or the ui is annoying.
     header.mark_changed_flag();
     update_box_points_color(box);
     save_box_info(box);
+
+    
 }
 
 
@@ -1550,6 +1579,8 @@ function on_selected_box_changed(box){
         update_image_box_projection(box)
         floatLabelManager.update_position(box, true);
         update_subview_by_bbox(box);
+        update_top_view_handle();
+
     } else {
         header.clear_box_info();
         clear_canvas();
@@ -1612,4 +1643,4 @@ function add_global_obj_type(){
 
 
 
-export {selected_box, params, on_box_changed, select_bbox, scene, floatLabelManager, on_load_world_finished, operation_state, transform_bbox}
+export {selected_box, params, on_box_changed, select_bbox, scene, floatLabelManager, on_load_world_finished, operation_state, transform_bbox, translate_box}

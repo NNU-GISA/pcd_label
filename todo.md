@@ -37,3 +37,4 @@
 33.  prevent highlighting multi-times
 34.  crop points in front-end in smart-paste/auto-adjust function
 35.  auto-shrink box if direction is given.
+36.  box position is not updating when being adjusted

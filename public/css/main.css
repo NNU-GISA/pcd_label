@@ -231,7 +231,13 @@ canvas {
 }
 
 #z-view-manipulator:hover{
-	border-color: yellow;
+	/* border-color: yellow; */
+	
+}
+
+
+.line-handle:hover{
+	cursor: pointer;
 }
 
 .v-table-wrapper {
@@ -252,3 +258,5 @@ canvas {
 td {
 	padding: 0px;
 }
+
+

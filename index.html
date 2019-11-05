@@ -71,7 +71,10 @@
 		<canvas id="canvas" width="320" height="240">cavas</canvas>		
 
 		<div id="z-view-manipulator">
-				
+			<svg width="100%" height="100%" id = "top-view-svg">
+				<rect x="50" y="80" width="20" height="20" fill="#00000000" class="line-handle" id="line-top-handle"/>
+				<line x1="60" y1="60" x2="60" y2="120" stroke="#00ff0000" stroke-width="1px" id="line-top" />
+			</svg>
 			<div class="v-table-wrapper" id="z-v-table-translate">
 				<table>
 					<tr>
@@ -119,9 +122,9 @@
 							<td><div class="v-m-item-icon"  id="z-v-t-up"><span class="ui-icon ui-icon-arrow-1-sw"></span></div></td>
 						</tr>
 						<tr>
-							<td><div class="v-m-item-icon" id="z-v-t-left"><span class="ui-icon ui-icon-arrowstop-1-e"></span></div> </td>
+							<td><div class="v-m-item-icon" id="z-v-shrink-left"><span class="ui-icon ui-icon-arrowstop-1-e"></span></div> </td>
 							<td></td>
-							<td><div class="v-m-item-icon" id="z-v-t-right"><span class="ui-icon ui-icon-arrowstop-1-w"></span></div></td>
+							<td><div class="v-m-item-icon" id="z-v-shrink-right"><span class="ui-icon ui-icon-arrowstop-1-w"></span></div></td>
 						</tr>
 						<tr>
 							<td><div class="v-m-item-icon"  id="z-v-t-up"><span class="ui-icon ui-icon-arrow-1-ne"></span></div></td>

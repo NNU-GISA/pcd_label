@@ -8,7 +8,7 @@ import {matmul2, euler_angle_to_rotate_matrix} from "./util.js"
 import {header} from "./header.js"
 import {get_obj_cfg_by_type, obj_type_map, get_next_obj_type_name} from "./obj_cfg.js"
 
-import {render_2d_image, update_image_box_projection, clear_canvas, clear_main_canvas} from "./image.js"
+import {render_2d_image, update_image_box_projection, clear_canvas, clear_main_canvas, choose_best_camera_for_point} from "./image.js"
 import {add_calib_gui}  from "./calib.js"
 import {mark_bbox, paste_bbox, auto_adjust_bbox, smart_paste} from "./auto-adjust.js"
 import {save_annotation} from "./save.js"
@@ -935,6 +935,14 @@ function select_bbox(object){
 
         // select me, the first time
         selected_box = object;
+
+        var best_iamge = choose_best_camera_for_point(selected_box.position.x, selected_box.position.y, selected_box.position.z);
+
+        if (best_iamge){
+            document.getElementById("camera-selector").value=best_iamge;
+            data.set_active_image(best_iamge);
+        }
+
         view_state.lock_obj_track_id = object.obj_track_id;
 
         floatLabelManager.select_box(selected_box.obj_local_id);

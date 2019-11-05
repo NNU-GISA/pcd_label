@@ -12,6 +12,61 @@ function clear_main_canvas(){
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 }
 
+function set_camera(name){
+    data.set_active_image(camera_name);
+}
+
+
+function get_active_calib(){
+    var scene_meta = data.meta.find(function(x){return x.scene==data.world.file_info.scene;});
+
+        
+    if (!scene_meta.calib){
+        return null;
+    }
+
+    var active_image_name = data.world.images.active_name;
+    var calib = scene_meta.calib[active_image_name];
+
+    return calib;
+}
+
+
+function choose_best_camera_for_point(x,y,z){
+    var scene_meta = data.meta.find(function(x){return x.scene==data.world.file_info.scene;});
+
+        
+    if (!scene_meta.calib){
+        return null;
+    }
+
+    var proj_pos = [];
+    for (var i in scene_meta.calib){
+        var imgpos = matmul(scene_meta.calib[i].extrinsic, [x,y,z,1], 4);
+        proj_pos.push({calib: i, pos: vector4to3(imgpos)});
+    }
+
+    var valid_proj_pos = proj_pos.filter(function(p){
+        return all_points_in_image_range(p.pos);
+    });
+    
+    valid_proj_pos.forEach(function(p){
+        p.dist_to_center = p.pos[0]*p.pos[0] + p.pos[1]*p.pos[1];
+    });
+
+    valid_proj_pos.sort(function(x,y){
+        return x.dist_to_center - y.dist_to_center;
+    });
+
+    console.log(valid_proj_pos);
+
+    if (valid_proj_pos.length>0){
+        return valid_proj_pos[0].calib;
+    }
+
+    return null;
+
+}
 
 function render_2d_image(){
     clear_main_canvas();
@@ -73,14 +128,7 @@ function render_2d_image(){
             y: clientHeight/img.naturalHeight,
         };
 
-        var scene_meta = data.meta.find(function(x){return x.scene==data.world.file_info.scene;});
-
-        var active_image_name = data.world.images.active_name;
-        if (!scene_meta.calib){
-            return;
-        }
-
-        var calib = scene_meta.calib[active_image_name]
+        var calib = get_active_calib();
         if (!calib){
             return;
         }
@@ -319,4 +367,4 @@ function vectorsub(vs, v){
 
 
 
-export {render_2d_image, update_image_box_projection, clear_canvas, clear_main_canvas}
+export {render_2d_image, update_image_box_projection, clear_canvas, clear_main_canvas, choose_best_camera_for_point}

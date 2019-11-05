@@ -357,15 +357,21 @@ var TransformControls = function ( camera, domElement ) {
 
 			offset.copy( pointEnd ).sub( pointStart );
 
+			var direction_ind = pointStart.clone().applyQuaternion(worldQuaternionInv );
+
 			if ( space === 'local' && axis !== 'XYZ' ) {
 
 				offset.applyQuaternion( worldQuaternionInv );
 
 			}
 
-			if ( axis.indexOf( 'X' ) === - 1 ) offset.x = 0;
-			if ( axis.indexOf( 'Y' ) === - 1 ) offset.y = 0;
-			if ( axis.indexOf( 'Z' ) === - 1 ) offset.z = 0;
+			if ( axis.indexOf( 'X' ) === - 1 ) offset.x = 0; else offset.x/2;
+			if ( axis.indexOf( 'Y' ) === - 1 ) offset.y = 0;else offset.y/2;
+			if ( axis.indexOf( 'Z' ) === - 1 ) offset.z = 0;else offset.z/2;
+
+			console.log(offset, positionStart, pointStart);
+
+			var local_offset = offset.clone();
 
 			if ( space === 'local' && axis !== 'XYZ' ) {
 
@@ -378,6 +384,9 @@ var TransformControls = function ( camera, domElement ) {
 			}
 
 			object.position.copy( offset ).add( positionStart );
+
+
+			
 
 			// Apply translation snap
 
@@ -445,6 +454,20 @@ var TransformControls = function ( camera, domElement ) {
 
 			}
 
+
+			/*
+			// lie, scale
+			_tempVector2.set(
+				1+(local_offset.x*2/scaleStart.x * direction_ind.x/Math.abs(direction_ind.x)),
+				1+(local_offset.y*2/scaleStart.y * direction_ind.y/Math.abs(direction_ind.y)),
+				1+(local_offset.z*2/scaleStart.z * direction_ind.z/Math.abs(direction_ind.z)),
+			)
+
+			// Apply scale
+
+			object.scale.copy( scaleStart ).multiply( _tempVector2 );
+			*/
+
 		} else if ( mode === 'scale' ) {
 
 			if ( axis.search( 'XYZ' ) !== - 1 ) {
@@ -456,7 +479,7 @@ var TransformControls = function ( camera, domElement ) {
 				_tempVector2.set( d, d, d );
 
 			} else {
-
+				/*
 				_tempVector.copy( pointStart );
 				_tempVector2.copy( pointEnd );
 
@@ -480,7 +503,53 @@ var TransformControls = function ( camera, domElement ) {
 					_tempVector2.z = 1;
 
 				}
+				*/
 
+				// Apply translate
+
+				offset.copy( pointEnd ).sub( pointStart );
+
+				var direction_ind = pointStart.clone().applyQuaternion(worldQuaternionInv );
+
+				if ( space === 'local' && axis !== 'XYZ' ) {
+
+					offset.applyQuaternion( worldQuaternionInv );
+
+				}
+
+				if ( axis.indexOf( 'X' ) === - 1 ) offset.x = 0; else offset.x/2;
+				if ( axis.indexOf( 'Y' ) === - 1 ) offset.y = 0;else offset.y/2;
+				if ( axis.indexOf( 'Z' ) === - 1 ) offset.z = 0;else offset.z/2;
+
+				console.log(offset, positionStart, pointStart);
+
+				var local_offset = offset.clone();
+
+				if ( space === 'local' && axis !== 'XYZ' ) {
+
+					offset.applyQuaternion( quaternionStart ).divide( parentScale );
+
+				} else {
+
+					offset.applyQuaternion( parentQuaternionInv ).divide( parentScale );
+
+				}
+
+				object.position.copy( offset ).add( positionStart );
+
+
+				// lie, scale
+				_tempVector2.set(
+					1+(local_offset.x*2/scaleStart.x * direction_ind.x/Math.abs(direction_ind.x)),
+					1+(local_offset.y*2/scaleStart.y * direction_ind.y/Math.abs(direction_ind.y)),
+					1+(local_offset.z*2/scaleStart.z * direction_ind.z/Math.abs(direction_ind.z)),
+				)
+
+				// Apply scale
+
+				object.scale.copy( scaleStart ).multiply( _tempVector2 );
+				
+				
 			}
 
 			// Apply scale
@@ -894,6 +963,7 @@ var TransformControlsGizmo = function () {
 			[ new Line( CircleGeometry( 1, 0.5 ), matLineBlue ), null, [ 0, Math.PI / 2, 0 ]],
 			[ new Mesh( new OctahedronBufferGeometry( 0.04, 0 ), matBlue ), [ 0.99, 0, 0 ], null, [ 1, 3, 1 ]],
 		],
+		/*
 		E: [
 			[ new Line( CircleGeometry( 1.25, 1 ), matLineYellowTransparent ), null, [ 0, Math.PI / 2, 0 ]],
 			[ new Mesh( new CylinderBufferGeometry( 0.03, 0, 0.15, 4, 1, false ), matLineYellowTransparent ), [ 1.17, 0, 0 ], [ 0, 0, - Math.PI / 2 ], [ 1, 1, 0.001 ]],
@@ -904,6 +974,7 @@ var TransformControlsGizmo = function () {
 		XYZE: [
 			[ new Line( CircleGeometry( 1, 1 ), matLineGray ), null, [ 0, Math.PI / 2, 0 ]]
 		]
+		*/
 	};
 
 	var helperRotate = {
@@ -943,6 +1014,7 @@ var TransformControlsGizmo = function () {
 			[ new Mesh( scaleHandleGeometry, matBlue ), [ 0, 0, 0.8 ], [ Math.PI / 2, 0, 0 ]],
 			[ new Line( lineGeometry, matLineBlue ), null, [ 0, - Math.PI / 2, 0 ], [ 0.8, 1, 1 ]]
 		],
+		/*
 		XY: [
 			[ new Mesh( scaleHandleGeometry, matYellowTransparent ), [ 0.85, 0.85, 0 ], null, [ 2, 2, 0.2 ]],
 			[ new Line( lineGeometry, matLineYellow ), [ 0.855, 0.98, 0 ], null, [ 0.125, 1, 1 ]],
@@ -967,6 +1039,7 @@ var TransformControlsGizmo = function () {
 		XYZZ: [
 			[ new Mesh( new BoxBufferGeometry( 0.125, 0.125, 0.125 ), matWhiteTransperent ), [ 0, 0, 1.1 ]],
 		]
+		*/
 	};
 
 	var pickerScale = {
@@ -979,6 +1052,7 @@ var TransformControlsGizmo = function () {
 		Z: [
 			[ new Mesh( new CylinderBufferGeometry( 0.2, 0, 0.8, 4, 1, false ), matInvisible ), [ 0, 0, 0.5 ], [ Math.PI / 2, 0, 0 ]]
 		],
+		/*
 		XY: [
 			[ new Mesh( scaleHandleGeometry, matInvisible ), [ 0.85, 0.85, 0 ], null, [ 3, 3, 0.2 ]],
 		],
@@ -997,6 +1071,7 @@ var TransformControlsGizmo = function () {
 		XYZZ: [
 			[ new Mesh( new BoxBufferGeometry( 0.2, 0.2, 0.2 ), matInvisible ), [ 0, 0, 1.1 ]],
 		]
+		*/
 	};
 
 	var helperScale = {

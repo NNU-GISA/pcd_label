@@ -357,15 +357,21 @@ var TransformControls = function ( camera, domElement ) {
 
 			offset.copy( pointEnd ).sub( pointStart );
 
+			var direction_ind = pointStart.clone().applyQuaternion(worldQuaternionInv );
+
 			if ( space === 'local' && axis !== 'XYZ' ) {
 
 				offset.applyQuaternion( worldQuaternionInv );
 
 			}
 
-			if ( axis.indexOf( 'X' ) === - 1 ) offset.x = 0;
-			if ( axis.indexOf( 'Y' ) === - 1 ) offset.y = 0;
-			if ( axis.indexOf( 'Z' ) === - 1 ) offset.z = 0;
+			if ( axis.indexOf( 'X' ) === - 1 ) offset.x = 0; else offset.x/2;
+			if ( axis.indexOf( 'Y' ) === - 1 ) offset.y = 0;else offset.y/2;
+			if ( axis.indexOf( 'Z' ) === - 1 ) offset.z = 0;else offset.z/2;
+
+			console.log(offset, positionStart, pointStart);
+
+			var local_offset = offset.clone();
 
 			if ( space === 'local' && axis !== 'XYZ' ) {
 
@@ -378,6 +384,9 @@ var TransformControls = function ( camera, domElement ) {
 			}
 
 			object.position.copy( offset ).add( positionStart );
+
+
+			
 
 			// Apply translation snap
 
@@ -445,6 +454,20 @@ var TransformControls = function ( camera, domElement ) {
 
 			}
 
+
+			/*
+			// lie, scale
+			_tempVector2.set(
+				1+(local_offset.x*2/scaleStart.x * direction_ind.x/Math.abs(direction_ind.x)),
+				1+(local_offset.y*2/scaleStart.y * direction_ind.y/Math.abs(direction_ind.y)),
+				1+(local_offset.z*2/scaleStart.z * direction_ind.z/Math.abs(direction_ind.z)),
+			)
+
+			// Apply scale
+
+			object.scale.copy( scaleStart ).multiply( _tempVector2 );
+			*/
+
 		} else if ( mode === 'scale' ) {
 
 			if ( axis.search( 'XYZ' ) !== - 1 ) {
@@ -456,7 +479,7 @@ var TransformControls = function ( camera, domElement ) {
 				_tempVector2.set( d, d, d );
 
 			} else {
-
+				/*
 				_tempVector.copy( pointStart );
 				_tempVector2.copy( pointEnd );
 
@@ -480,7 +503,53 @@ var TransformControls = function ( camera, domElement ) {
 					_tempVector2.z = 1;
 
 				}
+				*/
 
+				// Apply translate
+
+				offset.copy( pointEnd ).sub( pointStart );
+
+				var direction_ind = pointStart.clone().applyQuaternion(worldQuaternionInv );
+
+				if ( space === 'local' && axis !== 'XYZ' ) {
+
+					offset.applyQuaternion( worldQuaternionInv );
+
+				}
+
+				if ( axis.indexOf( 'X' ) === - 1 ) offset.x = 0; else offset.x/2;
+				if ( axis.indexOf( 'Y' ) === - 1 ) offset.y = 0;else offset.y/2;
+				if ( axis.indexOf( 'Z' ) === - 1 ) offset.z = 0;else offset.z/2;
+
+				console.log(offset, positionStart, pointStart);
+
+				var local_offset = offset.clone();
+
+				if ( space === 'local' && axis !== 'XYZ' ) {
+
+					offset.applyQuaternion( quaternionStart ).divide( parentScale );
+
+				} else {
+
+					offset.applyQuaternion( parentQuaternionInv ).divide( parentScale );
+
+				}
+
+				object.position.copy( offset ).add( positionStart );
+
+
+				// lie, scale
+				_tempVector2.set(
+					1+(local_offset.x*2/scaleStart.x * direction_ind.x/Math.abs(direction_ind.x)),
+					1+(local_offset.y*2/scaleStart.y * direction_ind.y/Math.abs(direction_ind.y)),
+					1+(local_offset.z*2/scaleStart.z * direction_ind.z/Math.abs(direction_ind.z)),
+				)
+
+				// Apply scale
+
+				object.scale.copy( scaleStart ).multiply( _tempVector2 );
+				
+				
 			}
 
 			// Apply scale

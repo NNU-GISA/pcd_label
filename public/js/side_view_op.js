@@ -5,7 +5,7 @@ import {views} from "./view.js"
 
 
 
-function create_view_handler(view_prefix, on_edge_changed, on_direction_changed, on_auto_shrink){
+function create_view_handler(view_prefix, on_edge_changed, on_direction_changed, on_auto_shrink, on_moved){
 
     var mouse_start_pos;
 
@@ -132,7 +132,13 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
             de = document.getElementById(view_prefix+"line-direction-handle");
             de.style.display = "none";
         }
-    
+
+
+        // move handle
+        de = document.getElementById(view_prefix+"move-handle");
+        de.setAttribute('x', Math.ceil((left+right)/2-20));
+        de.setAttribute('y', Math.ceil((top+bottom)/2-20));
+        
     }
     
     
@@ -182,6 +188,8 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
         if (on_direction_changed)
             install_direction_handler("line-direction");
     
+        install_move_handler();
+
         function install_edge_hanler(linename, axis, direction, axis_direction)
         {
             var handle = document.getElementById(view_prefix+linename+"-handle");
@@ -346,7 +354,133 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
             };
         }
     
-        
+        function install_move_handler(){
+            var handle = document.getElementById(view_prefix+"move-handle");
+            var svg = document.getElementById(view_prefix+"view-svg");
+
+            var lines = {
+                top: document.getElementById(view_prefix+"line-top"),
+                bottom: document.getElementById(view_prefix+"line-bottom"),
+                left: document.getElementById(view_prefix+"line-left"),
+                right: document.getElementById(view_prefix+"line-right"),
+            }
+
+            var lines_pos;  //save at mousedown
+    
+            function move_all_lines(offset){
+                
+                var x1 = lines_pos.x1+offset.x;
+                var y1 = lines_pos.y1+offset.y;
+                var x2 = lines_pos.x2+offset.x;
+                var y2 = lines_pos.y2+offset.y;
+
+                lines.top.setAttribute("x1", x1);
+                lines.top.setAttribute("y1", y1);
+                lines.top.setAttribute("x2", x2);
+                lines.top.setAttribute("y2", y1);
+
+                lines.bottom.setAttribute("x1", x1);
+                lines.bottom.setAttribute("y1", y2);
+                lines.bottom.setAttribute("x2", x2);
+                lines.bottom.setAttribute("y2", y2);
+
+                lines.left.setAttribute("x1", x1);
+                lines.left.setAttribute("y1", y1);
+                lines.left.setAttribute("x2", x1);
+                lines.left.setAttribute("y2", y2);
+
+                lines.right.setAttribute("x1", x2);
+                lines.right.setAttribute("y1", y1);
+                lines.right.setAttribute("x2", x2);
+                lines.right.setAttribute("y2", y2);
+
+                
+            }
+
+
+            function highlight_lines(){
+                for (var l in lines){
+                    lines[l].style.stroke="yellow";
+                };
+            }
+
+            function hide(event){
+                for (var l in lines){
+                    lines[l].style.stroke="#00000000";
+                }
+            };
+
+    
+            handle.onmouseenter = highlight_lines;
+            handle.onmouseleave = hide;
+    
+            handle.ondblclick= function(evnet){
+                //
+            };   
+    
+            
+    
+            handle.onmouseup = function(event){
+                hide();
+                handle.onmouseleave = hide;
+            };
+    
+            handle.onmousedown = function(event){
+                highlight_lines();
+
+                handle.onmouseleave = null;
+
+                lines_pos = {
+                    x1 : parseInt(lines.top.getAttribute('x1')),
+                    y1 : parseInt(lines.top.getAttribute('y1')),
+                    x2 : parseInt(lines.right.getAttribute('x2')),
+                    y2 : parseInt(lines.right.getAttribute('y2')),
+                };
+            
+
+    
+                mouse_start_pos={
+                    x: event.clientX,
+                    y:event.clientY,
+                };
+    
+                var mouse_cur_pos = {x: mouse_start_pos.x, y: mouse_start_pos.y};
+    
+                svg.onmouseup = function(event){
+                    svg.onmousemove = null;
+                    svg.onmouseup=null;
+    
+                    // restore color
+                    hide();
+                    handle.onmouseleave = hide;
+
+                    var mouse_offset = {
+                        x: mouse_cur_pos.x - mouse_start_pos.x,
+                        y: mouse_cur_pos.y - mouse_start_pos.y,
+                    };
+    
+                    var ratio = {
+                        x: mouse_offset.x/view_handle_dimension.x,
+                        y: mouse_offset.y/view_handle_dimension.y
+                    };
+
+                    on_moved(ratio);
+                    
+                }
+    
+                svg.onmousemove = function(event){
+                    
+                    mouse_cur_pos={x: event.clientX,y:event.clientY,};
+                    
+                    var mouse_offset = {
+                        x: mouse_cur_pos.x - mouse_start_pos.x,
+                        y: mouse_cur_pos.y - mouse_start_pos.y,
+                    };
+    
+                    move_all_lines(mouse_offset);
+                }
+            };
+        }
     
         /*
         document.getElementById("z-view-manipulator").onmouseenter = function(){
@@ -470,11 +604,23 @@ function on_z_direction_changed(theta){
     selected_box.rotation.z += theta;
     on_box_changed(selected_box);
 }
+function on_z_moved(ratio){
+    var delta = {
+        x: selected_box.scale.x*ratio.x,
+        y: selected_box.scale.y*ratio.y
+    };
+
+    
+    translate_box(selected_box, "x", delta.x);
+    translate_box(selected_box, "y", -delta.y);
+
+    on_box_changed(selected_box);
+}
 
 var on_z_auto_shrink  = auto_shrink;
 
 
-var z_view_handle = create_view_handler("z-", on_z_edge_changed, on_z_direction_changed, on_z_auto_shrink);
+var z_view_handle = create_view_handler("z-", on_z_edge_changed, on_z_direction_changed, on_z_auto_shrink, on_z_moved);
 
 
 
@@ -501,7 +647,19 @@ function on_y_auto_shrink(axis, direction){
     auto_shrink(axis, direction);
 }
 
-var y_view_handle = create_view_handler("y-", on_y_edge_changed, null, on_y_auto_shrink);
+function on_y_moved(ratio){
+    var delta = {
+        x: selected_box.scale.x*ratio.x,
+        z: selected_box.scale.z*ratio.y
+    };
+
+    
+    translate_box(selected_box, "x", delta.x);
+    translate_box(selected_box, "z", -delta.z);
+
+    on_box_changed(selected_box);
+}
+var y_view_handle = create_view_handler("y-", on_y_edge_changed, null, on_y_auto_shrink, on_y_moved);
 
 
 
@@ -534,7 +692,21 @@ function on_x_auto_shrink(axis, direction){
     auto_shrink(axis, direction);
 }
 
-var x_view_handle = create_view_handler("x-", on_x_edge_changed, null, on_x_auto_shrink);
+
+function on_x_moved(ratio){
+    var delta = {
+        y: selected_box.scale.y*ratio.x,
+        z: selected_box.scale.z*ratio.y
+    };
+
+    
+    translate_box(selected_box, "y", delta.y);
+    translate_box(selected_box, "z", -delta.z);
+
+    on_box_changed(selected_box);
+}
+
+var x_view_handle = create_view_handler("x-", on_x_edge_changed, null, on_x_auto_shrink, on_x_moved);
 
 
 var view_handles = {

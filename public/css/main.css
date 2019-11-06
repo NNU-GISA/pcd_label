@@ -267,6 +267,10 @@ canvas {
 	cursor: ns-resize;
 }
 
+.grab-handle:hover{
+	cursor: grab;
+}
+
 .v-table-wrapper {
 	display: none;
 }

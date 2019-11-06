@@ -236,8 +236,12 @@ canvas {
 }
 
 
-.line-handle:hover{
-	cursor: pointer;
+#line-left-handle:hover, #line-right-handle:hover{
+	cursor: ew-resize;
+}
+
+#line-top-handle:hover, #line-bottom-handle:hover{
+	cursor: ns-resize;
 }
 
 .v-table-wrapper {
@@ -259,4 +263,10 @@ td {
 	padding: 0px;
 }
 
+
+.svg-line{
+	stroke-dasharray: 3,3;
+	stroke: #00000000;
+	stroke-width: 1px;
+}
 

@@ -240,6 +240,19 @@ canvas {
 	align-items: flex-end;	
 }
 
+
+#bottom-view-manipulator {
+	position: absolute;
+	top: 50%;
+	left: 0%;
+	width: 20%;
+	height: 20%;
+	background-color: #00000000;
+	border-width: 0px;
+	display: inline-flex;
+	align-items: flex-end;	
+}
+
 #view-manipulator:hover{
 	/* border-color: yellow; */
 	

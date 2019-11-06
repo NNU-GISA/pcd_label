@@ -447,7 +447,7 @@ function auto_shrink(axis, direction){
         end = "min";
     }
 
-    var delta = selected_box.scale[axis]/2 - direction*extreme[end][axis];
+    var delta = selected_box.scale[axis]/2 - direction*extreme[end][axis] - 0.01;
 
     console.log(extreme, delta);
     translate_box(selected_box, axis, -direction* delta/2 );
@@ -493,12 +493,6 @@ function on_y_edge_changed(ratio, axis, direction, axis_direction){
     on_box_changed(selected_box);
 }
 
-function on_y_direction_changed(theta){
-    /*selected_box.rotation.y += -theta;
-    on_box_changed(selected_box);
-    */
-}
-
 function on_y_auto_shrink(axis, direction){
     if (axis=='y'){
         axis ='z';
@@ -510,25 +504,62 @@ function on_y_auto_shrink(axis, direction){
 var y_view_handle = create_view_handler("y-", on_y_edge_changed, null, on_y_auto_shrink);
 
 
+
+
+
+function on_x_edge_changed(ratio, axis, direction, axis_direction){
+
+    if (axis=="y"){
+        axis= "z"
+    } else if (axis == 'x'){
+        axis= "y"
+    }
+
+    var delta = selected_box.scale[axis]*ratio;
+    console.log(delta);
+
+    translate_box(selected_box, axis, delta/2*direction*axis_direction);
+
+    selected_box.scale[axis] += delta;
+    on_box_changed(selected_box);
+}
+
+function on_x_auto_shrink(axis, direction){
+    if (axis=="y"){
+        axis= "z"
+    } else if (axis == 'x'){
+        axis= "y"
+    }
+
+    auto_shrink(axis, direction);
+}
+
+var x_view_handle = create_view_handler("x-", on_x_edge_changed, null, on_x_auto_shrink);
+
+
 var view_handles = {
     init_view_operation: function(){
         z_view_handle.init_view_operation();
         y_view_handle.init_view_operation();
+        x_view_handle.init_view_operation();
     },
 
     update_view_handle: function(){
         z_view_handle.update_view_handle(views[1].viewport, {x: selected_box.scale.x, y:selected_box.scale.y});
         y_view_handle.update_view_handle(views[2].viewport, {x: selected_box.scale.x, y:selected_box.scale.z});
+        x_view_handle.update_view_handle(views[3].viewport, {x: selected_box.scale.y, y:selected_box.scale.z});
     }, 
 
     hide: function(){
         document.getElementById("top-view-manipulator").style.display="none";
         document.getElementById("middle-view-manipulator").style.display="none";
+        document.getElementById("bottom-view-manipulator").style.display="none";
     },
 
     show: function(){
         document.getElementById("top-view-manipulator").style.display="inline-flex";
         document.getElementById("middle-view-manipulator").style.display="inline-flex";
+        document.getElementById("bottom-view-manipulator").style.display="inline-flex";
     },
 }
 

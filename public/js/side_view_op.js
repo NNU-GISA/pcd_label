@@ -3,378 +3,397 @@ import {transform_bbox, selected_box, translate_box, on_box_changed} from "./mai
 import {data} from "./data.js"
 import {views} from "./view.js"
 
-var mouse_start_pos;
 
-var top_view_handle = {
-    x: 0,  //width
-    y: 0,  //height
-}
 
-var top_view_center = {
-    x: 0,
-    y: 0,
-};
+function create_view_handler(view_prefix, on_edge_changed, on_direction_changed, on_auto_shrink){
 
-function update_top_view_handle(){
-    var viewport = views[1].viewport;
-    var viewport_ratio = viewport.width/viewport.height;
-    var box_ratio = selected_box.scale.x/selected_box.scale.y;
+    var mouse_start_pos;
 
-    var width=0;
-    var height=0;
-
-    if (box_ratio > viewport_ratio){
-        //handle width is viewport.width*2/3
-        width = viewport.width*2/3;
-        height = width/box_ratio;
+    var view_handle_dimension = {  //dimension of the enclosed box
+        x: 0,  //width
+        y: 0,  //height
     }
-    else{
-        //handle height is viewport.height*2/3
-        height = viewport.height*2/3;
-        width = height*box_ratio;
-    }
-
-    top_view_handle.x = width;
-    top_view_handle.y = height;
-
-    var x = viewport.left + viewport.width/2;
-    var y = viewport.bottom - viewport.height/2;
-
-
-
-    var left = x-width/2-1;
-    var right = x+width/2-1;
-    var top = y-height/2-1;
-    var bottom = y+height/2-1;
-
-    top_view_center.x = (left+right)/2;
-    top_view_center.y = (top + bottom)/2;
-
-    var de = document.getElementById("line-left");
-    de.setAttribute('x1', Math.ceil(left));
-    de.setAttribute('y1', Math.ceil(top));
-    de.setAttribute('x2', Math.ceil(left));
-    de.setAttribute('y2', Math.ceil(bottom));
-
-    de = document.getElementById("line-left-handle");
-    de.setAttribute('x', Math.ceil(left-10));
-    de.setAttribute('y', Math.ceil(top+10));
-    de.setAttribute('height', Math.ceil(bottom-top-20));
-    de.setAttribute('width', 20);
-
-
-    de = document.getElementById("line-right");
-    de.setAttribute('x1', Math.ceil(right));
-    de.setAttribute('y1', Math.ceil(top));
-    de.setAttribute('x2', Math.ceil(right));
-    de.setAttribute('y2', Math.ceil(bottom));
-
-    de = document.getElementById("line-right-handle");
-    de.setAttribute('x', Math.ceil(right-10));
-    de.setAttribute('y', Math.ceil(top+10));
-    de.setAttribute('height', Math.ceil(bottom-top-20));
-    de.setAttribute('width', 20);
-
-
-
-
-    de = document.getElementById("line-top");
-    de.setAttribute('x1', Math.ceil(left));
-    de.setAttribute('y1', Math.ceil(top));
-    de.setAttribute('x2', Math.ceil(right));
-    de.setAttribute('y2', Math.ceil(top));
-
-    de = document.getElementById("line-top-handle");
-    de.setAttribute('x', Math.ceil(left+10));
-    de.setAttribute('y', Math.ceil(top-10));
-    de.setAttribute('width', Math.ceil(right-left-20));
-    de.setAttribute('height', 20);
-
-
-    de = document.getElementById("line-bottom");
-    de.setAttribute('x1', Math.ceil(left));
-    de.setAttribute('y1', Math.ceil(bottom));
-    de.setAttribute('x2', Math.ceil(right));
-    de.setAttribute('y2', Math.ceil(bottom));
-
-    de = document.getElementById("line-bottom-handle");
-    de.setAttribute('x', Math.ceil(left+10));
-    de.setAttribute('y', Math.ceil(bottom-10));
-    de.setAttribute('width', Math.ceil(right-left-20));
-    de.setAttribute('height', 20);
-
-    //direction
-
-    de = document.getElementById("line-direction");
-    de.setAttribute('x1', Math.ceil((left+right)/2));
-    de.setAttribute('y1', Math.ceil((top+bottom)/2));
-    de.setAttribute('x2', Math.ceil((left+right)/2));
-    de.setAttribute('y2', Math.ceil(top));
-
-    de = document.getElementById("line-direction-handle");
-    de.setAttribute('x', Math.ceil((left+right)/2-10));
-    de.setAttribute('y', Math.ceil(top+10));    
-    de.setAttribute('height', Math.ceil((bottom-top)/2-20));
-
-}
-
-
-function init_side_view_operation(){
-    document.getElementById("z-v-up").onclick = function(){
-        transform_bbox("y_move_up");
-    };
-
-    document.getElementById("z-v-down").onclick = function(){
-        transform_bbox("y_move_down");
-    };
-
-    document.getElementById("z-v-left").onclick = function(){
-        transform_bbox("x_move_down");
-    };
-
-    document.getElementById("z-v-right").onclick = function(){
-        transform_bbox("x_move_up");
-    };
-
-
-
-    document.getElementById("z-v-t-up").onclick = function(){
-        transform_bbox("y_scale_up");
-    };
-
-    document.getElementById("z-v-t-down").onclick = function(){
-        transform_bbox("y_scale_down");
-    };
-
-    document.getElementById("z-v-t-left").onclick = function(){
-        transform_bbox("x_scale_down");
-    };
-
-    document.getElementById("z-v-t-right").onclick = function(){
-        transform_bbox("x_scale_up");
-    };
-
-
     
-    install_edge_hanler("line-left", "x", -1,1);
-    install_edge_hanler("line-right", "x", 1, 1);
-    install_edge_hanler("line-top", "y", -1, -1);
-    install_edge_hanler("line-bottom", "y", 1, -1);
-    install_direction_handler("line-direction");
+    var view_center = {
+        x: 0,
+        y: 0,
+    };
 
-    //top 
-    function install_edge_hanler(linename, axis, direction, axis_direction)
-    {
-        var handle = document.getElementById(linename+"-handle");
-        var line = document.getElementById(linename);
-        var svg = document.getElementById("top-view-svg");
-
-        handle.onmouseenter = function(event){
-            line.style.stroke="yellow";
-        };
-
-        handle.onmouseleave = hide;
-
-        
-        function hide(event){
-                line.style.stroke="#00000000";
-        };
-
-        handle.onmouseup = function(event){
-            //line.style["stroke-dasharray"]="none";
-            line.style.stroke="#00000000";
-            handle.onmouseleave = hide;
-        };
-
-        handle.ondblclick= function(evnet){
-            auto_shrink(axis,direction*axis_direction);
-        };
-
-        handle.onmousedown = function(event){
-            line.style.stroke="yellow";            
-            handle.onmouseleave = null;
-
-
-            mouse_start_pos={x: event.clientX,y:event.clientY,};
-            var mouse_cur_pos = {x: mouse_start_pos.x, y: mouse_start_pos.y};
-
-            console.log(mouse_start_pos);
-            var line_pos = {
-                x: parseInt(line.getAttribute('x1')),
-                y: parseInt(line.getAttribute('y1')),
-            }
-
-            svg.onmouseup = function(event){
-                svg.onmousemove = null;
-                svg.onmouseup=null;
-
-                var mouse_delta = (mouse_cur_pos[axis] - mouse_start_pos[axis])*direction;
-                if (mouse_delta == 0){
-                    return;
-                }
-
-                var ratio = mouse_delta/top_view_handle[axis];
-
-                var delta = selected_box.scale[axis]*ratio;
-                console.log(delta);
-                
-                translate_box(selected_box, axis, delta/2*direction*axis_direction);
-
-                selected_box.scale[axis] += delta;
-                on_box_changed(selected_box);
-
-                // restore color
-                line.style.stroke="#00000000";
-                handle.onmouseleave = hide;
-            }
-
-            svg.onmousemove = function(event){
-                
-                mouse_cur_pos={x: event.clientX,y:event.clientY,};
-                
-                var pos = mouse_cur_pos[axis] - mouse_start_pos[axis] + line_pos[axis];
-                //console.log(mouse_cur_pos, pos);
-                //document.getElementById("line-top").setAttribute('x1', pos);
-                line.setAttribute(axis+1, pos);
-                line.setAttribute(axis+2, pos);
-
-                //handle.setAttribute(axis, pos-10);
-            }
-        };
+    var view_port_pos = {
+        x:0,
+        y:0,
     }
+    
+    function update_view_handle(viewport, obj_dimension){
+        var viewport_ratio = viewport.width/viewport.height;
+        var box_ratio = obj_dimension.x/obj_dimension.y;
+    
+        view_port_pos.x = viewport.left;
+        view_port_pos.y = viewport.bottom-viewport.height;
 
-    function install_direction_handler(linename){
-        var handle = document.getElementById(linename+"-handle");
-        var line = document.getElementById(linename);
-        var svg = document.getElementById("top-view-svg");
-
-        handle.onmouseenter = function(event){
-            line.style.stroke="yellow";
+        var width=0;
+        var height=0;
+    
+        if (box_ratio > viewport_ratio){
+            //handle width is viewport.width*2/3
+            width = viewport.width*2/3;
+            height = width/box_ratio;
+        }
+        else{
+            //handle height is viewport.height*2/3
+            height = viewport.height*2/3;
+            width = height*box_ratio;
+        }
+    
+        view_handle_dimension.x = width;
+        view_handle_dimension.y = height;
+    
+        var x = viewport.width/2;//viewport.left + viewport.width/2;
+        var y = viewport.height/2//viewport.bottom - viewport.height/2;
+    
+        var left = x-width/2-1;
+        var right = x+width/2-1;
+        var top = y-height/2-1;
+        var bottom = y+height/2-1;
+    
+        view_center.x = (left+right)/2;
+        view_center.y = (top + bottom)/2;
+    
+        var de = document.getElementById(view_prefix+"line-left");
+        de.setAttribute('x1', Math.ceil(left));
+        de.setAttribute('y1', Math.ceil(top));
+        de.setAttribute('x2', Math.ceil(left));
+        de.setAttribute('y2', Math.ceil(bottom));
+    
+        de = document.getElementById(view_prefix+"line-left-handle");
+        de.setAttribute('x', Math.ceil(left-10));
+        de.setAttribute('y', Math.ceil(top+10));
+        de.setAttribute('height', Math.ceil(bottom-top-20));
+        de.setAttribute('width', 20);
+    
+    
+        de = document.getElementById(view_prefix+"line-right");
+        de.setAttribute('x1', Math.ceil(right));
+        de.setAttribute('y1', Math.ceil(top));
+        de.setAttribute('x2', Math.ceil(right));
+        de.setAttribute('y2', Math.ceil(bottom));
+    
+        de = document.getElementById(view_prefix+"line-right-handle");
+        de.setAttribute('x', Math.ceil(right-10));
+        de.setAttribute('y', Math.ceil(top+10));
+        de.setAttribute('height', Math.ceil(bottom-top-20));
+        de.setAttribute('width', 20);
+    
+    
+    
+    
+        de = document.getElementById(view_prefix+"line-top");
+        de.setAttribute('x1', Math.ceil(left));
+        de.setAttribute('y1', Math.ceil(top));
+        de.setAttribute('x2', Math.ceil(right));
+        de.setAttribute('y2', Math.ceil(top));
+    
+        de = document.getElementById(view_prefix+"line-top-handle");
+        de.setAttribute('x', Math.ceil(left+10));
+        de.setAttribute('y', Math.ceil(top-10));
+        de.setAttribute('width', Math.ceil(right-left-20));
+        de.setAttribute('height', 20);
+    
+    
+        de = document.getElementById(view_prefix+"line-bottom");
+        de.setAttribute('x1', Math.ceil(left));
+        de.setAttribute('y1', Math.ceil(bottom));
+        de.setAttribute('x2', Math.ceil(right));
+        de.setAttribute('y2', Math.ceil(bottom));
+    
+        de = document.getElementById(view_prefix+"line-bottom-handle");
+        de.setAttribute('x', Math.ceil(left+10));
+        de.setAttribute('y', Math.ceil(bottom-10));
+        de.setAttribute('width', Math.ceil(right-left-20));
+        de.setAttribute('height', 20);
+    
+        //direction
+        if (on_direction_changed){
+            de = document.getElementById(view_prefix+"line-direction");
+            de.setAttribute('x1', Math.ceil((left+right)/2));
+            de.setAttribute('y1', Math.ceil((top+bottom)/2));
+            de.setAttribute('x2', Math.ceil((left+right)/2));
+            de.setAttribute('y2', Math.ceil(top));
+        
+            de = document.getElementById(view_prefix+"line-direction-handle");
+            de.setAttribute('x', Math.ceil((left+right)/2-10));
+            de.setAttribute('y', Math.ceil(top+10));    
+            de.setAttribute('height', Math.ceil((bottom-top)/2-20));
+        }
+        else{
+            de = document.getElementById(view_prefix+"line-direction");
+            de.style.display = "none";
+        
+            de = document.getElementById(view_prefix+"line-direction-handle");
+            de.style.display = "none";
+        }
+    
+    }
+    
+    
+    function init_view_operation(){
+        /*
+        document.getElementById("z-v-up").onclick = function(){
+            transform_bbox("y_move_up");
         };
-
-        handle.onmouseleave = hide;
-
-        handle.ondblclick= function(evnet){
-            transform_bbox("z_rotate_reverse");
+    
+        document.getElementById("z-v-down").onclick = function(){
+            transform_bbox("y_move_down");
         };
-
-
-        function hide(event){
-            line.style.stroke="#00000000";
+    
+        document.getElementById("z-v-left").onclick = function(){
+            transform_bbox("x_move_down");
         };
-
-        handle.onmouseup = function(event){
-            //line.style["stroke-dasharray"]="none";
-            line.style.stroke="#00000000";
-            handle.onmouseleave = hide;
+    
+        document.getElementById("z-v-right").onclick = function(){
+            transform_bbox("x_move_up");
         };
+    
+    
+    
+        document.getElementById("z-v-t-up").onclick = function(){
+            transform_bbox("y_scale_up");
+        };
+    
+        document.getElementById("z-v-t-down").onclick = function(){
+            transform_bbox("y_scale_down");
+        };
+    
+        document.getElementById("z-v-t-left").onclick = function(){
+            transform_bbox("x_scale_down");
+        };
+    
+        document.getElementById("z-v-t-right").onclick = function(){
+            transform_bbox("x_scale_up");
+        };
+        */
+    
+        
+        install_edge_hanler("line-left", "x", -1,1);
+        install_edge_hanler("line-right", "x", 1, 1);
+        install_edge_hanler("line-top", "y", -1, -1);
+        install_edge_hanler("line-bottom", "y", 1, -1);
 
-        handle.onmousedown = function(event){
-            line.style.stroke="yellow";
-            handle.onmouseleave = null;
-
-            var handle_center={
-                x: parseInt(line.getAttribute('x1')),
-            }
-
-            mouse_start_pos={
-                x: event.clientX,
-                y:event.clientY,
-
-                handle_offset_x: handle_center.x - event.clientX,                
+        if (on_direction_changed)
+            install_direction_handler("line-direction");
+    
+        function install_edge_hanler(linename, axis, direction, axis_direction)
+        {
+            var handle = document.getElementById(view_prefix+linename+"-handle");
+            var line = document.getElementById(view_prefix+linename);
+            var svg = document.getElementById(view_prefix+"view-svg");
+    
+            handle.onmouseenter = function(event){
+                line.style.stroke="yellow";
             };
-
-
-            var mouse_cur_pos = {x: mouse_start_pos.x, y: mouse_start_pos.y};
-
-            console.log(mouse_start_pos);
-
-            var theta = 0;
-
-            svg.onmouseup = function(event){
-                svg.onmousemove = null;
-                svg.onmouseup=null;
-
-                if (theta == 0){
-                    return;
-                }
-
-                selected_box.rotation.z += -theta-Math.PI/2;
-                on_box_changed(selected_box);
-
-                // restore color
+    
+            handle.onmouseleave = hide;
+    
+            
+            function hide(event){
+                    line.style.stroke="#00000000";
+            };
+    
+            handle.onmouseup = function(event){
+                //line.style["stroke-dasharray"]="none";
                 line.style.stroke="#00000000";
                 handle.onmouseleave = hide;
-            }
-
-            svg.onmousemove = function(event){
-                
-                mouse_cur_pos={x: event.clientX,y:event.clientY,};
-                
-                var handle_center_cur_pos = {
-                    x: mouse_cur_pos.x + mouse_start_pos.handle_offset_x,
-                    y: mouse_cur_pos.y,
-                };
-
-                var line_len = top_view_handle.y;
-
-                theta = Math.atan2(
-                    handle_center_cur_pos.y-top_view_center.y,  
-                    handle_center_cur_pos.x-top_view_center.x);
-                console.log(theta);
-                var line_end = {
-                    x: line_len*Math.cos(theta) + top_view_center.x,
-                    y: line_len*Math.sin(theta) + top_view_center.y,
-                };
-
-                line.setAttribute("x2", line_end.x);
-                line.setAttribute("y2", line_end.y);                
-            }
-        };
-    }
-
+            };
     
+            handle.ondblclick= function(evnet){
+                on_auto_shrink(axis,direction*axis_direction);
+            };
+    
+            handle.onmousedown = function(event){
+                line.style.stroke="yellow";            
+                handle.onmouseleave = null;
+    
+    
+                mouse_start_pos={x: event.clientX,y:event.clientY,};
+                var mouse_cur_pos = {x: mouse_start_pos.x, y: mouse_start_pos.y};
+    
+                console.log(mouse_start_pos);
+                var line_pos = {
+                    x: parseInt(line.getAttribute('x1')),
+                    y: parseInt(line.getAttribute('y1')),
+                }
+    
+                svg.onmouseup = function(event){
+                    svg.onmousemove = null;
+                    svg.onmouseup=null;
 
-    /*
-    document.getElementById("z-view-manipulator").onmouseenter = function(){
-        document.getElementById("z-v-table-translate").style.display="inherit";
-        document.getElementById("z-v-table-scale").style.display="inherit";
-        document.getElementById("z-v-table-shrink").style.display="inherit";
-    };
-
-    document.getElementById("z-view-manipulator").onmouseleave = function(){
-        document.getElementById("z-v-table-translate").style.display="none";
-        document.getElementById("z-v-table-scale").style.display="none";
-        document.getElementById("z-v-table-shrink").style.display="none";
-    };
-    */
-
-    document.getElementById("z-v-shrink-left").onclick = function(event){
-        var points = data.world.get_points_of_box_in_box_coord(selected_box);
-
-        if (points.length == 0){
-            return;
+                    // restore color
+                    line.style.stroke="#00000000";
+                    handle.onmouseleave = hide;
+                    
+                    var mouse_delta = (mouse_cur_pos[axis] - mouse_start_pos[axis])*direction;
+                    if (mouse_delta == 0){
+                        return;
+                    }
+    
+                    var ratio = mouse_delta/view_handle_dimension[axis];
+                    on_edge_changed(ratio, axis, direction, axis_direction);
+                }
+    
+                svg.onmousemove = function(event){
+                    
+                    mouse_cur_pos={x: event.clientX,y:event.clientY,};
+                    
+                    var pos = mouse_cur_pos[axis] - mouse_start_pos[axis] + line_pos[axis];
+                    //console.log(mouse_cur_pos, pos);
+                    //document.getElementById("line-top").setAttribute('x1', pos);
+                    line.setAttribute(axis+1, pos);
+                    line.setAttribute(axis+2, pos);
+    
+                    //handle.setAttribute(axis, pos-10);
+                }
+            };
         }
+    
+        function install_direction_handler(linename){
+            var handle = document.getElementById(view_prefix+linename+"-handle");
+            var line = document.getElementById(view_prefix+linename);
+            var svg = document.getElementById(view_prefix+"view-svg");
+    
+            handle.onmouseenter = function(event){
+                line.style.stroke="yellow";
+            };
+    
+            handle.onmouseleave = hide;
+    
+            handle.ondblclick= function(evnet){
+                transform_bbox("z_rotate_reverse");
+            };
+    
+    
+            function hide(event){
+                line.style.stroke="#00000000";
+            };
+    
+            handle.onmouseup = function(event){
+                //line.style["stroke-dasharray"]="none";
+                line.style.stroke="#00000000";
+                handle.onmouseleave = hide;
+            };
+    
+            handle.onmousedown = function(event){
+                line.style.stroke="yellow";
+                handle.onmouseleave = null;
+    
+                var handle_center={
+                    x: parseInt(line.getAttribute('x1')),
+                }
+    
+                mouse_start_pos={
+                    x: event.clientX,
+                    y:event.clientY,
+    
+                    handle_offset_x: handle_center.x - event.clientX,                
+                };
+    
+    
+                var mouse_cur_pos = {x: mouse_start_pos.x, y: mouse_start_pos.y};
+    
+                console.log(mouse_start_pos);
+    
+                var theta = 0;
+    
+                svg.onmouseup = function(event){
+                    svg.onmousemove = null;
+                    svg.onmouseup=null;
+    
+                    // restore color
+                    line.style.stroke="#00000000";
+                    handle.onmouseleave = hide;
 
-        var minx = 0;
-        for (var i in points){
-            if (points[i][0] < minx){
-                minx = points[i][0];
-            }
+
+                    if (theta == 0){
+                        return;
+                    }
+    
+                    on_direction_changed(-theta-Math.PI/2);
+                    
+                }
+    
+                svg.onmousemove = function(event){
+                    
+                    mouse_cur_pos={x: event.clientX,y:event.clientY,};
+                    
+                    var handle_center_cur_pos = {
+                        x: mouse_cur_pos.x + mouse_start_pos.handle_offset_x - view_port_pos.x,
+                        y: mouse_cur_pos.y - view_port_pos.y,
+                    };
+    
+                    var line_len = view_handle_dimension.y;
+    
+                    theta = Math.atan2(
+                        handle_center_cur_pos.y-view_center.y,  
+                        handle_center_cur_pos.x-view_center.x);
+                    console.log(theta);
+                    var line_end = {
+                        x: line_len*Math.cos(theta) + view_center.x,
+                        y: line_len*Math.sin(theta) + view_center.y,
+                    };
+    
+                    line.setAttribute("x2", line_end.x);
+                    line.setAttribute("y2", line_end.y);                
+                }
+            };
         }
-
+    
         
-        var delta = minx + selected_box.scale.x/2;
-        console.log(minx, delta);
-        translate_box(selected_box, 'x', delta/2 );
-        selected_box.scale.x -= delta;
-        on_box_changed(selected_box);
-    };
-
-    document.getElementById("z-v-shrink-right").onclick = function(event){
-        auto_shrink("x",1);
-    }
     
+        /*
+        document.getElementById("z-view-manipulator").onmouseenter = function(){
+            document.getElementById("z-v-table-translate").style.display="inherit";
+            document.getElementById("z-v-table-scale").style.display="inherit";
+            document.getElementById("z-v-table-shrink").style.display="inherit";
+        };
+    
+        document.getElementById("z-view-manipulator").onmouseleave = function(){
+            document.getElementById("z-v-table-translate").style.display="none";
+            document.getElementById("z-v-table-scale").style.display="none";
+            document.getElementById("z-v-table-shrink").style.display="none";
+        };
+        */
+    
+        document.getElementById("z-v-shrink-left").onclick = function(event){
+            var points = data.world.get_points_of_box_in_box_coord(selected_box);
+    
+            if (points.length == 0){
+                return;
+            }
+    
+            var minx = 0;
+            for (var i in points){
+                if (points[i][0] < minx){
+                    minx = points[i][0];
+                }
+            }
+    
+            
+            var delta = minx + selected_box.scale.x/2;
+            console.log(minx, delta);
+            translate_box(selected_box, 'x', delta/2 );
+            selected_box.scale.x -= delta;
+            on_box_changed(selected_box);
+        };
+    
+        document.getElementById("z-v-shrink-right").onclick = function(event){
+            auto_shrink("x",1);
+        }
+        
+    }
+
+    return {
+        update_view_handle: update_view_handle,
+        init_view_operation: init_view_operation,
+    }
 }
 
 // direction: 1, -1
@@ -388,15 +407,15 @@ function auto_shrink(axis, direction){
 
     var extreme= {
         max: {        
-            x:0,
-            y:0,
-            z:0,
+            x:-100000,
+            y:-100000,
+            z:-100000,
         },
 
         min: {        
-            x:0,
-            y:0,
-            z:0,
+            x:1000000,
+            y:1000000,
+            z:1000000,
         },
     };
     
@@ -418,7 +437,7 @@ function auto_shrink(axis, direction){
 
         if (points[i][2] > max.z){
             max.z = points[i][2];
-        }else if (points[i][0] < min.z){
+        }else if (points[i][2] < min.z){
             min.z = points[i][2];
         }
     }
@@ -436,4 +455,82 @@ function auto_shrink(axis, direction){
     on_box_changed(selected_box);
 }
 
-export {init_side_view_operation, update_top_view_handle} 
+
+function on_z_edge_changed(ratio, axis, direction, axis_direction){
+    var delta = selected_box.scale[axis]*ratio;
+    console.log(delta);
+
+    translate_box(selected_box, axis, delta/2*direction*axis_direction);
+
+    selected_box.scale[axis] += delta;
+    on_box_changed(selected_box);
+}
+
+function on_z_direction_changed(theta){
+    selected_box.rotation.z += theta;
+    on_box_changed(selected_box);
+}
+
+var on_z_auto_shrink  = auto_shrink;
+
+
+var z_view_handle = create_view_handler("z-", on_z_edge_changed, on_z_direction_changed, on_z_auto_shrink);
+
+
+
+
+function on_y_edge_changed(ratio, axis, direction, axis_direction){
+
+    if (axis=="y"){
+        axis= "z"        
+    }
+    var delta = selected_box.scale[axis]*ratio;
+    console.log(delta);
+
+    translate_box(selected_box, axis, delta/2*direction*axis_direction);
+
+    selected_box.scale[axis] += delta;
+    on_box_changed(selected_box);
+}
+
+function on_y_direction_changed(theta){
+    /*selected_box.rotation.y += -theta;
+    on_box_changed(selected_box);
+    */
+}
+
+function on_y_auto_shrink(axis, direction){
+    if (axis=='y'){
+        axis ='z';
+    }
+
+    auto_shrink(axis, direction);
+}
+
+var y_view_handle = create_view_handler("y-", on_y_edge_changed, null, on_y_auto_shrink);
+
+
+var view_handles = {
+    init_view_operation: function(){
+        z_view_handle.init_view_operation();
+        y_view_handle.init_view_operation();
+    },
+
+    update_view_handle: function(){
+        z_view_handle.update_view_handle(views[1].viewport, {x: selected_box.scale.x, y:selected_box.scale.y});
+        y_view_handle.update_view_handle(views[2].viewport, {x: selected_box.scale.x, y:selected_box.scale.z});
+    }, 
+
+    hide: function(){
+        document.getElementById("top-view-manipulator").style.display="none";
+        document.getElementById("middle-view-manipulator").style.display="none";
+    },
+
+    show: function(){
+        document.getElementById("top-view-manipulator").style.display="inline-flex";
+        document.getElementById("middle-view-manipulator").style.display="inline-flex";
+    },
+}
+
+
+export {view_handles} 

@@ -16,7 +16,7 @@ import {load_obj_ids_of_scene, generate_new_unique_id} from "./obj_id_list.js"
 import {stop_play, pause_resume_play, play_current_scene_with_buffer} from "./play.js"
 import {init_mouse, onUpPosition, getIntersects, getMousePosition, get_mouse_location_in_world} from "./mouse.js"
 
-import {init_side_view_operation, update_top_view_handle}  from "./side_view_op.js"
+import {view_handles}  from "./side_view_op.js"
 
 
 var sideview_enabled = true;
@@ -136,7 +136,8 @@ function init() {
 
     install_context_menu();
 
-    init_side_view_operation();
+    view_handles.init_view_operation();
+    view_handles.hide();
 }
 
 function install_fast_tool(){
@@ -676,7 +677,7 @@ function update_subview_by_windowsize(box){
     if (box === null)
         return;
 
-    update_top_view_handle();
+        view_handles.update_view_handle(views[1].viewport, selected_box.scale);
     
     // side views
     var exp_camera_width, exp_camera_height, exp_camera_clip;
@@ -888,6 +889,8 @@ function unselect_bbox(new_object, keep_lock){
                     }
 
                     selected_box = null;
+                    view_handles.hide();
+
                     on_selected_box_changed(null);
                 }
             }
@@ -919,7 +922,7 @@ function unselect_bbox(new_object, keep_lock){
             floatLabelManager.update_position(selected_box, true);
 
             selected_box = null;
-    
+            view_handles.hide();
             if (!keep_lock)
                 view_state.lock_obj_track_id = "";
         }
@@ -986,6 +989,7 @@ function select_bbox(object){
 
     on_selected_box_changed(object);
 
+    view_handles.show();
 }
 
 
@@ -1092,6 +1096,10 @@ function translate_box(box, axis, delta){
             box.position.x += delta*Math.cos(Math.PI/2 + box.rotation.z);
             box.position.y += delta*Math.sin(Math.PI/2 + box.rotation.z);  
             break;
+        case 'z':
+            box.position.z += delta;
+            break;
+
     }
 }
 
@@ -1539,7 +1547,7 @@ function update_frame_info(scene, frame){
 function on_box_changed(box){
 
     update_subview_by_bbox(box);
-    update_top_view_handle();
+    view_handles.update_view_handle(views[1].viewport, selected_box.scale);
     update_image_box_projection(box);
     render_2d_image();
     header.update_box_info(box);
@@ -1579,7 +1587,7 @@ function on_selected_box_changed(box){
         update_image_box_projection(box)
         floatLabelManager.update_position(box, true);
         update_subview_by_bbox(box);
-        update_top_view_handle();
+        view_handles.update_view_handle(views[1].viewport, selected_box.scale);
 
     } else {
         header.clear_box_info();

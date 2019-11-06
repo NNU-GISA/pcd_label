@@ -70,24 +70,45 @@
 		</canvas>
 		<canvas id="canvas" width="320" height="240">cavas</canvas>		
 
-		<div id="z-view-manipulator">
-			<svg width="100%" height="100%" id = "top-view-svg">
-				<rect x="70" y="50" width="20" height="140" fill="#00000000" class="line-handle" id="line-left-handle"/>
-				<line x1="80" y1="40" x2="80" y2="200" class = "svg-line"  id="line-left" />
+		<div class="view-manipulator"  id="top-view-manipulator">
+			<svg width="100%" height="100%" id = "z-view-svg">
+				<rect x="70" y="50" width="20" height="140" fill="#00000000" class="line-handle ew-handle" id="z-line-left-handle"/>
+				<line x1="80" y1="40" x2="80" y2="200" class = "svg-line"  id="z-line-left" />
 
-				<rect x="90" y="30" width="40" height="20" fill="#00000000" class="line-handle" id="line-top-handle"/>
-				<line x1="80" y1="40" x2="140" y2="40" class = "svg-line" id="line-top" />
+				<rect x="90" y="30" width="40" height="20" fill="#00000000" class="line-handle ns-handle" id="z-line-top-handle"/>
+				<line x1="80" y1="40" x2="140" y2="40" class = "svg-line" id="z-line-top" />
 
-				<rect x="130" y="50" width="20" height="140" fill="#00000000" class="line-handle" id="line-right-handle"/>
-				<line x1="140" y1="40" x2="140" y2="200" class = "svg-line" id="line-right" />
+				<rect x="130" y="50" width="20" height="140" fill="#00000000" class="line-handle ew-handle" id="z-line-right-handle"/>
+				<line x1="140" y1="40" x2="140" y2="200" class = "svg-line" id="z-line-right" />
 
-				<rect x="90" y="190" width="40" height="20" fill="#00000000" class="line-handle" id="line-bottom-handle"/>
-				<line x1="80" y1="200" x2="140" y2="200" class = "svg-line" id="line-bottom" />
+				<rect x="90" y="190" width="40" height="20" fill="#00000000" class="line-handle ns-handle" id="z-line-bottom-handle"/>
+				<line x1="80" y1="200" x2="140" y2="200" class = "svg-line" id="z-line-bottom" />
 
-				<rect x="110" y="120" width="10" height="70", fill="#00000000" class="line-handle" id="line-direction-handle"/>
-				<line x1="110" y1="120" x2="110" y2="40" class = "svg-line" id="line-direction" />
+				<rect x="110" y="120" width="20" height="70", fill="#00000000" class="line-handle  ew-handle" id="z-line-direction-handle"/>
+				<line x1="110" y1="120" x2="110" y2="40" class = "svg-line" id="z-line-direction" />
 
 			</svg>
+		</div>
+		<div class="view-manipulator" id="middle-view-manipulator">
+			<svg width="100%" height="100%" id = "y-view-svg">
+				<rect x="70" y="50" width="20" height="140" fill="#00000000" class="line-handle ew-handle" id="y-line-left-handle"/>
+				<line x1="80" y1="40" x2="80" y2="200" class = "svg-line"  id="y-line-left" />
+
+				<rect x="90" y="30" width="40" height="20" fill="#00000000" class="line-handle ns-handle" id="y-line-top-handle"/>
+				<line x1="80" y1="40" x2="140" y2="40" class = "svg-line" id="y-line-top" />
+
+				<rect x="130" y="50" width="20" height="140" fill="#00000000" class="line-handle ew-handle" id="y-line-right-handle"/>
+				<line x1="140" y1="40" x2="140" y2="200" class = "svg-line" id="y-line-right" />
+
+				<rect x="90" y="190" width="40" height="20" fill="#00000000" class="line-handle ns-handle" id="y-line-bottom-handle"/>
+				<line x1="80" y1="200" x2="140" y2="200" class = "svg-line" id="y-line-bottom" />
+
+				<rect x="110" y="120" width="20" height="70", fill="#00000000" class="line-handle  ew-handle" id="y-line-direction-handle"/>
+				<line x1="110" y1="120" x2="110" y2="40" class = "svg-line" id="y-line-direction" />
+
+			</svg>
+		</div>
+		<div>
 			<div class="v-table-wrapper" id="z-v-table-translate">
 				<table>
 					<tr>

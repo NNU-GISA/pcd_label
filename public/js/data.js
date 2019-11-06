@@ -828,6 +828,8 @@ var data = {
                     indices.push(i);
                     relative_position.push([tp[0],tp[1],tp[2]]);
                 });
+                
+                console.log("found indices: " + indices.length);
 
                 return {
                     index: indices,

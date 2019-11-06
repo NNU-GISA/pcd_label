@@ -2,6 +2,7 @@
 import {transform_bbox, selected_box, translate_box, on_box_changed} from "./main.js"
 import {data} from "./data.js"
 import {views} from "./view.js"
+import {matmul2} from "./util.js"
 
 
 
@@ -290,9 +291,33 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
             };
     
             handle.onmousedown = function(event){
+                var lines = {
+                    top: document.getElementById(view_prefix+"line-top"),
+                    bottom: document.getElementById(view_prefix+"line-bottom"),
+                    left: document.getElementById(view_prefix+"line-left"),
+                    right: document.getElementById(view_prefix+"line-right"),
+                }
+
                 line.style.stroke="yellow";
                 handle.onmouseleave = null;
+                highlight_lines();
+
+
+
+                function highlight_lines(){
+                    for (var l in lines){
+                        lines[l].style.stroke="yellow";
+                    };
+                }
     
+                function hide_lines(event){
+                    for (var l in lines){
+                        lines[l].style.stroke="#00000000";
+                    }
+                };
+
+
+
                 var handle_center={
                     x: parseInt(line.getAttribute('x1')),
                 }
@@ -311,6 +336,25 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
     
                 var theta = 0;
     
+                svg.onmousemove = function(event){
+                    
+                    mouse_cur_pos={x: event.clientX,y:event.clientY,};
+                    
+                    var handle_center_cur_pos = {
+                        x: mouse_cur_pos.x + mouse_start_pos.handle_offset_x - view_port_pos.x,
+                        y: mouse_cur_pos.y - view_port_pos.y,
+                    };
+    
+                    
+    
+                    theta = Math.atan2(
+                        handle_center_cur_pos.y-view_center.y,  
+                        handle_center_cur_pos.x-view_center.x);
+                    console.log(theta);
+
+                    rotate_lines(theta);
+                };
+
                 svg.onmouseup = function(event){
                     svg.onmousemove = null;
                     svg.onmouseup=null;
@@ -326,30 +370,53 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
     
                     on_direction_changed(-theta-Math.PI/2);
                     
-                }
-    
-                svg.onmousemove = function(event){
-                    
-                    mouse_cur_pos={x: event.clientX,y:event.clientY,};
-                    
-                    var handle_center_cur_pos = {
-                        x: mouse_cur_pos.x + mouse_start_pos.handle_offset_x - view_port_pos.x,
-                        y: mouse_cur_pos.y - view_port_pos.y,
-                    };
-    
-                    var line_len = view_handle_dimension.y;
-    
-                    theta = Math.atan2(
-                        handle_center_cur_pos.y-view_center.y,  
-                        handle_center_cur_pos.x-view_center.x);
+                };
+
+                function rotate_lines(theta){
+
                     console.log(theta);
-                    var line_end = {
-                        x: line_len*Math.cos(theta) + view_center.x,
-                        y: line_len*Math.sin(theta) + view_center.y,
-                    };
-    
-                    line.setAttribute("x2", line_end.x);
-                    line.setAttribute("y2", line_end.y);                
+                    theta = -theta-Math.PI/2;
+                    console.log(theta);
+                    // we use rotation matrix
+                    var trans_matrix =[
+                        Math.cos(theta), Math.sin(theta), view_center.x,
+                        -Math.sin(theta), Math.cos(theta), view_center.y,
+                        0, 0, 1,
+                    ]
+
+                    var points =[
+                        -view_handle_dimension.x/2, view_handle_dimension.x/2,view_handle_dimension.x/2,-view_handle_dimension.x/2, 0,
+                        -view_handle_dimension.y/2, -view_handle_dimension.y/2,view_handle_dimension.y/2,  view_handle_dimension.y/2, -view_handle_dimension.y/2,
+                        1,1,1,1,1
+                    ];
+
+                    console.log(points);
+                    var trans_points = matmul2(trans_matrix, points, 3);
+                    console.log(trans_points);
+
+                    line.setAttribute("x2", Math.ceil(trans_points[4]));
+                    line.setAttribute("y2", Math.ceil(trans_points[4+5]));
+
+                    lines.top.setAttribute("x1", Math.ceil(trans_points[0]));
+                    lines.top.setAttribute("y1", Math.ceil(trans_points[0+5]));
+                    lines.top.setAttribute("x2", Math.ceil(trans_points[1]));
+                    lines.top.setAttribute("y2", Math.ceil(trans_points[1+5]));
+
+                    lines.left.setAttribute("x1", Math.ceil(trans_points[0]));
+                    lines.left.setAttribute("y1", Math.ceil(trans_points[0+5]));
+                    lines.left.setAttribute("x2", Math.ceil(trans_points[3]));
+                    lines.left.setAttribute("y2", Math.ceil(trans_points[3+5]));
+
+                    lines.bottom.setAttribute("x1", Math.ceil(trans_points[3]));
+                    lines.bottom.setAttribute("y1", Math.ceil(trans_points[3+5]));
+                    lines.bottom.setAttribute("x2", Math.ceil(trans_points[2]));
+                    lines.bottom.setAttribute("y2", Math.ceil(trans_points[2+5]));
+
+                    lines.right.setAttribute("x1", Math.ceil(trans_points[1]));
+                    lines.right.setAttribute("y1", Math.ceil(trans_points[1+5]));
+                    lines.right.setAttribute("x2", Math.ceil(trans_points[2]));
+                    lines.right.setAttribute("y2", Math.ceil(trans_points[2+5]));
+
                 }
             };
         }
@@ -358,12 +425,7 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
             var handle = document.getElementById(view_prefix+"move-handle");
             var svg = document.getElementById(view_prefix+"view-svg");
 
-            var lines = {
-                top: document.getElementById(view_prefix+"line-top"),
-                bottom: document.getElementById(view_prefix+"line-bottom"),
-                left: document.getElementById(view_prefix+"line-left"),
-                right: document.getElementById(view_prefix+"line-right"),
-            }
+            
 
             var lines_pos;  //save at mousedown
     

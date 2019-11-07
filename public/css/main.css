@@ -267,6 +267,22 @@ canvas {
 	cursor: ns-resize;
 }
 
+
+.nw-handle:hover{
+	cursor: nw-resize;
+}
+.ne-handle:hover{
+	cursor: ne-resize;
+}
+
+.sw-handle:hover{
+	cursor: sw-resize;
+}
+
+.se-handle:hover{
+	cursor: se-resize;
+}
+
 .grab-handle:hover{
 	cursor: grab;
 }

@@ -3,6 +3,7 @@ import {transform_bbox, selected_box, translate_box, on_box_changed} from "./mai
 import {data} from "./data.js"
 import {views} from "./view.js"
 import {matmul2} from "./util.js"
+import { DefaultLoadingManager } from "./lib/three.module.js";
 
 
 
@@ -23,6 +24,159 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
     var view_port_pos = {
         x:0,
         y:0,
+    }
+
+    var lines = {
+        top: document.getElementById(view_prefix+"line-top"),
+        bottom: document.getElementById(view_prefix+"line-bottom"),
+        left: document.getElementById(view_prefix+"line-left"),
+        right: document.getElementById(view_prefix+"line-right"),
+        direction: document.getElementById(view_prefix+"line-direction"),
+    }
+
+    var svg = document.getElementById(view_prefix+"view-svg");
+
+    var handles = {
+        top: document.getElementById(view_prefix+"line-top-handle"),
+        bottom: document.getElementById(view_prefix+"line-bottom-handle"),
+        left: document.getElementById(view_prefix+"line-left-handle"),
+        right: document.getElementById(view_prefix+"line-right-handle"),
+        direction: document.getElementById(view_prefix+"line-direction-handle"),
+
+        topleft: document.getElementById(view_prefix+"top-left-handle"),
+        topright: document.getElementById(view_prefix+"top-right-handle"),
+        bottomleft: document.getElementById(view_prefix+"bottom-left-handle"),
+        bottomright: document.getElementById(view_prefix+"bottom-right-handle"),
+
+        move: document.getElementById(view_prefix+"move-handle"),
+    }
+
+    function line(name){
+        return lines[name];
+    }
+
+    function highlight_lines(lines){
+        for (var l in lines){
+            lines[l].style.stroke="yellow";
+        };
+    }
+
+    function hide_lines(lines){
+        for (var l in lines){
+            lines[l].style.stroke="#00000000";
+        }
+    };
+
+    function disable_handle_except(exclude){
+        for (var h in handles){
+            if (handles[h] != exclude)
+                handles[h].style.display='none';
+        }
+    }
+
+    function enable_handles(){
+        for (var h in handles){
+            handles[h].style.display='inherit';
+        }
+    }
+
+    function move_lines(delta, direction){
+        
+        var x1 = view_center.x-view_handle_dimension.x/2;
+        var y1 = view_center.y-view_handle_dimension.y/2;
+        var x2 = view_center.x+view_handle_dimension.x/2;
+        var y2 = view_center.y+view_handle_dimension.y/2;
+
+        if (direction){
+            if (direction.x == 1){ //right
+                x2 += delta.x;
+            } else if (direction.x == -1){ //left
+                x1 += delta.x;
+            }
+
+            if (direction.y == -1){ //bottom
+                y2 += delta.y;
+            } else if (direction.y == 1){ //top
+                y1 += delta.y;
+            }
+        } 
+        else {
+            x1 += delta.x;
+            y1 += delta.y;
+            x2 += delta.x;
+            y2 += delta.y;   
+        }
+
+        set_line_pos(Math.ceil(x1),Math.ceil(x2),Math.ceil(y1),Math.ceil(y2));        
+    }
+
+    function set_line_pos(x1,x2,y1,y2){
+        lines.top.setAttribute("x1", x1);
+        lines.top.setAttribute("y1", y1);
+        lines.top.setAttribute("x2", x2);
+        lines.top.setAttribute("y2", y1);
+
+        lines.bottom.setAttribute("x1", x1);
+        lines.bottom.setAttribute("y1", y2);
+        lines.bottom.setAttribute("x2", x2);
+        lines.bottom.setAttribute("y2", y2);
+
+        lines.left.setAttribute("x1", x1);
+        lines.left.setAttribute("y1", y1);
+        lines.left.setAttribute("x2", x1);
+        lines.left.setAttribute("y2", y2);
+
+        lines.right.setAttribute("x1", x2);
+        lines.right.setAttribute("y1", y1);
+        lines.right.setAttribute("x2", x2);
+        lines.right.setAttribute("y2", y2);
+    }
+
+    function rotate_lines(theta){
+
+        console.log(theta);
+        theta = -theta-Math.PI/2;
+        console.log(theta);
+        // we use rotation matrix
+        var trans_matrix =[
+            Math.cos(theta), Math.sin(theta), view_center.x,
+            -Math.sin(theta), Math.cos(theta), view_center.y,
+            0, 0, 1,
+        ]
+
+        var points =[
+            -view_handle_dimension.x/2, view_handle_dimension.x/2,view_handle_dimension.x/2,-view_handle_dimension.x/2, 0,
+            -view_handle_dimension.y/2, -view_handle_dimension.y/2,view_handle_dimension.y/2,  view_handle_dimension.y/2, -view_handle_dimension.y/2,
+            1,1,1,1,1
+        ];
+
+        console.log(points);
+        var trans_points = matmul2(trans_matrix, points, 3);
+        console.log(trans_points);
+
+        lines.direction.setAttribute("x2", Math.ceil(trans_points[4]));
+        lines.direction.setAttribute("y2", Math.ceil(trans_points[4+5]));
+
+        lines.top.setAttribute("x1", Math.ceil(trans_points[0]));
+        lines.top.setAttribute("y1", Math.ceil(trans_points[0+5]));
+        lines.top.setAttribute("x2", Math.ceil(trans_points[1]));
+        lines.top.setAttribute("y2", Math.ceil(trans_points[1+5]));
+
+        lines.left.setAttribute("x1", Math.ceil(trans_points[0]));
+        lines.left.setAttribute("y1", Math.ceil(trans_points[0+5]));
+        lines.left.setAttribute("x2", Math.ceil(trans_points[3]));
+        lines.left.setAttribute("y2", Math.ceil(trans_points[3+5]));
+
+        lines.bottom.setAttribute("x1", Math.ceil(trans_points[3]));
+        lines.bottom.setAttribute("y1", Math.ceil(trans_points[3+5]));
+        lines.bottom.setAttribute("x2", Math.ceil(trans_points[2]));
+        lines.bottom.setAttribute("y2", Math.ceil(trans_points[2+5]));
+
+        lines.right.setAttribute("x1", Math.ceil(trans_points[1]));
+        lines.right.setAttribute("y1", Math.ceil(trans_points[1+5]));
+        lines.right.setAttribute("x2", Math.ceil(trans_points[2]));
+        lines.right.setAttribute("y2", Math.ceil(trans_points[2+5]));
+
     }
     
     function update_view_handle(viewport, obj_dimension){
@@ -57,80 +211,73 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
         var top = y-height/2-1;
         var bottom = y+height/2-1;
     
-        view_center.x = (left+right)/2;
-        view_center.y = (top + bottom)/2;
+        view_center.x = x-1;
+        view_center.y = y-1;
     
-        var de = document.getElementById(view_prefix+"line-left");
-        de.setAttribute('x1', Math.ceil(left));
-        de.setAttribute('y1', Math.ceil(top));
-        de.setAttribute('x2', Math.ceil(left));
-        de.setAttribute('y2', Math.ceil(bottom));
+        set_line_pos(left, right, top, bottom);    
     
-        de = document.getElementById(view_prefix+"line-left-handle");
+        var de = handles.left;
         de.setAttribute('x', Math.ceil(left-10));
         de.setAttribute('y', Math.ceil(top+10));
         de.setAttribute('height', Math.ceil(bottom-top-20));
         de.setAttribute('width', 20);
+
     
-    
-        de = document.getElementById(view_prefix+"line-right");
-        de.setAttribute('x1', Math.ceil(right));
-        de.setAttribute('y1', Math.ceil(top));
-        de.setAttribute('x2', Math.ceil(right));
-        de.setAttribute('y2', Math.ceil(bottom));
-    
-        de = document.getElementById(view_prefix+"line-right-handle");
+        de = handles.right;
         de.setAttribute('x', Math.ceil(right-10));
         de.setAttribute('y', Math.ceil(top+10));
         de.setAttribute('height', Math.ceil(bottom-top-20));
         de.setAttribute('width', 20);
-    
-    
-    
-    
-        de = document.getElementById(view_prefix+"line-top");
-        de.setAttribute('x1', Math.ceil(left));
-        de.setAttribute('y1', Math.ceil(top));
-        de.setAttribute('x2', Math.ceil(right));
-        de.setAttribute('y2', Math.ceil(top));
-    
-        de = document.getElementById(view_prefix+"line-top-handle");
+        
+        de = handles.top;
         de.setAttribute('x', Math.ceil(left+10));
         de.setAttribute('y', Math.ceil(top-10));
         de.setAttribute('width', Math.ceil(right-left-20));
         de.setAttribute('height', 20);
-    
-    
-        de = document.getElementById(view_prefix+"line-bottom");
-        de.setAttribute('x1', Math.ceil(left));
-        de.setAttribute('y1', Math.ceil(bottom));
-        de.setAttribute('x2', Math.ceil(right));
-        de.setAttribute('y2', Math.ceil(bottom));
-    
-        de = document.getElementById(view_prefix+"line-bottom-handle");
+
+        de = handles.bottom;
         de.setAttribute('x', Math.ceil(left+10));
         de.setAttribute('y', Math.ceil(bottom-10));
         de.setAttribute('width', Math.ceil(right-left-20));
         de.setAttribute('height', 20);
     
+
+        de = handles.topleft;
+        de.setAttribute('x', Math.ceil(left-10));
+        de.setAttribute('y', Math.ceil(top-10));
+
+
+        de = handles.topright;
+        de.setAttribute('x', Math.ceil(right-10));
+        de.setAttribute('y', Math.ceil(top-10));
+
+
+        de = handles.bottomleft;
+        de.setAttribute('x', Math.ceil(left-10));
+        de.setAttribute('y', Math.ceil(bottom-10));
+
+        de = handles.bottomright;
+        de.setAttribute('x', Math.ceil(right-10));
+        de.setAttribute('y', Math.ceil(bottom-10));
+
         //direction
         if (on_direction_changed){
-            de = document.getElementById(view_prefix+"line-direction");
+            de = lines.direction;
             de.setAttribute('x1', Math.ceil((left+right)/2));
             de.setAttribute('y1', Math.ceil((top+bottom)/2));
             de.setAttribute('x2', Math.ceil((left+right)/2));
             de.setAttribute('y2', Math.ceil(top));
         
-            de = document.getElementById(view_prefix+"line-direction-handle");
+            de = handles.direction;
             de.setAttribute('x', Math.ceil((left+right)/2-10));
             de.setAttribute('y', Math.ceil(top+10));    
             de.setAttribute('height', Math.ceil((bottom-top)/2-20));
         }
         else{
-            de = document.getElementById(view_prefix+"line-direction");
+            de = lines.direction;
             de.style.display = "none";
         
-            de = document.getElementById(view_prefix+"line-direction-handle");
+            de = handles.direction;
             de.style.display = "none";
         }
 
@@ -181,85 +328,98 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
         */
     
         
-        install_edge_hanler("line-left", "x", -1,1);
-        install_edge_hanler("line-right", "x", 1, 1);
-        install_edge_hanler("line-top", "y", -1, -1);
-        install_edge_hanler("line-bottom", "y", 1, -1);
+        install_edge_hanler(handles.left,   lines,   {x:-1,y:0});
+        install_edge_hanler(handles.right,  lines,   {x:1, y:0});
+        install_edge_hanler(handles.top,    lines,   {x:0, y:1});
+        install_edge_hanler(handles.bottom, lines,   {x:0, y:-1});
+        install_edge_hanler(handles.topleft, lines,   {x:-1, y:1});
+        install_edge_hanler(handles.topright, lines,   {x:1, y:1});
+        install_edge_hanler(handles.bottomleft, lines,   {x:-1, y:-1});
+        install_edge_hanler(handles.bottomright, lines,   {x:1, y:-1});
+        install_edge_hanler(handles.move, lines,  null);
 
         if (on_direction_changed)
             install_direction_handler("line-direction");
     
-        install_move_handler();
+        //install_move_handler();
 
-        function install_edge_hanler(linename, axis, direction, axis_direction)
+        function install_edge_hanler(handle, lines, direction)
         {
-            var handle = document.getElementById(view_prefix+linename+"-handle");
-            var line = document.getElementById(view_prefix+linename);
-            var svg = document.getElementById(view_prefix+"view-svg");
-    
-            handle.onmouseenter = function(event){
-                line.style.stroke="yellow";
-            };
-    
-            handle.onmouseleave = hide;
-    
             
-            function hide(event){
-                    line.style.stroke="#00000000";
+            function hide(){
+                hide_lines(lines);
             };
+            function highlight(){
+                highlight_lines(lines);
+            }
+            
+            handle.onmouseenter = highlight;    
+            handle.onmouseleave = hide;
+
     
             handle.onmouseup = function(event){
                 //line.style["stroke-dasharray"]="none";
-                line.style.stroke="#00000000";
+                hide();
                 handle.onmouseleave = hide;
             };
     
             handle.ondblclick= function(evnet){
-                on_auto_shrink(axis,direction*axis_direction);
+                on_auto_shrink(direction);
             };
     
             handle.onmousedown = function(event){
-                line.style.stroke="yellow";            
+                highlight();
+                disable_handle_except(handle);
+
                 handle.onmouseleave = null;
-    
+
+                var lines_pos = {
+                    x1 : parseInt(lines.top.getAttribute('x1')),
+                    y1 : parseInt(lines.top.getAttribute('y1')),
+                    x2 : parseInt(lines.right.getAttribute('x2')),
+                    y2 : parseInt(lines.right.getAttribute('y2')),
+                };
     
                 mouse_start_pos={x: event.clientX,y:event.clientY,};
                 var mouse_cur_pos = {x: mouse_start_pos.x, y: mouse_start_pos.y};
     
                 console.log(mouse_start_pos);
-                var line_pos = {
-                    x: parseInt(line.getAttribute('x1')),
-                    y: parseInt(line.getAttribute('y1')),
-                }
     
                 svg.onmouseup = function(event){
                     svg.onmousemove = null;
                     svg.onmouseup=null;
-
+                    enable_handles();
                     // restore color
-                    line.style.stroke="#00000000";
+                    hide();
                     handle.onmouseleave = hide;
                     
-                    var mouse_delta = (mouse_cur_pos[axis] - mouse_start_pos[axis])*direction;
-                    if (mouse_delta == 0){
-                        return;
-                    }
-    
-                    var ratio = mouse_delta/view_handle_dimension[axis];
-                    on_edge_changed(ratio, axis, direction, axis_direction);
+                    var handle_delta = {
+                        x: mouse_cur_pos.x - mouse_start_pos.x,
+                        y: -(mouse_cur_pos.y - mouse_start_pos.y),  //reverse since it'll be used by 3d-coord system
+                    };
+
+                    var ratio_delta = {
+                        x: handle_delta.x/view_handle_dimension.x,
+                        y: handle_delta.y/view_handle_dimension.y
+                    };
+                    
+                    
+                    if (direction)
+                        on_edge_changed(ratio_delta, direction);
+                    else
+                        on_moved(ratio_delta);
                 }
     
                 svg.onmousemove = function(event){
                     
                     mouse_cur_pos={x: event.clientX,y:event.clientY,};
                     
-                    var pos = mouse_cur_pos[axis] - mouse_start_pos[axis] + line_pos[axis];
-                    //console.log(mouse_cur_pos, pos);
-                    //document.getElementById("line-top").setAttribute('x1', pos);
-                    line.setAttribute(axis+1, pos);
-                    line.setAttribute(axis+2, pos);
-    
-                    //handle.setAttribute(axis, pos-10);
+                    var handle_delta = {
+                        x: mouse_cur_pos.x - mouse_start_pos.x,
+                        y: mouse_cur_pos.y - mouse_start_pos.y,  // don't reverse direction
+                    };
+
+                    move_lines(handle_delta, direction);
                 }
             };
         }
@@ -291,30 +451,12 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
             };
     
             handle.onmousedown = function(event){
-                var lines = {
-                    top: document.getElementById(view_prefix+"line-top"),
-                    bottom: document.getElementById(view_prefix+"line-bottom"),
-                    left: document.getElementById(view_prefix+"line-left"),
-                    right: document.getElementById(view_prefix+"line-right"),
-                }
+                
 
                 line.style.stroke="yellow";
                 handle.onmouseleave = null;
-                highlight_lines();
-
-
-
-                function highlight_lines(){
-                    for (var l in lines){
-                        lines[l].style.stroke="yellow";
-                    };
-                }
-    
-                function hide_lines(event){
-                    for (var l in lines){
-                        lines[l].style.stroke="#00000000";
-                    }
-                };
+                highlight_lines(lines);
+                disable_handle_except(handle);
 
 
 
@@ -361,6 +503,7 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
     
                     // restore color
                     line.style.stroke="#00000000";
+                    enable_handles();
                     handle.onmouseleave = hide;
 
 
@@ -372,178 +515,11 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
                     
                 };
 
-                function rotate_lines(theta){
-
-                    console.log(theta);
-                    theta = -theta-Math.PI/2;
-                    console.log(theta);
-                    // we use rotation matrix
-                    var trans_matrix =[
-                        Math.cos(theta), Math.sin(theta), view_center.x,
-                        -Math.sin(theta), Math.cos(theta), view_center.y,
-                        0, 0, 1,
-                    ]
-
-                    var points =[
-                        -view_handle_dimension.x/2, view_handle_dimension.x/2,view_handle_dimension.x/2,-view_handle_dimension.x/2, 0,
-                        -view_handle_dimension.y/2, -view_handle_dimension.y/2,view_handle_dimension.y/2,  view_handle_dimension.y/2, -view_handle_dimension.y/2,
-                        1,1,1,1,1
-                    ];
-
-                    console.log(points);
-                    var trans_points = matmul2(trans_matrix, points, 3);
-                    console.log(trans_points);
-
-                    line.setAttribute("x2", Math.ceil(trans_points[4]));
-                    line.setAttribute("y2", Math.ceil(trans_points[4+5]));
-
-                    lines.top.setAttribute("x1", Math.ceil(trans_points[0]));
-                    lines.top.setAttribute("y1", Math.ceil(trans_points[0+5]));
-                    lines.top.setAttribute("x2", Math.ceil(trans_points[1]));
-                    lines.top.setAttribute("y2", Math.ceil(trans_points[1+5]));
-
-                    lines.left.setAttribute("x1", Math.ceil(trans_points[0]));
-                    lines.left.setAttribute("y1", Math.ceil(trans_points[0+5]));
-                    lines.left.setAttribute("x2", Math.ceil(trans_points[3]));
-                    lines.left.setAttribute("y2", Math.ceil(trans_points[3+5]));
-
-                    lines.bottom.setAttribute("x1", Math.ceil(trans_points[3]));
-                    lines.bottom.setAttribute("y1", Math.ceil(trans_points[3+5]));
-                    lines.bottom.setAttribute("x2", Math.ceil(trans_points[2]));
-                    lines.bottom.setAttribute("y2", Math.ceil(trans_points[2+5]));
-
-                    lines.right.setAttribute("x1", Math.ceil(trans_points[1]));
-                    lines.right.setAttribute("y1", Math.ceil(trans_points[1+5]));
-                    lines.right.setAttribute("x2", Math.ceil(trans_points[2]));
-                    lines.right.setAttribute("y2", Math.ceil(trans_points[2+5]));
-
-                }
+                
             };
         }
     
-        function install_move_handler(){
-            var handle = document.getElementById(view_prefix+"move-handle");
-            var svg = document.getElementById(view_prefix+"view-svg");
-
-            
-
-            var lines_pos;  //save at mousedown
-    
-            function move_all_lines(offset){
-                
-                var x1 = lines_pos.x1+offset.x;
-                var y1 = lines_pos.y1+offset.y;
-                var x2 = lines_pos.x2+offset.x;
-                var y2 = lines_pos.y2+offset.y;
-
-                lines.top.setAttribute("x1", x1);
-                lines.top.setAttribute("y1", y1);
-                lines.top.setAttribute("x2", x2);
-                lines.top.setAttribute("y2", y1);
-
-                lines.bottom.setAttribute("x1", x1);
-                lines.bottom.setAttribute("y1", y2);
-                lines.bottom.setAttribute("x2", x2);
-                lines.bottom.setAttribute("y2", y2);
-
-                lines.left.setAttribute("x1", x1);
-                lines.left.setAttribute("y1", y1);
-                lines.left.setAttribute("x2", x1);
-                lines.left.setAttribute("y2", y2);
-
-                lines.right.setAttribute("x1", x2);
-                lines.right.setAttribute("y1", y1);
-                lines.right.setAttribute("x2", x2);
-                lines.right.setAttribute("y2", y2);
-
-                
-            }
-
-
-            function highlight_lines(){
-                for (var l in lines){
-                    lines[l].style.stroke="yellow";
-                };
-            }
-
-            function hide(event){
-                for (var l in lines){
-                    lines[l].style.stroke="#00000000";
-                }
-            };
-
-    
-            handle.onmouseenter = highlight_lines;
-            handle.onmouseleave = hide;
-    
-            handle.ondblclick= function(evnet){
-                //
-            };   
-    
-            
-    
-            handle.onmouseup = function(event){
-                hide();
-                handle.onmouseleave = hide;
-            };
-    
-            handle.onmousedown = function(event){
-                highlight_lines();
-
-                handle.onmouseleave = null;
-
-                lines_pos = {
-                    x1 : parseInt(lines.top.getAttribute('x1')),
-                    y1 : parseInt(lines.top.getAttribute('y1')),
-                    x2 : parseInt(lines.right.getAttribute('x2')),
-                    y2 : parseInt(lines.right.getAttribute('y2')),
-                };
-            
-
-    
-                mouse_start_pos={
-                    x: event.clientX,
-                    y:event.clientY,
-                };
-    
-                var mouse_cur_pos = {x: mouse_start_pos.x, y: mouse_start_pos.y};
-    
-                svg.onmouseup = function(event){
-                    svg.onmousemove = null;
-                    svg.onmouseup=null;
-    
-                    // restore color
-                    hide();
-                    handle.onmouseleave = hide;
-
-                    var mouse_offset = {
-                        x: mouse_cur_pos.x - mouse_start_pos.x,
-                        y: mouse_cur_pos.y - mouse_start_pos.y,
-                    };
-    
-                    var ratio = {
-                        x: mouse_offset.x/view_handle_dimension.x,
-                        y: mouse_offset.y/view_handle_dimension.y
-                    };
-
-                    on_moved(ratio);
-                    
-                }
-    
-                svg.onmousemove = function(event){
-                    
-                    mouse_cur_pos={x: event.clientX,y:event.clientY,};
-                    
-                    var mouse_offset = {
-                        x: mouse_cur_pos.x - mouse_start_pos.x,
-                        y: mouse_cur_pos.y - mouse_start_pos.y,
-                    };
-    
-                    move_all_lines(mouse_offset);
-                }
-            };
-        }
-    
+        
         /*
         document.getElementById("z-view-manipulator").onmouseenter = function(){
             document.getElementById("z-v-table-translate").style.display="inherit";
@@ -594,7 +570,7 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
 
 // direction: 1, -1
 // axis: x,y,z
-function auto_shrink(axis, direction){
+function auto_shrink(direction){
     var points = data.world.get_points_of_box_in_box_coord(selected_box);
 
     if (points.length == 0){
@@ -638,34 +614,64 @@ function auto_shrink(axis, direction){
         }
     }
 
-    var end = "max";
-    if (direction === -1){
-        end = "min";
+
+    
+    if (!direction){
+        
     }
 
-    var delta = selected_box.scale[axis]/2 - direction*extreme[end][axis] - 0.01;
+    for (var axis in direction){
 
-    console.log(extreme, delta);
-    translate_box(selected_box, axis, -direction* delta/2 );
-    selected_box.scale[axis] -= delta;
+        if (direction[axis] !=0){
+
+            var end = "max";
+            if (direction[axis] === -1){
+                end = "min";
+            }
+
+            var delta = selected_box.scale[axis]/2 - direction[axis]*extreme[end][axis] - 0.01;
+
+            console.log(extreme, delta);
+            translate_box(selected_box, axis, -direction[axis]* delta/2 );
+            selected_box.scale[axis] -= delta;
+        }
+    }
+    
     on_box_changed(selected_box);
 }
 
-
-function on_z_edge_changed(ratio, axis, direction, axis_direction){
-    var delta = selected_box.scale[axis]*ratio;
+function on_edge_changed(delta, direction){
     console.log(delta);
 
-    translate_box(selected_box, axis, delta/2*direction*axis_direction);
+    translate_box(selected_box, 'x', delta.x/2 * direction.x);
+    translate_box(selected_box, 'y', delta.y/2 * direction.y);
+    translate_box(selected_box, 'z', delta.z/2 * direction.z);
 
-    selected_box.scale[axis] += delta;
+    selected_box.scale.x += delta.x;
+    selected_box.scale.y += delta.y;
+    selected_box.scale.z += delta.z;
     on_box_changed(selected_box);
+}
+
+function on_z_edge_changed(ratio, direction){
+
+    var delta = {
+        x: selected_box.scale.x * ratio.x * direction.x,
+        y: selected_box.scale.y * ratio.y * direction.y,
+        z: 0,
+    };
+
+    direction.z = 0;
+
+    on_edge_changed(delta, direction);
 }
 
 function on_z_direction_changed(theta){
     selected_box.rotation.z += theta;
     on_box_changed(selected_box);
 }
+
+
 function on_z_moved(ratio){
     var delta = {
         x: selected_box.scale.x*ratio.x,
@@ -674,7 +680,7 @@ function on_z_moved(ratio){
 
     
     translate_box(selected_box, "x", delta.x);
-    translate_box(selected_box, "y", -delta.y);
+    translate_box(selected_box, "y", delta.y);
 
     on_box_changed(selected_box);
 }
@@ -687,26 +693,32 @@ var z_view_handle = create_view_handler("z-", on_z_edge_changed, on_z_direction_
 
 
 
-function on_y_edge_changed(ratio, axis, direction, axis_direction){
+function on_y_edge_changed(ratio, direction){
 
-    if (axis=="y"){
-        axis= "z"        
-    }
-    var delta = selected_box.scale[axis]*ratio;
-    console.log(delta);
+    var delta = {
+        x: selected_box.scale.x * ratio.x * direction.x,
+        z: selected_box.scale.z * ratio.y * direction.y,
+        y: 0,
+    };
 
-    translate_box(selected_box, axis, delta/2*direction*axis_direction);
+    direction ={
+        x: direction.x,
+        z: direction.y,
+        y: 0,
+    };
 
-    selected_box.scale[axis] += delta;
-    on_box_changed(selected_box);
+    on_edge_changed(delta, direction);
 }
 
-function on_y_auto_shrink(axis, direction){
-    if (axis=='y'){
-        axis ='z';
+function on_y_auto_shrink(direction){
+    
+    direction = {
+        x: direction.x,
+        y: 0,
+        z: direction.y,
     }
 
-    auto_shrink(axis, direction);
+    auto_shrink(direction);
 }
 
 function on_y_moved(ratio){
@@ -717,7 +729,7 @@ function on_y_moved(ratio){
 
     
     translate_box(selected_box, "x", delta.x);
-    translate_box(selected_box, "z", -delta.z);
+    translate_box(selected_box, "z", delta.z);
 
     on_box_changed(selected_box);
 }
@@ -733,32 +745,32 @@ var y_view_handle = create_view_handler("y-", on_y_edge_changed, on_y_direction_
 
 
 
+function on_x_edge_changed(ratio, direction){
 
-function on_x_edge_changed(ratio, axis, direction, axis_direction){
+    var delta = {
+        y: selected_box.scale.y * ratio.x * direction.x,
+        z: selected_box.scale.z * ratio.y * direction.y,
+        x: 0,
+    };
 
-    if (axis=="y"){
-        axis= "z"
-    } else if (axis == 'x'){
-        axis= "y"
-    }
+    direction ={
+        y: direction.x,
+        z: direction.y,
+        x: 0,
+    };
 
-    var delta = selected_box.scale[axis]*ratio;
-    console.log(delta);
-
-    translate_box(selected_box, axis, delta/2*direction*axis_direction);
-
-    selected_box.scale[axis] += delta;
-    on_box_changed(selected_box);
+    on_edge_changed(delta, direction);
 }
 
-function on_x_auto_shrink(axis, direction){
-    if (axis=="y"){
-        axis= "z"
-    } else if (axis == 'x'){
-        axis= "y"
+function on_x_auto_shrink(direction){
+
+    direction = {
+        x: 0,
+        y: direction.x,
+        z: direction.y,
     }
 
-    auto_shrink(axis, direction);
+    auto_shrink(direction);
 }
 
 
@@ -770,7 +782,7 @@ function on_x_moved(ratio){
 
     
     translate_box(selected_box, "y", delta.y);
-    translate_box(selected_box, "z", -delta.z);
+    translate_box(selected_box, "z", delta.z);
 
     on_box_changed(selected_box);
 }

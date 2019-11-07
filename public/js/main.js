@@ -159,10 +159,7 @@ function install_fast_tool(){
 
     document.getElementById("label-edit").onclick = function(event){
         event.currentTarget.blur();
-        select_bbox(selected_box);
-        //document.getElementById("obj-label").style.display="none";
-        //document.getElementById("category-id-editor").style.display="inherit";
-        
+        select_bbox(selected_box);        
     }
 
     document.getElementById("label-reset").onclick = function(event){
@@ -976,7 +973,7 @@ function select_bbox(object){
     else {
         //reselect the same box
         if (views[0].transform_control.visible){
-
+            change_transform_control_view();
         }
         else{
             //select me the second time

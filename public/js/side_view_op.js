@@ -3,9 +3,12 @@ import {transform_bbox, selected_box, translate_box, on_box_changed} from "./mai
 import {data} from "./data.js"
 import {views} from "./view.js"
 import {matmul2} from "./util.js"
-import { DefaultLoadingManager } from "./lib/three.module.js";
 
 
+import {
+	Quaternion,
+	Vector3
+} from "./lib/three.module.js";
 
 function create_view_handler(view_prefix, on_edge_changed, on_direction_changed, on_auto_shrink, on_moved){
 
@@ -35,6 +38,7 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
     }
 
     var svg = document.getElementById(view_prefix+"view-svg");
+    var div = document.getElementById(view_prefix+"view-manipulator");
 
     var handles = {
         top: document.getElementById(view_prefix+"line-top-handle"),
@@ -146,7 +150,7 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
 
         var points =[
             -view_handle_dimension.x/2, view_handle_dimension.x/2,view_handle_dimension.x/2,-view_handle_dimension.x/2, 0,
-            -view_handle_dimension.y/2, -view_handle_dimension.y/2,view_handle_dimension.y/2,  view_handle_dimension.y/2, -view_handle_dimension.y/2,
+            -view_handle_dimension.y/2, -view_handle_dimension.y/2,view_handle_dimension.y/2,  view_handle_dimension.y/2, -view_center.y,
             1,1,1,1,1
         ];
 
@@ -266,12 +270,12 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
             de.setAttribute('x1', Math.ceil((left+right)/2));
             de.setAttribute('y1', Math.ceil((top+bottom)/2));
             de.setAttribute('x2', Math.ceil((left+right)/2));
-            de.setAttribute('y2', Math.ceil(top));
+            de.setAttribute('y2', Math.ceil(0));
         
             de = handles.direction;
             de.setAttribute('x', Math.ceil((left+right)/2-10));
-            de.setAttribute('y', Math.ceil(top+10));    
-            de.setAttribute('height', Math.ceil((bottom-top)/2-20));
+            de.setAttribute('y', 0);//Math.ceil(top+10));    
+            de.setAttribute('height', Math.ceil((bottom-top)/2-10+top));
         }
         else{
             de = lines.direction;
@@ -327,7 +331,7 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
         };
         */
     
-        
+        div.onkeydown = on_key_down;
         install_edge_hanler(handles.left,   lines,   {x:-1,y:0});
         install_edge_hanler(handles.right,  lines,   {x:1, y:0});
         install_edge_hanler(handles.top,    lines,   {x:0, y:1});
@@ -519,7 +523,12 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
             };
         }
     
-        
+        function on_key_down(event){
+            event.preventDefault();
+            event.stopPropagation();
+            console.log("key down!")
+        }
+
         /*
         document.getElementById("z-view-manipulator").onmouseenter = function(){
             document.getElementById("z-v-table-translate").style.display="inherit";
@@ -667,7 +676,9 @@ function on_z_edge_changed(ratio, direction){
 }
 
 function on_z_direction_changed(theta){
-    selected_box.rotation.z += theta;
+    var _tempQuaternion = new Quaternion();
+    var rotationAxis = new Vector3(0,0,1);
+    selected_box.quaternion.multiply( _tempQuaternion.setFromAxisAngle( rotationAxis, theta ) ).normalize();
     on_box_changed(selected_box);
 }
 
@@ -735,7 +746,11 @@ function on_y_moved(ratio){
 }
 
 function on_y_direction_changed(theta){
-    selected_box.rotation.y -= theta;
+    //selected_box.rotation.x += theta;
+    //on_box_changed(selected_box);
+    var _tempQuaternion = new Quaternion();
+    var rotationAxis = new Vector3(0, 1, 0);
+    selected_box.quaternion.multiply( _tempQuaternion.setFromAxisAngle( rotationAxis, -theta ) ).normalize();
     on_box_changed(selected_box);
 }
 
@@ -788,8 +803,13 @@ function on_x_moved(ratio){
 }
 
 function on_x_direction_changed(theta){
-    selected_box.rotation.x += theta;
+    //selected_box.rotation.x += theta;
+    //on_box_changed(selected_box);
+    var _tempQuaternion = new Quaternion();
+    var rotationAxis = new Vector3(1,0,0);
+    selected_box.quaternion.multiply( _tempQuaternion.setFromAxisAngle( rotationAxis, theta ) ).normalize();
     on_box_changed(selected_box);
+
 }
 
 
@@ -810,15 +830,15 @@ var view_handles = {
     }, 
 
     hide: function(){
-        document.getElementById("top-view-manipulator").style.display="none";
-        document.getElementById("middle-view-manipulator").style.display="none";
-        document.getElementById("bottom-view-manipulator").style.display="none";
+        document.getElementById("z-view-manipulator").style.display="none";
+        document.getElementById("y-view-manipulator").style.display="none";
+        document.getElementById("x-view-manipulator").style.display="none";
     },
 
     show: function(){
-        document.getElementById("top-view-manipulator").style.display="inline-flex";
-        document.getElementById("middle-view-manipulator").style.display="inline-flex";
-        document.getElementById("bottom-view-manipulator").style.display="inline-flex";
+        document.getElementById("z-view-manipulator").style.display="inline-flex";
+        document.getElementById("y-view-manipulator").style.display="inline-flex";
+        document.getElementById("x-view-manipulator").style.display="inline-flex";
     },
 }
 

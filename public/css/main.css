@@ -216,7 +216,7 @@ canvas {
 
 
 
-#top-view-manipulator {
+#z-view-manipulator {
 	position: absolute;
 	top: 0%;
 	left: 0%;
@@ -228,7 +228,7 @@ canvas {
 	align-items: flex-end;	
 }
 
-#middle-view-manipulator {
+#y-view-manipulator {
 	position: absolute;
 	top: 30%;
 	left: 0%;
@@ -241,7 +241,7 @@ canvas {
 }
 
 
-#bottom-view-manipulator {
+#x-view-manipulator {
 	position: absolute;
 	top: 50%;
 	left: 0%;

@@ -721,7 +721,14 @@ function on_y_moved(ratio){
 
     on_box_changed(selected_box);
 }
-var y_view_handle = create_view_handler("y-", on_y_edge_changed, null, on_y_auto_shrink, on_y_moved);
+
+function on_y_direction_changed(theta){
+    selected_box.rotation.y -= theta;
+    on_box_changed(selected_box);
+}
+
+
+var y_view_handle = create_view_handler("y-", on_y_edge_changed, on_y_direction_changed, on_y_auto_shrink, on_y_moved);
 
 
 
@@ -768,7 +775,13 @@ function on_x_moved(ratio){
     on_box_changed(selected_box);
 }
 
-var x_view_handle = create_view_handler("x-", on_x_edge_changed, null, on_x_auto_shrink, on_x_moved);
+function on_x_direction_changed(theta){
+    selected_box.rotation.x += theta;
+    on_box_changed(selected_box);
+}
+
+
+var x_view_handle = create_view_handler("x-", on_x_edge_changed, on_x_direction_changed, on_x_auto_shrink, on_x_moved);
 
 
 var view_handles = {

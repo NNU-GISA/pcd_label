@@ -332,6 +332,12 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
         */
     
         div.onkeydown = on_key_down;
+        div.onmouseenter = function(event){
+            div.focus();
+        };
+        div.onmouseleave = function(event){
+            div.blur();
+        };
         install_edge_hanler(handles.left,   lines,   {x:-1,y:0});
         install_edge_hanler(handles.right,  lines,   {x:1, y:0});
         install_edge_hanler(handles.top,    lines,   {x:0, y:1});
@@ -527,6 +533,14 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
             event.preventDefault();
             event.stopPropagation();
             console.log("key down!")
+            switch(event.key){
+                case 'f':
+                    on_direction_changed(-0.01);
+                    break;
+                case 'r':
+                    on_direction_changed(0.01);
+                    break;
+            }
         }
 
         /*
@@ -621,6 +635,14 @@ function get_selected_obj_support_point(){
         }
     }
 
+    extreme.max.x += 0.01;
+    extreme.max.y += 0.01;
+    extreme.max.z += 0.01;
+
+    extreme.max.x -= 0.01;
+    extreme.max.y -= 0.01;
+    extreme.max.z -= 0.01;
+
     return extreme;
 }
 // direction: 1, -1
@@ -637,7 +659,7 @@ function auto_shrink(extreme, direction){
                 end = "min";
             }
 
-            var delta = selected_box.scale[axis]/2 - direction[axis]*extreme[end][axis] - 0.01;
+            var delta = selected_box.scale[axis]/2 - direction[axis]*extreme[end][axis];
 
             console.log(extreme, delta);
             translate_box(selected_box, axis, -direction[axis]* delta/2 );

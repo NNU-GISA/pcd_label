@@ -819,9 +819,9 @@ var data = {
 
                     var tp = matmul(trans, p, 4);
 
-                    if ((Math.abs(tp[0]) > box.scale.x/2 * scale_ratio) 
-                        || (Math.abs(tp[1]) > box.scale.y/2 * scale_ratio)
-                        || (Math.abs(tp[2]) > box.scale.z/2 *scale_ratio) ){
+                    if ((Math.abs(tp[0]) > box.scale.x/2 * scale_ratio+0.01) 
+                        || (Math.abs(tp[1]) > box.scale.y/2 * scale_ratio+0.01)
+                        || (Math.abs(tp[2]) > box.scale.z/2 *scale_ratio+0.01) ){
                         return;
                     }
                     

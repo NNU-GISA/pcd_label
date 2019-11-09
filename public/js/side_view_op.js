@@ -577,9 +577,7 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
     }
 }
 
-// direction: 1, -1
-// axis: x,y,z
-function auto_shrink(direction){
+function get_selected_obj_support_point(){
     var points = data.world.get_points_of_box_in_box_coord(selected_box);
 
     if (points.length == 0){
@@ -623,11 +621,12 @@ function auto_shrink(direction){
         }
     }
 
+    return extreme;
+}
+// direction: 1, -1
+// axis: x,y,z
 
-    
-    if (!direction){
-        
-    }
+function auto_shrink(extreme, direction){
 
     for (var axis in direction){
 
@@ -644,6 +643,24 @@ function auto_shrink(direction){
             translate_box(selected_box, axis, -direction[axis]* delta/2 );
             selected_box.scale[axis] -= delta;
         }
+    }
+}
+
+
+function on_z_auto_shrink(direction){
+    var  extreme = get_selected_obj_support_point()
+    
+    if (!direction){
+        ['x','y'].forEach(function(axis){
+
+            selected_box.position[axis] += (extreme.max[axis] + extreme.min[axis])/2;
+            selected_box.scale[axis] = extreme.max[axis]-extreme.min[axis];        
+ 
+        })       
+        
+
+    } else{
+        auto_shrink(extreme, direction)
     }
     
     on_box_changed(selected_box);
@@ -696,7 +713,6 @@ function on_z_moved(ratio){
     on_box_changed(selected_box);
 }
 
-var on_z_auto_shrink  = auto_shrink;
 
 
 var z_view_handle = create_view_handler("z-", on_z_edge_changed, on_z_direction_changed, on_z_auto_shrink, on_z_moved);
@@ -722,15 +738,29 @@ function on_y_edge_changed(ratio, direction){
 }
 
 function on_y_auto_shrink(direction){
+    var  extreme = get_selected_obj_support_point()
     
-    direction = {
-        x: direction.x,
-        y: 0,
-        z: direction.y,
-    }
+    if (!direction){
+        ['x','z'].forEach(function(axis){
 
-    auto_shrink(direction);
+            selected_box.position[axis] += (extreme.max[axis] + extreme.min[axis])/2;
+            selected_box.scale[axis] = extreme.max[axis]-extreme.min[axis];        
+ 
+        })       
+        
+
+    } else{
+        direction = {
+            x: direction.x,
+            y: 0,
+            z: direction.y,
+        }
+        auto_shrink(extreme, direction)
+    }
+    
+    on_box_changed(selected_box);
 }
+
 
 function on_y_moved(ratio){
     var delta = {
@@ -777,15 +807,29 @@ function on_x_edge_changed(ratio, direction){
     on_edge_changed(delta, direction);
 }
 
+
 function on_x_auto_shrink(direction){
+    var  extreme = get_selected_obj_support_point()
+    
+    if (!direction){
+        ['y','z'].forEach(function(axis){
 
-    direction = {
-        x: 0,
-        y: direction.x,
-        z: direction.y,
+            selected_box.position[axis] += (extreme.max[axis] + extreme.min[axis])/2;
+            selected_box.scale[axis] = extreme.max[axis]-extreme.min[axis];        
+ 
+        })       
+        
+
+    } else{
+        direction = {
+            x: 0,
+            y: direction.x,
+            z: direction.y,
+        }
+        auto_shrink(extreme, direction)
     }
-
-    auto_shrink(direction);
+    
+    on_box_changed(selected_box);
 }
 
 

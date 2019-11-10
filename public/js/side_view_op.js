@@ -644,9 +644,9 @@ function get_selected_obj_support_point(){
     extreme.max.y += 0.01;
     extreme.max.z += 0.01;
 
-    extreme.max.x -= 0.01;
-    extreme.max.y -= 0.01;
-    extreme.max.z -= 0.01;
+    extreme.min.x -= 0.01;
+    extreme.min.y -= 0.01;
+    extreme.min.z -= 0.01;
 
     return extreme;
 }
@@ -680,8 +680,8 @@ function on_z_auto_shrink(direction){
     if (!direction){
         ['x','y'].forEach(function(axis){
 
-            selected_box.position[axis] += (extreme.max[axis] + extreme.min[axis])/2;
-            selected_box.scale[axis] = extreme.max[axis]-extreme.min[axis];        
+            translate_box(selected_box, axis, (extreme.max[axis] + extreme.min[axis])/2);
+            selected_box.scale[axis] = extreme.max[axis] - extreme.min[axis];        
  
         })       
         
@@ -770,7 +770,7 @@ function on_y_auto_shrink(direction){
     if (!direction){
         ['x','z'].forEach(function(axis){
 
-            selected_box.position[axis] += (extreme.max[axis] + extreme.min[axis])/2;
+            translate_box(selected_box, axis, (extreme.max[axis] + extreme.min[axis])/2);
             selected_box.scale[axis] = extreme.max[axis]-extreme.min[axis];        
  
         })       
@@ -841,7 +841,7 @@ function on_x_auto_shrink(direction){
     if (!direction){
         ['y','z'].forEach(function(axis){
 
-            selected_box.position[axis] += (extreme.max[axis] + extreme.min[axis])/2;
+            translate_box(selected_box, axis, (extreme.max[axis] + extreme.min[axis])/2);
             selected_box.scale[axis] = extreme.max[axis]-extreme.min[axis];        
  
         })       

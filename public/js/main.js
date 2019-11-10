@@ -353,7 +353,8 @@ function animate() {
 function render(){
 
     views[0].switch_camera(params["bird's eye view"]);
-    
+    console.log(views[0].camera.rotation.z);
+
     for ( var ii = 0; ii < views.length; ++ ii ) {
 
         if ((ii > 0) && !sideview_enabled){
@@ -1050,6 +1051,9 @@ function add_bbox(){
     var pos = get_mouse_location_in_world();
 
     var box = data.world.add_box(pos.x, pos.y, pos.z);
+
+    // let the rotation of z be same as camera.
+    box.rotation.z = views[0].camera.rotation.z;
 
     scene.add(box);
 

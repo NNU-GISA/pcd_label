@@ -10,7 +10,7 @@ import {
 	Vector3
 } from "./lib/three.module.js";
 
-function create_view_handler(view_prefix, on_edge_changed, on_direction_changed, on_auto_shrink, on_moved){
+function create_view_handler(view_prefix, on_edge_changed, on_direction_changed, on_auto_shrink, on_moved, on_scale){
 
     var mouse_start_pos;
 
@@ -331,13 +331,38 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
         };
         */
     
+        var mouse_right_down = false;
+
         div.onkeydown = on_key_down;
         div.onmouseenter = function(event){
             div.focus();
         };
         div.onmouseleave = function(event){
             div.blur();
+            mouse_right_down = false;
         };
+
+        div.oncontextmenu = function(event){
+            return false;
+        };
+
+        div.onmousedown = function(event){
+            if (event.which==3){
+                mouse_right_down = true;
+                event.preventDefault();
+                event.stopPropagation();
+                return false;
+            }
+        };
+
+        div.onmouseup = function(event){
+            if (event.which==3){
+                mouse_right_down = false;
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        };
+
         install_edge_hanler(handles.left,   lines,   {x:-1,y:0});
         install_edge_hanler(handles.right,  lines,   {x:1, y:0});
         install_edge_hanler(handles.top,    lines,   {x:0, y:1});
@@ -539,11 +564,46 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
             event.stopPropagation();
             console.log("key down!")
             switch(event.key){
+                case 'e':
                 case 'f':
                     on_direction_changed(-0.005);
                     break;
-                case 'r':
+                case 'q':
+                case 'r':                
                     on_direction_changed(0.005);
+                    break;
+                case 'w':
+                case 'ArrowUp':
+                    if (mouse_right_down){
+                        //console.log("right mouse down!");
+                        on_scale({x:0, y:0.01});
+                    }
+                    else{
+                        on_moved({x:0, y:0.01});
+                    }
+                    break;
+                case 's':
+                case 'ArrowDown':
+                    if (mouse_right_down){
+                        //console.log("right mouse down!");
+                        on_scale({x:0, y:-0.01});
+                    }
+                    else
+                        on_moved({x:0, y:-0.01});
+                    break;
+                case 'a':
+                case 'ArrowLeft':
+                    if (mouse_right_down)
+                        on_scale({x:-0.01, y:0});
+                    else
+                        on_moved({x:-0.01, y:0});
+                    break;
+                case 'd':
+                case 'ArrowRight':
+                    if (mouse_right_down)
+                        on_scale({x:0.01, y:0});
+                    else
+                        on_moved({x:0.01, y:0});
                     break;
             }
         }
@@ -741,8 +801,18 @@ function on_z_moved(ratio){
 }
 
 
+function on_z_scaled(ratio){
+        
+    for (var axis in ratio){
+        if (ratio[axis] != 0){
+            selected_box.scale[axis] *= 1+ratio[axis];
+        }
+    }
+    
+    on_box_changed(selected_box);
+}
 
-var z_view_handle = create_view_handler("z-", on_z_edge_changed, on_z_direction_changed, on_z_auto_shrink, on_z_moved);
+var z_view_handle = create_view_handler("z-", on_z_edge_changed, on_z_direction_changed, on_z_auto_shrink, on_z_moved, on_z_scaled);
 
 
 
@@ -812,7 +882,23 @@ function on_y_direction_changed(theta){
 }
 
 
-var y_view_handle = create_view_handler("y-", on_y_edge_changed, on_y_direction_changed, on_y_auto_shrink, on_y_moved);
+function on_y_scaled(ratio){
+    
+    ratio = {
+        x: ratio.x,
+        y: 0,
+        z: ratio.y,
+    };
+
+    for (var axis in ratio){
+        if (ratio[axis] != 0){
+            selected_box.scale[axis] *= 1+ratio[axis];
+        }
+    }
+    
+    on_box_changed(selected_box);
+}
+var y_view_handle = create_view_handler("y-", on_y_edge_changed, on_y_direction_changed, on_y_auto_shrink, on_y_moved, on_y_scaled);
 
 
 
@@ -883,8 +969,22 @@ function on_x_direction_changed(theta){
 
 }
 
+function on_x_scaled(ratio){
+    
+    ratio = {
+        y: ratio.x,
+        z: ratio.y,
+    };
 
-var x_view_handle = create_view_handler("x-", on_x_edge_changed, on_x_direction_changed, on_x_auto_shrink, on_x_moved);
+    for (var axis in ratio){
+        if (ratio[axis] != 0){
+            selected_box.scale[axis] *= 1+ratio[axis];
+        }
+    }
+    
+    on_box_changed(selected_box);
+}
+var x_view_handle = create_view_handler("x-", on_x_edge_changed, on_x_direction_changed, on_x_auto_shrink, on_x_moved, on_x_scaled);
 
 
 var view_handles = {

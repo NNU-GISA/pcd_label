@@ -373,8 +373,11 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
                 handle.onmouseleave = hide;
             };
     
-            handle.ondblclick= function(evnet){
+            handle.ondblclick= function(event){
+                event.stopPropagation();
+                event.preventDefault();
                 on_auto_shrink(direction);
+                
             };
     
             handle.onmousedown = function(event){
@@ -445,7 +448,9 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
     
             handle.onmouseleave = hide;
     
-            handle.ondblclick= function(evnet){
+            handle.ondblclick= function(event){
+                event.stopPropagation();
+                event.preventDefault();
                 transform_bbox("z_rotate_reverse");
             };
     

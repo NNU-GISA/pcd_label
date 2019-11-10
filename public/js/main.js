@@ -56,6 +56,10 @@ function init() {
         }
     })
 
+    document.oncontextmenu=function(event){
+        return false;
+    };
+
 
     scene = new THREE.Scene();
 
@@ -225,8 +229,13 @@ function highlight_selected_box(){
 function install_context_menu(){
 
     document.getElementById("context-menu-wrapper").onclick = function(event){
-        event.currentTarget.style.display="none";
+        //event.currentTarget.style.display="none";
     }
+
+    document.getElementById("context-menu-wrapper").onmousedown = function(event){
+        event.currentTarget.style.display="none";
+        //event.preventDefault();
+    };
 
     document.getElementById("context-menu-wrapper").oncontextmenu = function(event){
         //event.currentTarget.style.display="none";

@@ -54,7 +54,7 @@ function get_mouse_location_in_world(){
 
 
 function onMouseDown( event ) {    
-    
+
     if (event.which==3){
         operation_state.mouse_right_down = true;
         operation_state.key_pressed = false;

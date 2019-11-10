@@ -210,13 +210,13 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
         var x = viewport.width/2;//viewport.left + viewport.width/2;
         var y = viewport.height/2//viewport.bottom - viewport.height/2;
     
-        var left = x-width/2-1;
-        var right = x+width/2-1;
-        var top = y-height/2-1;
-        var bottom = y+height/2-1;
+        var left = x-width/2;
+        var right = x+width/2;
+        var top = y-height/2;
+        var bottom = y+height/2;
     
-        view_center.x = x-1;
-        view_center.y = y-1;
+        view_center.x = x;
+        view_center.y = y;
     
         set_line_pos(left, right, top, bottom);    
     
@@ -540,10 +540,10 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
             console.log("key down!")
             switch(event.key){
                 case 'f':
-                    on_direction_changed(-0.01);
+                    on_direction_changed(-0.005);
                     break;
                 case 'r':
-                    on_direction_changed(0.01);
+                    on_direction_changed(0.005);
                     break;
             }
         }

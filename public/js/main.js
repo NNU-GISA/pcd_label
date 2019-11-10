@@ -229,9 +229,10 @@ function install_context_menu(){
     }
 
     document.getElementById("context-menu-wrapper").oncontextmenu = function(event){
-        event.currentTarget.style.display="none";
+        //event.currentTarget.style.display="none";
         event.preventDefault();
     }
+    
 
     document.getElementById("cm-new").onclick = function(event){
         //add_bbox();

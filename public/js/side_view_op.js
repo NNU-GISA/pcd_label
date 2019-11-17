@@ -55,6 +55,8 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
         move: document.getElementById(view_prefix+"move-handle"),
     }
 
+    var this_axis = view_prefix[0];
+
     function line(name){
         return lines[name];
     }
@@ -451,7 +453,7 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
             handle.ondblclick= function(event){
                 event.stopPropagation();
                 event.preventDefault();
-                transform_bbox("z_rotate_reverse");
+                transform_bbox(this_axis+"_rotate_reverse");
             };
     
     

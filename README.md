@@ -5,18 +5,19 @@
 
 ## Features
 
-. 9 DoF box editing
-. edit on perspective view and projective view
-. camera image as context
-. camera image and LiDAR point cloud fusion is extrinsic info is given
-. focus target object in image if extrinsic info is given
-. binary/ascii pcd files and all format image files
-. multi-camera images
-. auto image follow if extrinsic transformation information is given
-. semi-auto box annotation (details later)
-. objects/boxes color by category
-. focus mode to hide background to check details easily
-. stream play/stop.
+- 9 DoF box editing
+- edit on perspective view and projective view
+- camera image as context
+- camera image and LiDAR point cloud fusion if extrinsic info is given
+- focus target object in image if extrinsic info is given
+- binary/ascii pcd files and all format image files
+- multi-camera images
+- auto image follow if extrinsic transformation information is given
+- semi-auto box annotation (details later)
+- objects/boxes color by category
+- focus mode to hide background to check details easily
+- stream play/stop
+
 
 
 

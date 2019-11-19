@@ -1,7 +1,7 @@
 # Point Cloud 3D Bounding Box Annotation Tool
 
 
-![screenshot](./pcd_label.png)
+![screenshot](./doc/pcd_label.png)
 
 ## Requirements
 

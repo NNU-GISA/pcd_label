@@ -1,7 +1,25 @@
 # Point Cloud 3D Bounding Box Annotation Tool
 
 
-![screenshot](./pcd_label.png)
+![screenshot](./doc/pcd_label.png)
+
+## Features
+
+- 9 DoF box editing
+- edit on perspective view and projective view
+- camera image as context
+- camera image and LiDAR point cloud fusion if extrinsic info is given
+- focus target object in image if extrinsic info is given
+- binary/ascii pcd files and all format image files
+- multi-camera images
+- auto image follow if extrinsic transformation information is given
+- semi-auto box annotation (details later)
+- objects/boxes color by category
+- focus mode to hide background to check details easily
+- stream play/stop
+
+
+
 
 ## Requirements
 
@@ -52,8 +70,24 @@ z/x/c: turan on/off x/y/z axis
 use mouse to adjust the box.
 
 
+in side view (projective view):
 
-if one box is selected, the following key can be used to adjust it:
+a: move box left
+s: move box down
+d: move box right
+w: move box up
+q: rotate box left
+e: rotate box right
+
+double click on center: auto-shrink box by adjusting all borders to nearest innner point.
+double click on border: auto-shrink box by adjusting the border to nearest innner point.
+double click on corder: auto-shrink box by adjusting the corresponding borders to nearest innner point.
+
+click and drag border/corner/center: move border/corner/box.
+
+in main view (persptive view):
+
+if one box is selected, the following key can be used to adjust it in main view:
 
 q w e r t
 a s d f g

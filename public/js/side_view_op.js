@@ -55,6 +55,8 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
         move: document.getElementById(view_prefix+"move-handle"),
     }
 
+    var this_axis = view_prefix[0];
+
     function line(name){
         return lines[name];
     }
@@ -373,8 +375,9 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
         install_edge_hanler(handles.bottomright, lines,   {x:1, y:-1});
         install_edge_hanler(handles.move, lines,  null);
 
-        if (on_direction_changed)
+        if (on_direction_changed){
             install_direction_handler("line-direction");
+        }
     
         //install_move_handler();
 
@@ -476,7 +479,8 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
             handle.ondblclick= function(event){
                 event.stopPropagation();
                 event.preventDefault();
-                transform_bbox("z_rotate_reverse");
+                //transform_bbox(this_axis+"_rotate_reverse");
+                on_direction_changed(Math.PI);
             };
     
     

@@ -437,6 +437,14 @@ function scene_changed(scene_name){
 
     document.getElementById("frame-selector").innerHTML = frame_selector_str;
     
+    
+
+    var camera_selector_str = meta.camera.map(function(c){
+        return '<option value="'+c+'">'+c+'</option>';
+    }).reduce(function(x,y){return x+y;}, "<option>--camera--</option>");
+    document.getElementById("camera-selector").innerHTML = camera_selector_str;
+
+
     load_obj_ids_of_scene(scene_name);
 }
 

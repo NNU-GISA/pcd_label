@@ -68,7 +68,7 @@ var data = {
         this.world.update_points_color();
     },
 
-    active_image_name: "image",
+    active_image_name: "",
     set_active_image: function(name){
         this.active_image_name = name;
         if (this.world){
@@ -229,9 +229,9 @@ var data = {
                     return true;
                 },
 
-                names: ["image","left","right"],
+                names: scene_meta.camera, //["image","left","right"],
                 loaded_flag: {},
-                active_name: "image",
+                active_name: "",
                 active_image: function(){
                     return this.content[this.active_name];
                 },

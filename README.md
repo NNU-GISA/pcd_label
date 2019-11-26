@@ -17,6 +17,7 @@
 - objects/boxes color by category
 - focus mode to hide background to check details easily
 - stream play/stop
+- auto object tracking id generation
 
 
 
@@ -27,8 +28,10 @@ python2, cherrypy
 
 
 ## Start
+run the following script in shell, then go to http://127.0.0.1:8081
+```
 python main.py
-
+```
 
 ## Data preparation
 
@@ -52,6 +55,8 @@ public
 bbox.json is the directory to save the annotation result.
 
 calib.txt is the calibration matrix from point cloud to image. it's optional, but if provided, the box is projected on the image so as to assist the annotation.
+
+## object type configuration
 
 ## Operations
 

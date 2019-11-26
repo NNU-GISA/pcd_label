@@ -39,3 +39,4 @@
 35.  auto-shrink box if direction is given.
 36.  box position is not updating when being adjusted
 37.  views.viewport could be updated less frequently.
+38.  make cameras configurable

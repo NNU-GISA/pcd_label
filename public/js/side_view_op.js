@@ -445,10 +445,17 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
                     };
                     
                     
-                    if (direction)
+                    if (direction){
                         on_edge_changed(ratio_delta, direction);
-                    else
+
+                        if (event.ctrlKey){
+                            on_auto_shrink(direction);
+                        }
+                    }
+                    else{
+                        // when intall handler for mover, the direcion is left null
                         on_moved(ratio_delta);
+                    }
                 }
     
                 svg.onmousemove = function(event){
@@ -737,7 +744,21 @@ function auto_shrink(extreme, direction){
     }
 }
 
+function on_edge_changed(delta, direction){
+    console.log(delta);
 
+    translate_box(selected_box, 'x', delta.x/2 * direction.x);
+    translate_box(selected_box, 'y', delta.y/2 * direction.y);
+    translate_box(selected_box, 'z', delta.z/2 * direction.z);
+
+    selected_box.scale.x += delta.x;
+    selected_box.scale.y += delta.y;
+    selected_box.scale.z += delta.z;
+    on_box_changed(selected_box);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////
 function on_z_auto_shrink(direction){
     var  extreme = get_selected_obj_support_point()
     
@@ -757,18 +778,7 @@ function on_z_auto_shrink(direction){
     on_box_changed(selected_box);
 }
 
-function on_edge_changed(delta, direction){
-    console.log(delta);
 
-    translate_box(selected_box, 'x', delta.x/2 * direction.x);
-    translate_box(selected_box, 'y', delta.y/2 * direction.y);
-    translate_box(selected_box, 'z', delta.z/2 * direction.z);
-
-    selected_box.scale.x += delta.x;
-    selected_box.scale.y += delta.y;
-    selected_box.scale.z += delta.z;
-    on_box_changed(selected_box);
-}
 
 function on_z_edge_changed(ratio, direction){
 
@@ -819,7 +829,7 @@ function on_z_scaled(ratio){
 var z_view_handle = create_view_handler("z-", on_z_edge_changed, on_z_direction_changed, on_z_auto_shrink, on_z_moved, on_z_scaled);
 
 
-
+///////////////////////////////////////////////////////////////////////////////////
 
 function on_y_edge_changed(ratio, direction){
 
@@ -905,7 +915,7 @@ function on_y_scaled(ratio){
 var y_view_handle = create_view_handler("y-", on_y_edge_changed, on_y_direction_changed, on_y_auto_shrink, on_y_moved, on_y_scaled);
 
 
-
+///////////////////////////////////////////////////////////////////////////////////
 
 function on_x_edge_changed(ratio, direction){
 
@@ -990,6 +1000,9 @@ function on_x_scaled(ratio){
 }
 var x_view_handle = create_view_handler("x-", on_x_edge_changed, on_x_direction_changed, on_x_auto_shrink, on_x_moved, on_x_scaled);
 
+
+
+// exports
 
 var view_handles = {
     init_view_operation: function(){

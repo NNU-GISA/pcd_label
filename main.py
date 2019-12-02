@@ -165,17 +165,17 @@ class Root(object):
               calib[calib_name]["extrinsic"] = map(strip_str, lines[0].strip().split(","))
               calib[calib_name]["intrinsic"] = lines[1].strip().split(",") 
 
-        camera = []
+        image = []
         cam_path = "public/data/"+s+"/image"
         if os.path.exists(cam_path):
           cams = os.listdir(cam_path)
           for c in cams:
             cam_file = "public/data/"+s+"/image/" + c
             if os.path.isdir(cam_file):
-              if camera:
-                camera.append(c)
+              if image:
+                image.append(c)
               else:
-                camera = [c]
+                image = [c]
 
             
         if not os.path.isdir("public/data/"+s+"/bbox.xyz"):
@@ -184,16 +184,16 @@ class Root(object):
             scene["point_transform_matrix"] = point_transform_matrix
           if calib:
             scene["calib"] = calib
-          if camera:
-            scene["camera"] = camera
+          if image:
+            scene["image"] = image
         else:
           scene["boxtype"] = "xyz"
           if point_transform_matrix:
             scene["point_transform_matrix"] = point_transform_matrix
           if calib:
             scene["calib"] = calib
-          if camera:
-            scene["camera"] = camera
+          if image:
+            scene["image"] = image
 
       
       print(data)

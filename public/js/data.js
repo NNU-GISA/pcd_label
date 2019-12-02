@@ -229,7 +229,7 @@ var data = {
                     return true;
                 },
 
-                names: scene_meta.camera, //["image","left","right"],
+                names: scene_meta.image, //["image","left","right"],
                 loaded_flag: {},
                 active_name: "",
                 active_image: function(){
@@ -256,7 +256,7 @@ var data = {
                             _self.on_image_loaded();
                         };
 
-                        _self.content[img].src = '/static/data/'+scene_name+'/' + img + '/'+ frame+'.jpg';
+                        _self.content[img].src = '/static/data/'+scene_name+'/image/' + img + '/'+ frame+'.jpg';
                     })
                 },
 
@@ -788,27 +788,60 @@ var data = {
                 this.scene.add(mesh);
             },
 
+            get_points_indices_of_box: function(box){
+                return this._get_points_of_box(this.points, box, 1).index;
+            },
+
             get_points_of_box_in_box_coord: function(box){
                 return this._get_points_of_box(this.points, box, 1).position;
+            },
+            get_points_dimmension_of_box: function(box){
+                return this._get_points_of_box(this.points, box, 1).extreme;
+            },
+            // given points and box, calculate new box scale
+            get_dimension_of_points: function(indices, box){
+                return this._get_points_of_box(this.points, box, 1, indices).extreme;                
             },
 
             _get_points_index_of_box: function(points, box, scale_ratio){
                 return this._get_points_of_box(points, box, scale_ratio).index;
             },
 
-            // this 
-            _get_points_of_box: function(points, box, scale_ratio){
+                        // this 
+            _get_points_of_box: function(points, box, scale_ratio, point_indices){
 
                 if (!scale_ratio){
                     scale_ratio = 1;
                 }
                 var pos_array = points.geometry.getAttribute("position").array;
-                var indices=[];
+
+                
                 var relative_position = [];
+                var extreme= {
+                    max: {        
+                        x:-100000,
+                        y:-100000,
+                        z:-100000,
+                    },
+            
+                    min: {        
+                        x:1000000,
+                        y:1000000,
+                        z:1000000,
+                    },
+                };
+
                 var r = box.rotation;
                 var trans = transpose(euler_angle_to_rotate_matrix(r, {x:0, y:0, z:0}), 4);
 
-                var cand_point_indices = this.get_covering_position_indices(points, box.position, box.scale);
+                var indices=[];
+                var cand_point_indices = point_indices;
+                if (!point_indices)
+                {                    
+                    cand_point_indices = this.get_covering_position_indices(points, box.position, box.scale);
+                }
+
+
                 cand_point_indices.forEach(function(i){
                 //for (var i  = 0; i < pos.count; i++){
                     var x = pos_array[i*3];
@@ -819,21 +852,62 @@ var data = {
 
                     var tp = matmul(trans, p, 4);
 
-                    if ((Math.abs(tp[0]) > box.scale.x/2 * scale_ratio+0.01) 
-                        || (Math.abs(tp[1]) > box.scale.y/2 * scale_ratio+0.01)
-                        || (Math.abs(tp[2]) > box.scale.z/2 *scale_ratio+0.01) ){
-                        return;
+                    if (!point_indices){
+                        // if indices is provided by caller, don't filter
+                        if ((Math.abs(tp[0]) > box.scale.x/2 * scale_ratio+0.01) 
+                            || (Math.abs(tp[1]) > box.scale.y/2 * scale_ratio+0.01)
+                            || (Math.abs(tp[2]) > box.scale.z/2 *scale_ratio+0.01) ){
+                            return;
+                        }
+
+                        indices.push(i);
                     }
                     
-                    indices.push(i);
+                    
+                    
+                    
                     relative_position.push([tp[0],tp[1],tp[2]]);
+
+                    if (tp[0] > extreme.max.x) {
+                        extreme.max.x = tp[0];
+                    } 
+                    
+                    if (tp[0] < extreme.min.x){
+                        extreme.min.x = tp[0];
+                    }
+            
+                    if (tp[1] > extreme.max.y){
+                        extreme.max.y = tp[1];
+                    }
+                    
+                    if (tp[1] < extreme.min.y){
+                        extreme.min.y = tp[1];
+                    }
+            
+                    if (tp[2] > extreme.max.z){
+                        extreme.max.z = tp[2];
+                    }
+                    
+                    if (tp[2] < extreme.min.z){
+                        extreme.min.z = tp[2];
+                    }
                 });
                 
-                console.log("found indices: " + indices.length);
+                extreme.max.x += 0.01;
+                extreme.max.y += 0.01;
+                extreme.max.z += 0.01;
+
+                extreme.min.x -= 0.01;
+                extreme.min.y -= 0.01;
+                extreme.min.z -= 0.01;
+
+                
+                console.log("found indices: " + indices.length, indices);
 
                 return {
                     index: indices,
                     position: relative_position,
+                    extreme: extreme,
                 }
             },
 

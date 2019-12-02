@@ -354,7 +354,7 @@ function animate() {
 function render(){
 
     views[0].switch_camera(params["bird's eye view"]);
-    console.log(views[0].camera.rotation.z);
+    //console.log(views[0].camera.rotation.z);
 
     for ( var ii = 0; ii < views.length; ++ ii ) {
 
@@ -439,7 +439,7 @@ function scene_changed(scene_name){
     
     
 
-    var camera_selector_str = meta.camera.map(function(c){
+    var camera_selector_str = meta.image.map(function(c){
         return '<option value="'+c+'">'+c+'</option>';
     }).reduce(function(x,y){return x+y;}, "<option>--camera--</option>");
     document.getElementById("camera-selector").innerHTML = camera_selector_str;

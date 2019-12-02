@@ -668,59 +668,10 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
 }
 
 function get_selected_obj_support_point(){
-    var points = data.world.get_points_of_box_in_box_coord(selected_box);
-
-    if (points.length == 0){
-        return;
-    }
-
-    var extreme= {
-        max: {        
-            x:-100000,
-            y:-100000,
-            z:-100000,
-        },
-
-        min: {        
-            x:1000000,
-            y:1000000,
-            z:1000000,
-        },
-    };
-    
-    var max=extreme.max;
-    var min=extreme.min;
-
-    for (var i in points){
-        if (points[i][0] > max.x) {
-            max.x = points[i][0];
-        } else if (points[i][0] < min.x){
-            min.x = points[i][0];
-        }
-
-        if (points[i][1] > max.y){
-            max.y = points[i][1];
-        }else if (points[i][1] < min.y){
-            min.y = points[i][1];
-        }
-
-        if (points[i][2] > max.z){
-            max.z = points[i][2];
-        }else if (points[i][2] < min.z){
-            min.z = points[i][2];
-        }
-    }
-
-    extreme.max.x += 0.01;
-    extreme.max.y += 0.01;
-    extreme.max.z += 0.01;
-
-    extreme.min.x -= 0.01;
-    extreme.min.y -= 0.01;
-    extreme.min.z -= 0.01;
-
-    return extreme;
+    return data.world.get_points_dimmension_of_box(selected_box);
 }
+
+
 // direction: 1, -1
 // axis: x,y,z
 
@@ -794,9 +745,21 @@ function on_z_edge_changed(ratio, direction){
 }
 
 function on_z_direction_changed(theta){
+    var points_indices = data.world.get_points_indices_of_box(selected_box);
+
     var _tempQuaternion = new Quaternion();
     var rotationAxis = new Vector3(0,0,1);
     selected_box.quaternion.multiply( _tempQuaternion.setFromAxisAngle( rotationAxis, theta ) ).normalize();
+
+    var extreme = data.world.get_dimension_of_points(points_indices, selected_box);
+
+    ['x','y'].forEach(function(axis){
+
+        translate_box(selected_box, axis, (extreme.max[axis] + extreme.min[axis])/2);
+        selected_box.scale[axis] = extreme.max[axis] - extreme.min[axis];        
+
+    }) 
+
     on_box_changed(selected_box);
 }
 

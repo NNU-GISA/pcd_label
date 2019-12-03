@@ -805,6 +805,7 @@ var data = {
                 return this._get_points_of_box(this.points, box, 1, indices).extreme;                
             },
 
+
             _get_points_index_of_box: function(points, box, scale_ratio){
                 return this._get_points_of_box(points, box, scale_ratio).index;
             },
@@ -1049,6 +1050,30 @@ var data = {
                 return extreme;
             },
 
+            select_points_by_view_rect: function(x,y,w,h, camera){
+                var points = this.points;
+                var pos_array = points.geometry.getAttribute("position").array;
+
+                var indices = [];
+                var p = new THREE.Vector3();
+
+                for (var i=0; i< pos_array.length/3; i++){
+                    p.set(pos_array[i*3], pos_array[i*3+1], pos_array[i*3+2]);
+                    p.project(camera);
+                    //p.x = p.x/p.z;
+                    //p.y = p.y/p.z;
+                    //console.log(p);
+                    if ((p.x > x) && (p.x < x+w) && (p.y>y) && (p.y<y+h)){
+                        indices.push(i);
+                    }
+                }
+
+                console.log("select rect points", indices.length);
+                this.set_spec_points_color(indices, {x:1,y:0,z:0});
+                this.update_points_color();
+            },
+
+
             set_box_points_color: function(box, target_color){
                 //var pos = this.points.geometry.getAttribute("position");
                 var color = this.points.geometry.getAttribute("color");
@@ -1064,6 +1089,17 @@ var data = {
 
                 var indices = this._get_points_index_of_box(this.points, box, 1.0);
                 indices.forEach(function(i){
+                    color.array[i*3] = target_color.x;
+                    color.array[i*3+1] = target_color.y;
+                    color.array[i*3+2] = target_color.z;
+                });
+            },
+
+            set_spec_points_color: function(point_indices, target_color){
+                //var pos = this.points.geometry.getAttribute("position");
+                var color = this.points.geometry.getAttribute("color");
+                
+                point_indices.forEach(function(i){
                     color.array[i*3] = target_color.x;
                     color.array[i*3+1] = target_color.y;
                     color.array[i*3+2] = target_color.z;

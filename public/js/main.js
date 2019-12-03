@@ -101,7 +101,7 @@ function init() {
     container.addEventListener( 'mousedown', onMouseDown, true );
     set_mouse_handler(handleLeftClick, handleRightClick);
     */
-    init_mouse(container, handleLeftClick, handleRightClick);
+    init_mouse(container, handleLeftClick, handleRightClick, handleSelectRect);
 
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
     //document.addEventListener( 'mousemove', onDocumentMouseMove, false );
@@ -804,7 +804,19 @@ function handleRightClick(event){
 }
 
 
+function handleSelectRect(x,y,w,h){
+    y = y+h;
+    x = x*2-1;
+    y = -y*2+1;
+    w *= 2;
+    h *= 2;
+    
+    console.log("main select rect", x,y,w,h);
 
+    views[0].camera.updateProjectionMatrix();
+    data.world.select_points_by_view_rect(x,y,w,h, views[0].camera);
+    render();
+}
 
 function handleLeftClick(event) {
 

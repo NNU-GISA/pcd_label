@@ -760,6 +760,8 @@ var OrbitControls = function ( object, domElement ) {
 
 		if ( scope.enabled === false ) return;
 
+		if (event.ctrlKey) return;
+
 		// Prevent the browser from scrolling.
 
 		event.preventDefault();

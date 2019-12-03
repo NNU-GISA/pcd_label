@@ -751,6 +751,7 @@ function on_z_direction_changed(theta){
     var rotationAxis = new Vector3(0,0,1);
     selected_box.quaternion.multiply( _tempQuaternion.setFromAxisAngle( rotationAxis, theta ) ).normalize();
 
+    
     var extreme = data.world.get_dimension_of_points(points_indices, selected_box);
 
     ['x','y'].forEach(function(axis){

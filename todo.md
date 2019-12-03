@@ -40,3 +40,5 @@
 36.  box position is not updating when being adjusted
 37.  views.viewport could be updated less frequently.
 38.  make cameras configurable
+39.  try reduce points searching times, at one adjustments, there are 6 point searching invoke.
+40.  add global parameter 'sticky mode'

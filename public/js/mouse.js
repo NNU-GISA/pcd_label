@@ -58,6 +58,8 @@ function onMouseDown( event ) {
     if (event.which==3){
         operation_state.mouse_right_down = true;
         operation_state.key_pressed = false;
+    } else if (event.width == 1){
+        console.log("mouse left key down!");
     }
     
 

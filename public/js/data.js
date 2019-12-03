@@ -245,19 +245,21 @@ var data = {
                 load: function(on_all_loaded){
                     this.on_all_loaded = on_all_loaded;
                     var _self = this;
-                    this.names.forEach(function(img){
-                        _self.content[img] = new Image();
-                        _self.content[img].onload= function(){ 
-                            _self.loaded_flag[img] = true;
-                            _self.on_image_loaded();
-                        };
-                        _self.content[img].onerror=function(){ 
-                            _self.loaded_flag[img] = true;
-                            _self.on_image_loaded();
-                        };
+                    if (this.names){
+                        this.names.forEach(function(img){
+                            _self.content[img] = new Image();
+                            _self.content[img].onload= function(){ 
+                                _self.loaded_flag[img] = true;
+                                _self.on_image_loaded();
+                            };
+                            _self.content[img].onerror=function(){ 
+                                _self.loaded_flag[img] = true;
+                                _self.on_image_loaded();
+                            };
 
-                        _self.content[img].src = '/static/data/'+scene_name+'/image/' + img + '/'+ frame+'.jpg';
-                    })
+                            _self.content[img].src = '/static/data/'+scene_name+'/image/' + img + '/'+ frame+'.jpg';
+                        });
+                    }
                 },
 
                 on_image_loaded: function(){
@@ -807,7 +809,7 @@ var data = {
                 return this._get_points_of_box(points, box, scale_ratio).index;
             },
 
-                        // this 
+            // this 
             _get_points_of_box: function(points, box, scale_ratio, point_indices){
 
                 if (!scale_ratio){
@@ -902,13 +904,149 @@ var data = {
                 extreme.min.z -= 0.01;
 
                 
-                console.log("found indices: " + indices.length, indices);
+                console.log("found indices: " + indices.length);
 
                 return {
                     index: indices,
                     position: relative_position,
                     extreme: extreme,
                 }
+            },
+
+            grow_box: function(box, min_distance){
+
+                var points = this.points;
+                var pos_array = points.geometry.getAttribute("position").array;
+                
+                var relative_position = [];
+                
+                var trans = transpose(euler_angle_to_rotate_matrix(box.rotation, {x:0, y:0, z:0}), 4);
+
+                var indices=[];
+                var outer_indices=[];
+                var cand_point_indices = this.get_covering_position_indices(points, box.position, box.scale);
+                
+                var extreme= {
+                    max: {        
+                        x:-100000,
+                        y:-100000,
+                        z:-100000,
+                    },
+            
+                    min: {        
+                        x:1000000,
+                        y:1000000,
+                        z:1000000,
+                    },
+                };
+
+                var scale_ratio = 1.0;
+                cand_point_indices.forEach(function(i){
+                //for (var i  = 0; i < pos.count; i++){
+                    var x = pos_array[i*3];
+                    var y = pos_array[i*3+1];
+                    var z = pos_array[i*3+2];
+
+                    var p = [x-box.position.x, y-box.position.y, z-box.position.z, 1];
+                    var tp = matmul(trans, p, 4);
+
+                    
+                    // if indices is provided by caller, don't filter
+                    if ((Math.abs(tp[0]) > box.scale.x/2 * scale_ratio+0.01) 
+                        || (Math.abs(tp[1]) > box.scale.y/2 * scale_ratio+0.01)
+                        || (Math.abs(tp[2]) > box.scale.z/2 *scale_ratio+0.01) ){
+                        outer_indices.push(i);
+                        return;
+                    }
+
+
+                    if (tp[0] > extreme.max.x) {
+                        extreme.max.x = tp[0];
+                    } 
+                    
+                    if (tp[0] < extreme.min.x){
+                        extreme.min.x = tp[0];
+                    }
+            
+                    if (tp[1] > extreme.max.y){
+                        extreme.max.y = tp[1];
+                    }
+                    
+                    if (tp[1] < extreme.min.y){
+                        extreme.min.y = tp[1];
+                    }
+            
+                    if (tp[2] > extreme.max.z){
+                        extreme.max.z = tp[2];
+                    }
+                    
+                    if (tp[2] < extreme.min.z){
+                        extreme.min.z = tp[2];
+                    }
+
+                    indices.push(i);
+                });
+                
+
+                if (indices.length==0){
+                    return null;
+                }
+
+                for (var t_o in outer_indices){
+                    var o = outer_indices[t_o];
+                    for (var t_i in indices){
+                        var i = indices[t_i];
+                        var x = pos_array[i*3] - pos_array[o*3];
+                        var y = pos_array[i*3+1] - pos_array[o*3+1];
+                        var z = pos_array[i*3+2] - pos_array[o*3+2];
+
+                        if (x*x+y*y+z*z < min_distance*min_distance){
+                            indices.push(o);
+
+                            var p = [pos_array[o*3]-box.position.x, pos_array[o*3+1]-box.position.y, pos_array[o*3+2]-box.position.z, 1];
+                            var tp = matmul(trans, p, 4);
+                            if (tp[0] > extreme.max.x) {
+                                extreme.max.x = tp[0];
+                            } 
+                            
+                            if (tp[0] < extreme.min.x){
+                                extreme.min.x = tp[0];
+                            }
+                    
+                            if (tp[1] > extreme.max.y){
+                                extreme.max.y = tp[1];
+                            }
+                            
+                            if (tp[1] < extreme.min.y){
+                                extreme.min.y = tp[1];
+                            }
+                    
+                            if (tp[2] > extreme.max.z){
+                                extreme.max.z = tp[2];
+                            }
+                            
+                            if (tp[2] < extreme.min.z){
+                                extreme.min.z = tp[2];
+                            }
+        
+                            break;
+                        }
+                    }
+                }
+                
+                extreme.max.x += 0.01;
+                extreme.max.y += 0.01;
+                extreme.max.z += 0.01;
+
+                extreme.min.x -= 0.01;
+                extreme.min.y -= 0.01;
+                extreme.min.z -= 0.01;
+
+                // return {
+                //     index: indices,                 
+                //     extreme: extreme,
+                // }
+                return extreme;
             },
 
             set_box_points_color: function(box, target_color){

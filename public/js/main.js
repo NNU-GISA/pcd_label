@@ -249,12 +249,12 @@ function install_context_menu(){
         item.style.top = parent_menu.top + "px";
         item.style.left = parent_menu.left + parent_menu.width + "px";
 
-        console.log("enter  new item");
+        //console.log("enter new item");
     };
 
     document.getElementById("cm-new").onmouseleave = function(event){
         document.getElementById("new-submenu").style.display="none";
-        console.log("leave  new item");
+        //console.log("leave  new item");
     };
 
 
@@ -506,8 +506,8 @@ function init_gui(){
     };
 
     params["test2"] = function(){
-        data.world.cancel_highlight();
-        render();
+        grow_box(0.2);
+        on_box_changed(selected_box);
     };
     
     params["reset main view"] = function(){
@@ -810,7 +810,7 @@ function handleLeftClick(event) {
 
         if (event.ctrlKey){
             //Ctrl+left click to smart paste!
-            smart_paste();
+            //smart_paste();
         }
         else{
             //select box /unselect box
@@ -1204,10 +1204,23 @@ function switch_bbox_type(target_type){
     floatLabelManager.set_object_type(selected_box.obj_local_id, selected_box.obj_type);
     floatLabelManager.update_label_editor(selected_box.obj_type, selected_box.obj_track_id);
 
-    on_box_changed(selected_box);
+    
     
 }
 
+function grow_box(min_distance){
+
+    var extreme = data.world.grow_box(selected_box, 0.2);
+
+    if (extreme){
+
+        ['x','y', 'z'].forEach(function(axis){
+            translate_box(selected_box, axis, (extreme.max[axis] + extreme.min[axis])/2);
+            selected_box.scale[axis] = extreme.max[axis] - extreme.min[axis];        
+        }) 
+    }
+
+}
 
 function keydown( ev ) {
     operation_state.key_pressed = true;
@@ -1251,6 +1264,7 @@ function keydown( ev ) {
         case 'b':
             switch_bbox_type();
             header.mark_changed_flag();
+            on_box_changed(selected_box);
             break;
         case 'z': // X
             views[0].transform_control.showX = ! views[0].transform_control.showX;
@@ -1654,6 +1668,8 @@ function add_global_obj_type(){
         document.getElementById("cm-new-"+o).onclick = function(event){
             add_bbox();
             switch_bbox_type(event.currentTarget.getAttribute("uservalue"));
+            grow_box();
+            on_box_changed(selected_box);
         }
     }
 

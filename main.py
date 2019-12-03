@@ -126,47 +126,76 @@ class Root(object):
         def strip_str(x):
           return x.strip()
 
+
+        
+        # calib_file = "public/data/"+s+"/calib.txt"
+        # if os.path.isfile(calib_file):
+        #   calib["image"] = {}
+        #   with open(calib_file)  as f:
+        #     lines = f.readlines()
+        #     calib["image"]["extrinsic"] = map(strip_str, lines[0].strip().split(","))
+        #     calib["image"]["intrinsic"] = lines[1].strip().split(",") 
+
+        # calibleft={}
+        # calib_file = "public/data/"+s+"/calib_left.txt"
+        # if os.path.isfile(calib_file):
+        #   calib["left"] = {}
+        #   with open(calib_file)  as f:
+        #     lines = f.readlines()
+        #     calib["left"]["extrinsic"] = map(strip_str, lines[0].strip().split(","))
+        #     calib["left"]["intrinsic"] = lines[1].strip().split(",") 
+
+        # calibright={}
+        # calib_file = "public/data/"+s+"/calib_right.txt"
+        # if os.path.isfile(calib_file):
+        #   calib["right"] = {}
+        #   with open(calib_file)  as f:
+        #     lines = f.readlines()
+        #     calib["right"]["extrinsic"] = map(strip_str, lines[0].strip().split(","))
+        #     calib["right"]["intrinsic"] = lines[1].strip().split(",") 
         calib={}
-        calib_file = "public/data/"+s+"/calib.txt"
-        if os.path.isfile(calib_file):
-          calib["image"] = {}
-          with open(calib_file)  as f:
-            lines = f.readlines()
-            calib["image"]["extrinsic"] = map(strip_str, lines[0].strip().split(","))
-            calib["image"]["intrinsic"] = lines[1].strip().split(",") 
+        calibs = os.listdir("public/data/"+s+"/calib")
+        for c in calibs:
+          calib_file = "public/data/"+s+"/calib/" + c
+          calib_name, _ = os.path.splitext(c)
+          if os.path.isfile(calib_file):
+            calib[calib_name] = {}
+            with open(calib_file)  as f:
+              lines = f.readlines()
+              calib[calib_name]["extrinsic"] = map(strip_str, lines[0].strip().split(","))
+              calib[calib_name]["intrinsic"] = lines[1].strip().split(",") 
 
-        calibleft={}
-        calib_file = "public/data/"+s+"/calib_left.txt"
-        if os.path.isfile(calib_file):
-          calib["left"] = {}
-          with open(calib_file)  as f:
-            lines = f.readlines()
-            calib["left"]["extrinsic"] = map(strip_str, lines[0].strip().split(","))
-            calib["left"]["intrinsic"] = lines[1].strip().split(",") 
+        image = []
+        cam_path = "public/data/"+s+"/image"
+        if os.path.exists(cam_path):
+          cams = os.listdir(cam_path)
+          for c in cams:
+            cam_file = "public/data/"+s+"/image/" + c
+            if os.path.isdir(cam_file):
+              if image:
+                image.append(c)
+              else:
+                image = [c]
 
-        calibright={}
-        calib_file = "public/data/"+s+"/calib_right.txt"
-        if os.path.isfile(calib_file):
-          calib["right"] = {}
-          with open(calib_file)  as f:
-            lines = f.readlines()
-            calib["right"]["extrinsic"] = map(strip_str, lines[0].strip().split(","))
-            calib["right"]["intrinsic"] = lines[1].strip().split(",") 
-
-
+            
         if not os.path.isdir("public/data/"+s+"/bbox.xyz"):
           scene["boxtype"] = "psr"
           if point_transform_matrix:
             scene["point_transform_matrix"] = point_transform_matrix
           if calib:
             scene["calib"] = calib
+          if image:
+            scene["image"] = image
         else:
           scene["boxtype"] = "xyz"
           if point_transform_matrix:
             scene["point_transform_matrix"] = point_transform_matrix
           if calib:
             scene["calib"] = calib
+          if image:
+            scene["image"] = image
 
+      
       print(data)
       return data
       # return [

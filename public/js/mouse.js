@@ -11,10 +11,15 @@ var onUpPosition;
 
 var handleLeftClick;
 var handleRightClick;
-
+var handleSelectRect;
 var dom_element;
 
-function init_mouse(container, on_left_click, on_right_click){
+var in_select_mode = false;
+var select_start_pos;
+var select_end_pos;
+
+
+function init_mouse(container, on_left_click, on_right_click, on_select_rect){
     raycaster = new THREE.Raycaster();
     onDownPosition = new THREE.Vector2();
     onUpPosition = new THREE.Vector2();
@@ -22,23 +27,18 @@ function init_mouse(container, on_left_click, on_right_click){
 
     container.addEventListener( 'mousemove', onMouseMove, false );
     container.addEventListener( 'mousedown', onMouseDown, true );
-    set_mouse_handler(on_left_click, on_right_click);
+    set_mouse_handler(on_left_click, on_right_click, on_select_rect);
     dom_element = container;
 }
 
-function set_mouse_handler(on_left_click, on_right_click){
+function set_mouse_handler(on_left_click, on_right_click, on_select_rect){
     handleLeftClick = on_left_click;
     handleRightClick = on_right_click;
+    handleSelectRect = on_select_rect;
 }
 
 
-function onMouseMove( event ) {
-    event.preventDefault();
-    mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-    mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-   
-    //console.log(mouse, x, y);   
-}
+
 
 function get_mouse_location_in_world(){
     raycaster.setFromCamera( mouse, views[0].camera );
@@ -55,9 +55,21 @@ function get_mouse_location_in_world(){
 
 function onMouseDown( event ) {    
 
+    in_select_mode = false;
+
     if (event.which==3){
         operation_state.mouse_right_down = true;
         operation_state.key_pressed = false;
+    } else if (event.which == 1){
+        console.log("mouse left key down!");
+        if (event.ctrlKey){
+            in_select_mode = true;
+        
+            select_start_pos={
+                x: event.clientX,
+                y: event.clientY,
+            }            
+        }
     }
     
 
@@ -69,11 +81,55 @@ function onMouseDown( event ) {
 
 }
 
+function onMouseMove( event ) {
+    event.preventDefault();
+    mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+    mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+   
+    if (event.ctrlKey)
+        console.log(mouse);   
+
+    if (in_select_mode){
+        if (event.client != select_start_pos.x || event.clientY != select_end_pos.y){
+            //draw select box
+            var sbox = document.getElementById("select-box");
+            
+            sbox.style.display="inherit";
+
+            select_end_pos={
+                x: event.clientX,
+                y: event.clientY,
+            } 
+
+            if (select_start_pos.x < select_end_pos.x){
+                sbox.style.left = select_start_pos.x + 'px';
+                sbox.style.width = select_end_pos.x - select_start_pos.x + 'px';
+            }else {
+                sbox.style.left = select_end_pos.x + 'px';
+                sbox.style.width = -select_end_pos.x + select_start_pos.x + 'px';
+            }
+
+            if (select_start_pos.y < select_end_pos.y){
+                sbox.style.top = select_start_pos.y + 'px';
+                sbox.style.height = select_end_pos.y - select_start_pos.y + 'px';
+            }else {
+                sbox.style.top = select_end_pos.y + 'px';
+                sbox.style.height = -select_end_pos.y + select_start_pos.y + 'px';
+            }
+        }
+    }
+    
+}
+
+
 function onMouseUp( event ) {
+    this.removeEventListener( 'mouseup', onMouseUp, false );
+
 
     if (event.which==3){
         operation_state.mouse_right_down = false;
     }
+
     
     var array = getMousePosition(dom_element, event.clientX, event.clientY );
     onUpPosition.fromArray( array );
@@ -93,6 +149,42 @@ function onMouseUp( event ) {
         }
     }
     
+
+    if (in_select_mode){
+        in_select_mode = false;
+        
+        
+        var sbox = document.getElementById("select-box");
+        sbox.style.display="none";
+
+        if (handleSelectRect){
+            var x,y,w,h;
+
+            if (onDownPosition.x < onUpPosition.x){
+                x = onDownPosition.x;
+                w = onUpPosition.x - onDownPosition.x;
+            }
+            else{
+                x = onUpPosition.x;
+                w = onDownPosition.x - onUpPosition.x;
+            }
+
+            if (onDownPosition.y < onUpPosition.y){
+                y = onDownPosition.y;
+                h = onUpPosition.y - onDownPosition.y;
+            }
+            else{
+                y = onUpPosition.y;
+                h = onDownPosition.y - onUpPosition.y;
+            }
+
+
+
+            console.log("select rect",x,y,w,h);
+            handleSelectRect(x,y,w,h, onUpPosition);
+        }
+    }
+
     this.removeEventListener( 'mouseup', onMouseUp, false );
 
 }

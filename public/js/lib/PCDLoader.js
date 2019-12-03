@@ -14,6 +14,7 @@ import {
 	LoaderUtils,	
 } from "./three.module.js";
 
+
 var PCDLoader = function ( manager ) {
 
 	this.manager = ( manager !== undefined ) ? manager : DefaultLoadingManager;
@@ -36,7 +37,8 @@ PCDLoader.prototype = {
 		loader.load( url, function ( data ) {
 
 			try {
-				onFileLoaded();
+				if (onFileLoaded)
+					onFileLoaded();
 				onLoad( scope.parse( data, url) );
 			} catch ( e ) {
 

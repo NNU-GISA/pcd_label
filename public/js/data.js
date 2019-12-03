@@ -68,7 +68,7 @@ var data = {
         this.world.update_points_color();
     },
 
-    active_image_name: "image",
+    active_image_name: "",
     set_active_image: function(name){
         this.active_image_name = name;
         if (this.world){
@@ -229,9 +229,9 @@ var data = {
                     return true;
                 },
 
-                names: ["image","left","right"],
+                names: scene_meta.image, //["image","left","right"],
                 loaded_flag: {},
-                active_name: "image",
+                active_name: "",
                 active_image: function(){
                     return this.content[this.active_name];
                 },
@@ -245,19 +245,21 @@ var data = {
                 load: function(on_all_loaded){
                     this.on_all_loaded = on_all_loaded;
                     var _self = this;
-                    this.names.forEach(function(img){
-                        _self.content[img] = new Image();
-                        _self.content[img].onload= function(){ 
-                            _self.loaded_flag[img] = true;
-                            _self.on_image_loaded();
-                        };
-                        _self.content[img].onerror=function(){ 
-                            _self.loaded_flag[img] = true;
-                            _self.on_image_loaded();
-                        };
+                    if (this.names){
+                        this.names.forEach(function(img){
+                            _self.content[img] = new Image();
+                            _self.content[img].onload= function(){ 
+                                _self.loaded_flag[img] = true;
+                                _self.on_image_loaded();
+                            };
+                            _self.content[img].onerror=function(){ 
+                                _self.loaded_flag[img] = true;
+                                _self.on_image_loaded();
+                            };
 
-                        _self.content[img].src = '/static/data/'+scene_name+'/' + img + '/'+ frame+'.jpg';
-                    })
+                            _self.content[img].src = '/static/data/'+scene_name+'/image/' + img + '/'+ frame+'.jpg';
+                        });
+                    }
                 },
 
                 on_image_loaded: function(){
@@ -788,27 +790,61 @@ var data = {
                 this.scene.add(mesh);
             },
 
+            get_points_indices_of_box: function(box){
+                return this._get_points_of_box(this.points, box, 1).index;
+            },
+
             get_points_of_box_in_box_coord: function(box){
                 return this._get_points_of_box(this.points, box, 1).position;
             },
+            get_points_dimmension_of_box: function(box){
+                return this._get_points_of_box(this.points, box, 1).extreme;
+            },
+            // given points and box, calculate new box scale
+            get_dimension_of_points: function(indices, box){
+                return this._get_points_of_box(this.points, box, 1, indices).extreme;                
+            },
+
 
             _get_points_index_of_box: function(points, box, scale_ratio){
                 return this._get_points_of_box(points, box, scale_ratio).index;
             },
 
             // this 
-            _get_points_of_box: function(points, box, scale_ratio){
+            _get_points_of_box: function(points, box, scale_ratio, point_indices){
 
                 if (!scale_ratio){
                     scale_ratio = 1;
                 }
                 var pos_array = points.geometry.getAttribute("position").array;
-                var indices=[];
+
+                
                 var relative_position = [];
+                var extreme= {
+                    max: {        
+                        x:-100000,
+                        y:-100000,
+                        z:-100000,
+                    },
+            
+                    min: {        
+                        x:1000000,
+                        y:1000000,
+                        z:1000000,
+                    },
+                };
+
                 var r = box.rotation;
                 var trans = transpose(euler_angle_to_rotate_matrix(r, {x:0, y:0, z:0}), 4);
 
-                var cand_point_indices = this.get_covering_position_indices(points, box.position, box.scale);
+                var indices=[];
+                var cand_point_indices = point_indices;
+                if (!point_indices)
+                {                    
+                    cand_point_indices = this.get_covering_position_indices(points, box.position, box.scale);
+                }
+
+
                 cand_point_indices.forEach(function(i){
                 //for (var i  = 0; i < pos.count; i++){
                     var x = pos_array[i*3];
@@ -819,23 +855,224 @@ var data = {
 
                     var tp = matmul(trans, p, 4);
 
-                    if ((Math.abs(tp[0]) > box.scale.x/2 * scale_ratio+0.01) 
-                        || (Math.abs(tp[1]) > box.scale.y/2 * scale_ratio+0.01)
-                        || (Math.abs(tp[2]) > box.scale.z/2 *scale_ratio+0.01) ){
-                        return;
+                    if (!point_indices){
+                        // if indices is provided by caller, don't filter
+                        if ((Math.abs(tp[0]) > box.scale.x/2 * scale_ratio+0.01) 
+                            || (Math.abs(tp[1]) > box.scale.y/2 * scale_ratio+0.01)
+                            || (Math.abs(tp[2]) > box.scale.z/2 *scale_ratio+0.01) ){
+                            return;
+                        }
+
+                        indices.push(i);
                     }
                     
-                    indices.push(i);
+                    
+                    
+                    
                     relative_position.push([tp[0],tp[1],tp[2]]);
+
+                    if (tp[0] > extreme.max.x) {
+                        extreme.max.x = tp[0];
+                    } 
+                    
+                    if (tp[0] < extreme.min.x){
+                        extreme.min.x = tp[0];
+                    }
+            
+                    if (tp[1] > extreme.max.y){
+                        extreme.max.y = tp[1];
+                    }
+                    
+                    if (tp[1] < extreme.min.y){
+                        extreme.min.y = tp[1];
+                    }
+            
+                    if (tp[2] > extreme.max.z){
+                        extreme.max.z = tp[2];
+                    }
+                    
+                    if (tp[2] < extreme.min.z){
+                        extreme.min.z = tp[2];
+                    }
                 });
+                
+                extreme.max.x += 0.01;
+                extreme.max.y += 0.01;
+                extreme.max.z += 0.01;
+
+                extreme.min.x -= 0.01;
+                extreme.min.y -= 0.01;
+                extreme.min.z -= 0.01;
+
                 
                 console.log("found indices: " + indices.length);
 
                 return {
                     index: indices,
                     position: relative_position,
+                    extreme: extreme,
                 }
             },
+
+            grow_box: function(box, min_distance){
+
+                var points = this.points;
+                var pos_array = points.geometry.getAttribute("position").array;
+                
+                var relative_position = [];
+                
+                var trans = transpose(euler_angle_to_rotate_matrix(box.rotation, {x:0, y:0, z:0}), 4);
+
+                var indices=[];
+                var outer_indices=[];
+                var cand_point_indices = this.get_covering_position_indices(points, box.position, box.scale);
+                
+                var extreme= {
+                    max: {        
+                        x:-100000,
+                        y:-100000,
+                        z:-100000,
+                    },
+            
+                    min: {        
+                        x:1000000,
+                        y:1000000,
+                        z:1000000,
+                    },
+                };
+
+                var scale_ratio = 1.0;
+                cand_point_indices.forEach(function(i){
+                //for (var i  = 0; i < pos.count; i++){
+                    var x = pos_array[i*3];
+                    var y = pos_array[i*3+1];
+                    var z = pos_array[i*3+2];
+
+                    var p = [x-box.position.x, y-box.position.y, z-box.position.z, 1];
+                    var tp = matmul(trans, p, 4);
+
+                    
+                    // if indices is provided by caller, don't filter
+                    if ((Math.abs(tp[0]) > box.scale.x/2 * scale_ratio+0.01) 
+                        || (Math.abs(tp[1]) > box.scale.y/2 * scale_ratio+0.01)
+                        || (Math.abs(tp[2]) > box.scale.z/2 *scale_ratio+0.01) ){
+                        outer_indices.push(i);
+                        return;
+                    }
+
+
+                    if (tp[0] > extreme.max.x) {
+                        extreme.max.x = tp[0];
+                    } 
+                    
+                    if (tp[0] < extreme.min.x){
+                        extreme.min.x = tp[0];
+                    }
+            
+                    if (tp[1] > extreme.max.y){
+                        extreme.max.y = tp[1];
+                    }
+                    
+                    if (tp[1] < extreme.min.y){
+                        extreme.min.y = tp[1];
+                    }
+            
+                    if (tp[2] > extreme.max.z){
+                        extreme.max.z = tp[2];
+                    }
+                    
+                    if (tp[2] < extreme.min.z){
+                        extreme.min.z = tp[2];
+                    }
+
+                    indices.push(i);
+                });
+                
+
+                if (indices.length==0){
+                    return null;
+                }
+
+                for (var t_o in outer_indices){
+                    var o = outer_indices[t_o];
+                    for (var t_i in indices){
+                        var i = indices[t_i];
+                        var x = pos_array[i*3] - pos_array[o*3];
+                        var y = pos_array[i*3+1] - pos_array[o*3+1];
+                        var z = pos_array[i*3+2] - pos_array[o*3+2];
+
+                        if (x*x+y*y+z*z < min_distance*min_distance){
+                            indices.push(o);
+
+                            var p = [pos_array[o*3]-box.position.x, pos_array[o*3+1]-box.position.y, pos_array[o*3+2]-box.position.z, 1];
+                            var tp = matmul(trans, p, 4);
+                            if (tp[0] > extreme.max.x) {
+                                extreme.max.x = tp[0];
+                            } 
+                            
+                            if (tp[0] < extreme.min.x){
+                                extreme.min.x = tp[0];
+                            }
+                    
+                            if (tp[1] > extreme.max.y){
+                                extreme.max.y = tp[1];
+                            }
+                            
+                            if (tp[1] < extreme.min.y){
+                                extreme.min.y = tp[1];
+                            }
+                    
+                            if (tp[2] > extreme.max.z){
+                                extreme.max.z = tp[2];
+                            }
+                            
+                            if (tp[2] < extreme.min.z){
+                                extreme.min.z = tp[2];
+                            }
+        
+                            break;
+                        }
+                    }
+                }
+                
+                extreme.max.x += 0.01;
+                extreme.max.y += 0.01;
+                extreme.max.z += 0.01;
+
+                extreme.min.x -= 0.01;
+                extreme.min.y -= 0.01;
+                extreme.min.z -= 0.01;
+
+                // return {
+                //     index: indices,                 
+                //     extreme: extreme,
+                // }
+                return extreme;
+            },
+
+            select_points_by_view_rect: function(x,y,w,h, camera){
+                var points = this.points;
+                var pos_array = points.geometry.getAttribute("position").array;
+
+                var indices = [];
+                var p = new THREE.Vector3();
+
+                for (var i=0; i< pos_array.length/3; i++){
+                    p.set(pos_array[i*3], pos_array[i*3+1], pos_array[i*3+2]);
+                    p.project(camera);
+                    //p.x = p.x/p.z;
+                    //p.y = p.y/p.z;
+                    //console.log(p);
+                    if ((p.x > x) && (p.x < x+w) && (p.y>y) && (p.y<y+h)){
+                        indices.push(i);
+                    }
+                }
+
+                console.log("select rect points", indices.length);
+                this.set_spec_points_color(indices, {x:1,y:0,z:0});
+                this.update_points_color();
+            },
+
 
             set_box_points_color: function(box, target_color){
                 //var pos = this.points.geometry.getAttribute("position");
@@ -852,6 +1089,17 @@ var data = {
 
                 var indices = this._get_points_index_of_box(this.points, box, 1.0);
                 indices.forEach(function(i){
+                    color.array[i*3] = target_color.x;
+                    color.array[i*3+1] = target_color.y;
+                    color.array[i*3+2] = target_color.z;
+                });
+            },
+
+            set_spec_points_color: function(point_indices, target_color){
+                //var pos = this.points.geometry.getAttribute("position");
+                var color = this.points.geometry.getAttribute("color");
+                
+                point_indices.forEach(function(i){
                     color.array[i*3] = target_color.x;
                     color.array[i*3+1] = target_color.y;
                     color.array[i*3+2] = target_color.z;

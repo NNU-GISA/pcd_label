@@ -3,7 +3,6 @@ import { OrbitControls } from './lib/OrbitControls.js';
 import { OrthographicTrackballControls } from './lib/OrthographicTrackballControls.js';
 import { TransformControls } from './lib/TransformControls.js';
 
-
 var views = [
     {
         left: 0,

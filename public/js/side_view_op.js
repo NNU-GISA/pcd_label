@@ -445,10 +445,17 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
                     };
                     
                     
-                    if (direction)
+                    if (direction){
                         on_edge_changed(ratio_delta, direction);
-                    else
+
+                        if (event.ctrlKey){
+                            on_auto_shrink(direction);
+                        }
+                    }
+                    else{
+                        // when intall handler for mover, the direcion is left null
                         on_moved(ratio_delta);
+                    }
                 }
     
                 svg.onmousemove = function(event){
@@ -661,59 +668,10 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
 }
 
 function get_selected_obj_support_point(){
-    var points = data.world.get_points_of_box_in_box_coord(selected_box);
-
-    if (points.length == 0){
-        return;
-    }
-
-    var extreme= {
-        max: {        
-            x:-100000,
-            y:-100000,
-            z:-100000,
-        },
-
-        min: {        
-            x:1000000,
-            y:1000000,
-            z:1000000,
-        },
-    };
-    
-    var max=extreme.max;
-    var min=extreme.min;
-
-    for (var i in points){
-        if (points[i][0] > max.x) {
-            max.x = points[i][0];
-        } else if (points[i][0] < min.x){
-            min.x = points[i][0];
-        }
-
-        if (points[i][1] > max.y){
-            max.y = points[i][1];
-        }else if (points[i][1] < min.y){
-            min.y = points[i][1];
-        }
-
-        if (points[i][2] > max.z){
-            max.z = points[i][2];
-        }else if (points[i][2] < min.z){
-            min.z = points[i][2];
-        }
-    }
-
-    extreme.max.x += 0.01;
-    extreme.max.y += 0.01;
-    extreme.max.z += 0.01;
-
-    extreme.min.x -= 0.01;
-    extreme.min.y -= 0.01;
-    extreme.min.z -= 0.01;
-
-    return extreme;
+    return data.world.get_points_dimmension_of_box(selected_box);
 }
+
+
 // direction: 1, -1
 // axis: x,y,z
 
@@ -737,7 +695,21 @@ function auto_shrink(extreme, direction){
     }
 }
 
+function on_edge_changed(delta, direction){
+    console.log(delta);
 
+    translate_box(selected_box, 'x', delta.x/2 * direction.x);
+    translate_box(selected_box, 'y', delta.y/2 * direction.y);
+    translate_box(selected_box, 'z', delta.z/2 * direction.z);
+
+    selected_box.scale.x += delta.x;
+    selected_box.scale.y += delta.y;
+    selected_box.scale.z += delta.z;
+    on_box_changed(selected_box);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////
 function on_z_auto_shrink(direction){
     var  extreme = get_selected_obj_support_point()
     
@@ -757,18 +729,7 @@ function on_z_auto_shrink(direction){
     on_box_changed(selected_box);
 }
 
-function on_edge_changed(delta, direction){
-    console.log(delta);
 
-    translate_box(selected_box, 'x', delta.x/2 * direction.x);
-    translate_box(selected_box, 'y', delta.y/2 * direction.y);
-    translate_box(selected_box, 'z', delta.z/2 * direction.z);
-
-    selected_box.scale.x += delta.x;
-    selected_box.scale.y += delta.y;
-    selected_box.scale.z += delta.z;
-    on_box_changed(selected_box);
-}
 
 function on_z_edge_changed(ratio, direction){
 
@@ -784,9 +745,22 @@ function on_z_edge_changed(ratio, direction){
 }
 
 function on_z_direction_changed(theta){
+    var points_indices = data.world.get_points_indices_of_box(selected_box);
+
     var _tempQuaternion = new Quaternion();
     var rotationAxis = new Vector3(0,0,1);
     selected_box.quaternion.multiply( _tempQuaternion.setFromAxisAngle( rotationAxis, theta ) ).normalize();
+
+    
+    var extreme = data.world.get_dimension_of_points(points_indices, selected_box);
+
+    ['x','y'].forEach(function(axis){
+
+        translate_box(selected_box, axis, (extreme.max[axis] + extreme.min[axis])/2);
+        selected_box.scale[axis] = extreme.max[axis] - extreme.min[axis];        
+
+    }) 
+
     on_box_changed(selected_box);
 }
 
@@ -819,7 +793,7 @@ function on_z_scaled(ratio){
 var z_view_handle = create_view_handler("z-", on_z_edge_changed, on_z_direction_changed, on_z_auto_shrink, on_z_moved, on_z_scaled);
 
 
-
+///////////////////////////////////////////////////////////////////////////////////
 
 function on_y_edge_changed(ratio, direction){
 
@@ -905,7 +879,7 @@ function on_y_scaled(ratio){
 var y_view_handle = create_view_handler("y-", on_y_edge_changed, on_y_direction_changed, on_y_auto_shrink, on_y_moved, on_y_scaled);
 
 
-
+///////////////////////////////////////////////////////////////////////////////////
 
 function on_x_edge_changed(ratio, direction){
 
@@ -990,6 +964,9 @@ function on_x_scaled(ratio){
 }
 var x_view_handle = create_view_handler("x-", on_x_edge_changed, on_x_direction_changed, on_x_auto_shrink, on_x_moved, on_x_scaled);
 
+
+
+// exports
 
 var view_handles = {
     init_view_operation: function(){

@@ -8,7 +8,7 @@ import {matmul2, euler_angle_to_rotate_matrix} from "./util.js"
 import {header} from "./header.js"
 import {get_obj_cfg_by_type, obj_type_map, get_next_obj_type_name} from "./obj_cfg.js"
 
-import {render_2d_image, update_image_box_projection, clear_canvas, clear_main_canvas, choose_best_camera_for_point} from "./image.js"
+import {init_image_op, render_2d_image, update_image_box_projection, clear_canvas, clear_main_canvas, choose_best_camera_for_point} from "./image.js"
 import {add_calib_gui}  from "./calib.js"
 import {mark_bbox, paste_bbox, auto_adjust_bbox, smart_paste} from "./auto-adjust.js"
 import {save_annotation} from "./save.js"
@@ -45,7 +45,10 @@ var operation_state = {
 init();
 animate();
 render();
-$( "#maincanvas" ).resizable();
+//$( "#maincanvas" ).resizable();
+
+init_image_op();
+
 load_data_meta();
 add_global_obj_type();
 
@@ -86,7 +89,7 @@ function init() {
     floatLabelManager = createFloatLabelManager(views[0]);
 
     init_gui();
-
+    
     scene.add( new THREE.AxesHelper( 1 ) );
 
     onWindowResize();
@@ -138,6 +141,8 @@ function init() {
 
     view_handles.init_view_operation();
     view_handles.hide();
+
+    
 }
 
 function install_fast_tool(){
@@ -816,6 +821,7 @@ function handleSelectRect(x,y,w,h){
     views[0].camera.updateProjectionMatrix();
     data.world.select_points_by_view_rect(x,y,w,h, views[0].camera);
     render();
+    render_2d_image();
 }
 
 function handleLeftClick(event) {

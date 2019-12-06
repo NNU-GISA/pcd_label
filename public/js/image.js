@@ -4,6 +4,116 @@ import {params, selected_box } from "./main.js"
 import {vector4to3, vector3_nomalize, psr_to_xyz, matmul} from "./util.js"
 import {get_obj_cfg_by_type} from "./obj_cfg.js"
 
+
+var drawing = false;
+var points = [];
+var polyline;
+var top_is_temp = false;
+function to_polyline_attr(points){
+    return points.reduce(function(x,y){
+        return String(x)+","+y;
+    }
+    )
+}
+
+function init_image_op(){
+    var c = document.getElementById("maincanvas-wrapper");
+    c.onclick = on_click;
+
+    // var h = document.getElementById("resize-handle");
+    // h.onmousedown = resize_mouse_down;
+        
+}
+
+function on_click(e){
+
+    console.log(e.layerX, e.layerY);
+    
+    
+    if (!drawing){
+        drawing = true;
+        var svg = document.getElementById("maincanvas-svg");
+        //svg.style.position = "absolute";
+        
+        polyline = document.createElementNS("http://www.w3.org/2000/svg", 'polyline');
+        svg.appendChild(polyline);
+        points.push(e.layerX);
+        points.push(e.layerY);
+
+        
+        polyline.setAttribute("class", "maincanvas-line")
+        polyline.setAttribute("points", to_polyline_attr(points));
+
+        var c = document.getElementById("maincanvas-wrapper");
+        c.onmousemove = on_move;
+        c.ondblclick = on_dblclick;   
+        c.onkeydown = on_key;    
+        
+        
+
+    } else {
+        if (points[points.length-2]!=e.layerX || points[points.length-1]!=e.layerY){
+            points.push(e.layerX);
+            points.push(e.layerY);
+            polyline.setAttribute("points", to_polyline_attr(points));
+        }
+        
+    }
+
+
+    function on_move(e){
+        console.log(e.layerX, e.layerY);        
+        polyline.setAttribute("points", to_polyline_attr(points) + ',' + e.layerX + ',' + e.layerY);
+    }
+
+    function on_dblclick(e){
+        console.log(e.layerX, e.layerY);
+        points.push(points[0]);
+        points.push(points[1]);
+        
+        polyline.setAttribute("points", to_polyline_attr(points));
+        console.log(points)
+        
+        drawing = false;
+        points = [];
+
+        var c = document.getElementById("maincanvas-wrapper");
+        c.onmousemove = null;
+        c.ondblclick = null;
+        c.onkeypress = null;
+        c.blur();
+    }
+
+    function cancel(){
+            
+            polyline.remove();
+
+            drawing = false;
+            points = [];
+            var c = document.getElementById("maincanvas-wrapper");
+            c.onmousemove = null;
+            c.ondblclick = null;
+            c.onkeypress = null;
+
+            c.blur();
+    }
+
+    function on_key(e){
+        if (e.key == "Escape"){
+            cancel();
+            
+        }
+    }
+}
+
+
+function on_mouse_down(e){
+    //e.stopPropagation();
+    //e.preventDefault();
+    
+    
+}
+
 // all boxes
 function clear_main_canvas(){
     var c = document.getElementById("maincanvas");
@@ -78,18 +188,23 @@ function render_2d_image(){
 
     draw_canvas();
 
+    //var svgimage = document.getElementById("svg-image");
+    //svgimage.setAttribute("xlink:href", data.world.images.active_image().src);
+
     function hide_canvas(){
-        document.getElementsByClassName("ui-wrapper")[0].style.display="none";
+        //document.getElementsByClassName("ui-wrapper")[0].style.display="none";
+        //document.getElementById("maincanvas-wrapper").style.display="none";
     }
 
     function show_canvas(){
-        document.getElementsByClassName("ui-wrapper")[0].style.display="inherit";
+        document.getElementById("maincanvas-wrapper").style.display="inherit";
     }
 
 
 
     function draw_canvas(){
         // draw picture
+        //var c = document.getElementById("maincanvas");
         var c = document.getElementById("maincanvas");
         var ctx = c.getContext("2d");
 
@@ -157,7 +272,98 @@ function render_2d_image(){
             draw_box_on_image(ctx, box, imgfinal, trans_ratio, selected_box == box);
 
         });
-    
+
+        // draw points 
+        if (true){
+
+            
+           
+            var canvasData = ctx.getImageData(0, 0, clientWidth, clientHeight);
+
+            // That's how you define the value of a pixel //
+            function drawPixel (x, y, r, g, b, a) {
+                var index = (x + y * clientWidth) * 4;
+
+                canvasData.data[index + 0] = r;
+                canvasData.data[index + 1] = g;
+                canvasData.data[index + 2] = b;
+                canvasData.data[index + 3] = a;
+            }
+
+            // That's how you update the canvas, so that your //
+            // modification are taken in consideration //
+            function updateCanvas() {
+                ctx.putImageData(canvasData, 0, 0);
+            }
+
+            var pts = data.world.get_points();
+            var p = pts.position.array;
+            var c = pts.color.array;
+            var p_homo = [];
+            for (var i=0; i<pts.position.count; ++i){
+                p_homo.push(p[i*3]);
+                p_homo.push(p[i*3+1]);
+                p_homo.push(p[i*3+2]);
+                p_homo.push(1);
+            }
+
+            var imgpos = matmul(calib.extrinsic, p_homo, 4);
+            var imgpos3 = vector4to3(imgpos);
+
+            var imgpos3_in_range = [];
+            var color=[];
+            for (var i = 0; i<imgpos3.length/3; ++i){
+                if (imgpos3[i*3+2] <-1){
+
+                }
+                else{
+                    imgpos3_in_range.push(imgpos3[i*3]);
+                    imgpos3_in_range.push(imgpos3[i*3+1]);
+                    imgpos3_in_range.push(imgpos3[i*3+2]);
+                    color.push(c[i*3]);
+                    color.push(c[i*3+1]);
+                    color.push(c[i*3+2]);
+                }
+            }
+
+            var imgpos2 = matmul(calib.intrinsic, imgpos3_in_range, 3);
+            var imgfinal = vector3_nomalize(imgpos2);
+
+            
+            for (var i = 0; i<imgfinal.length/2; ++i){
+                /*
+                var x = Math.round(imgfinal[i*2]*trans_ratio.x); 
+                var y = Math.round(imgfinal[i*2+1]*trans_ratio.y);
+                var r = Math.round(color[i*3]*255); 
+                var g = Math.round(color[i*3+1]*255); 
+                var b = Math.round(color[i*3+2]*255);
+                var a = Math.round(0.5*255);
+                
+                
+                drawPixel(x-1,y,r,g,b,a);
+                drawPixel(x+1,y,r,g,b,a);
+                drawPixel(x,  y,r,g,b,a);
+
+                drawPixel(x-1,y-1,r,g,b,a);
+                drawPixel(x+1,y-1,r,g,b,a);
+                drawPixel(x,  y-1,r,g,b,a);
+
+                drawPixel(x-1,y+1,r,g,b,a);
+                drawPixel(x+1,y+1,r,g,b,a);
+                drawPixel(x,  y+1,r,g,b,a);
+                */
+
+                
+               ctx.fillStyle="rgba("+Math.round(color[i*3]*255)+","+
+                                     Math.round(color[i*3+1]*255)+","+
+                                     Math.round(color[i*3+2]*255)+","+
+                                     0.5+")";
+               ctx.fillRect(Math.round(imgfinal[i*2]*trans_ratio.x)-3,Math.round(imgfinal[i*2+1]*trans_ratio.y)-3,5,5); // fill in the pixel at (10,10)
+               
+            }
+
+            //updateCanvas();
+        }
     }
 
 
@@ -276,7 +482,7 @@ function update_image_box_projection(box){
         var rotation = box.rotation;
 
         var img = data.world.images.active_image(); //document.getElementById("camera");
-        if (img.naturalWidth > 0){
+        if (img && (img.naturalWidth > 0)){
 
             clear_canvas();
 
@@ -367,4 +573,4 @@ function vectorsub(vs, v){
 
 
 
-export {render_2d_image, update_image_box_projection, clear_canvas, clear_main_canvas, choose_best_camera_for_point}
+export {init_image_op, render_2d_image, update_image_box_projection, clear_canvas, clear_main_canvas, choose_best_camera_for_point}

@@ -9,6 +9,9 @@ var drawing = false;
 var points = [];
 var polyline;
 var top_is_temp = false;
+
+var all_lines=[];
+
 function to_polyline_attr(points){
     return points.reduce(function(x,y){
         return String(x)+","+y;
@@ -22,13 +25,28 @@ function init_image_op(){
 
     // var h = document.getElementById("resize-handle");
     // h.onmousedown = resize_mouse_down;
-        
+    
+    c.onresize = on_resize;
 }
 
-function on_click(e){
+function on_resize(ev){
+    console.log(ev);
+}
 
-    console.log(e.layerX, e.layerY);
+
+function to_viewbox_coord(x,y){
+    var div = document.getElementById("maincanvas-svg");
     
+    x = Math.round(x*2048/div.clientWidth);
+    y = Math.round(y*1536/div.clientHeight);
+    return [x,y];
+
+}
+function on_click(e){
+    var p= to_viewbox_coord(e.layerX, e.layerY);
+    var x=p[0];
+    var y=p[1];
+    console.log(x,y);
     
     if (!drawing){
         drawing = true;
@@ -37,8 +55,8 @@ function on_click(e){
         
         polyline = document.createElementNS("http://www.w3.org/2000/svg", 'polyline');
         svg.appendChild(polyline);
-        points.push(e.layerX);
-        points.push(e.layerY);
+        points.push(x);
+        points.push(y);
 
         
         polyline.setAttribute("class", "maincanvas-line")
@@ -52,9 +70,9 @@ function on_click(e){
         
 
     } else {
-        if (points[points.length-2]!=e.layerX || points[points.length-1]!=e.layerY){
-            points.push(e.layerX);
-            points.push(e.layerY);
+        if (points[points.length-2]!=x || points[points.length-1]!=y){
+            points.push(x);
+            points.push(y);
             polyline.setAttribute("points", to_polyline_attr(points));
         }
         
@@ -62,18 +80,24 @@ function on_click(e){
 
 
     function on_move(e){
-        console.log(e.layerX, e.layerY);        
-        polyline.setAttribute("points", to_polyline_attr(points) + ',' + e.layerX + ',' + e.layerY);
+        var p= to_viewbox_coord(e.layerX, e.layerY);
+        var x=p[0];
+        var y=p[1];
+
+        console.log(x,y);
+        polyline.setAttribute("points", to_polyline_attr(points) + ',' + x + ',' + y);
     }
 
     function on_dblclick(e){
-        console.log(e.layerX, e.layerY);
+        
         points.push(points[0]);
         points.push(points[1]);
         
         polyline.setAttribute("points", to_polyline_attr(points));
         console.log(points)
         
+        all_lines.push(points);
+
         drawing = false;
         points = [];
 
@@ -186,10 +210,10 @@ function render_2d_image(){
         return;
     }
 
-    draw_canvas();
+    //draw_canvas();
 
-    //var svgimage = document.getElementById("svg-image");
-    //svgimage.setAttribute("xlink:href", data.world.images.active_image().src);
+    var svgimage = document.getElementById("svg-image");
+    svgimage.setAttribute("xlink:href", data.world.images.active_image().src);
 
     function hide_canvas(){
         //document.getElementsByClassName("ui-wrapper")[0].style.display="none";
@@ -205,7 +229,7 @@ function render_2d_image(){
     function draw_canvas(){
         // draw picture
         //var c = document.getElementById("maincanvas");
-        var c = document.getElementById("maincanvas");
+        var c = document.getElementById("svg-canvas");
         var ctx = c.getContext("2d");
 
         var img = data.world.images.active_image();

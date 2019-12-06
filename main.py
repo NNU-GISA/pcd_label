@@ -154,28 +154,30 @@ class Root(object):
         #     calib["right"]["extrinsic"] = map(strip_str, lines[0].strip().split(","))
         #     calib["right"]["intrinsic"] = lines[1].strip().split(",") 
         calib={}
-        calibs = os.listdir("public/data/"+s+"/calib")
-        for c in calibs:
-          calib_file = "public/data/"+s+"/calib/" + c
-          calib_name, _ = os.path.splitext(c)
-          if os.path.isfile(calib_file):
-            calib[calib_name] = {}
-            with open(calib_file)  as f:
-              lines = f.readlines()
-              calib[calib_name]["extrinsic"] = map(strip_str, lines[0].strip().split(","))
-              calib[calib_name]["intrinsic"] = lines[1].strip().split(",") 
+        if os.path.exists("public/data/"+s+"/calib"):
+          calibs = os.listdir("public/data/"+s+"/calib")
+          for c in calibs:
+            calib_file = "public/data/"+s+"/calib/" + c
+            calib_name, _ = os.path.splitext(c)
+            if os.path.isfile(calib_file):
+              calib[calib_name] = {}
+              with open(calib_file)  as f:
+                lines = f.readlines()
+                calib[calib_name]["extrinsic"] = map(strip_str, lines[0].strip().split(","))
+                calib[calib_name]["intrinsic"] = lines[1].strip().split(",") 
 
         image = []
         cam_path = "public/data/"+s+"/image"
         if os.path.exists(cam_path):
-          cams = os.listdir(cam_path)
-          for c in cams:
-            cam_file = "public/data/"+s+"/image/" + c
-            if os.path.isdir(cam_file):
-              if image:
-                image.append(c)
-              else:
-                image = [c]
+          if os.path.exists(cam_path):
+            cams = os.listdir(cam_path)
+            for c in cams:
+              cam_file = "public/data/"+s+"/image/" + c
+              if os.path.isdir(cam_file):
+                if image:
+                  image.append(c)
+                else:
+                  image = [c]
 
             
         if not os.path.isdir("public/data/"+s+"/bbox.xyz"):

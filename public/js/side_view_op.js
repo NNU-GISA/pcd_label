@@ -562,7 +562,7 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
                         return;
                     }
     
-                    on_direction_changed(-theta-Math.PI/2);
+                    on_direction_changed(-theta-Math.PI/2, event.ctrlKey);
                     
                 };
 
@@ -577,11 +577,11 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
             switch(event.key){
                 case 'e':
                 case 'f':
-                    on_direction_changed(-0.005);
+                    on_direction_changed(-0.005, event.ctrlKey);
                     break;
                 case 'q':
                 case 'r':                
-                    on_direction_changed(0.005);
+                    on_direction_changed(0.005, event.ctrlKey);
                     break;
                 case 'w':
                 case 'ArrowUp':
@@ -744,22 +744,24 @@ function on_z_edge_changed(ratio, direction){
     on_edge_changed(delta, direction);
 }
 
-function on_z_direction_changed(theta){
+function on_z_direction_changed(theta, sticky){
     var points_indices = data.world.get_points_indices_of_box(selected_box);
 
     var _tempQuaternion = new Quaternion();
     var rotationAxis = new Vector3(0,0,1);
     selected_box.quaternion.multiply( _tempQuaternion.setFromAxisAngle( rotationAxis, theta ) ).normalize();
 
+    if (sticky){
     
-    var extreme = data.world.get_dimension_of_points(points_indices, selected_box);
+        var extreme = data.world.get_dimension_of_points(points_indices, selected_box);
 
-    ['x','y'].forEach(function(axis){
+        ['x','y'].forEach(function(axis){
 
-        translate_box(selected_box, axis, (extreme.max[axis] + extreme.min[axis])/2);
-        selected_box.scale[axis] = extreme.max[axis] - extreme.min[axis];        
+            translate_box(selected_box, axis, (extreme.max[axis] + extreme.min[axis])/2);
+            selected_box.scale[axis] = extreme.max[axis] - extreme.min[axis];        
 
-    }) 
+        }) 
+    }
 
     on_box_changed(selected_box);
 }

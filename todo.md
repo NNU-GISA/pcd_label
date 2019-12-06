@@ -42,3 +42,5 @@
 38.  make cameras configurable
 39.  try reduce points searching times, at one adjustments, there are 6 point searching invoke.
 40.  add global parameter 'sticky mode'
+41.  project points to image
+42.  

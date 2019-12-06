@@ -351,6 +351,15 @@ var data = {
                     this.go();
                 }  
             },
+
+            get_points: function(){
+                return {
+                  position: this.points.geometry.getAttribute("position"),
+                  color: this.points.geometry.getAttribute("color"),
+                };
+            },
+
+
             load_points: function(){
                 var loader = new PCDLoader();
 
@@ -1063,7 +1072,7 @@ var data = {
                     //p.x = p.x/p.z;
                     //p.y = p.y/p.z;
                     //console.log(p);
-                    if ((p.x > x) && (p.x < x+w) && (p.y>y) && (p.y<y+h)){
+                    if ((p.x > x) && (p.x < x+w) && (p.y>y) && (p.y<y+h) && (p.z>0)){
                         indices.push(i);
                     }
                 }

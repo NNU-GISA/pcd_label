@@ -210,10 +210,12 @@ function render_2d_image(){
         return;
     }
 
-    //draw_canvas();
+    
 
     var svgimage = document.getElementById("svg-image");
     svgimage.setAttribute("xlink:href", data.world.images.active_image().src);
+
+    draw_svg();
 
     function hide_canvas(){
         //document.getElementsByClassName("ui-wrapper")[0].style.display="none";
@@ -390,8 +392,120 @@ function render_2d_image(){
         }
     }
 
+    function draw_svg(){
+        // draw picture
+        var img = data.world.images.active_image();       
+
+        if (!img || img.width==0){
+            hide_canvas();
+            return;
+        }
+
+        show_canvas();
+
+        var clientWidth, clientHeight;
+
+        clientWidth = 2048;
+        clientHeight = 1536;
+
+        var trans_ratio ={
+            x: clientWidth/img.naturalWidth,
+            y: clientHeight/img.naturalHeight,
+        };
+
+        var calib = get_active_calib();
+        if (!calib){
+            return;
+        }
+
+        var svg = document.getElementById("maincanvas-svg");
+
+        // draw boxes
+        data.world.boxes.forEach(function(box){
+            
+
+            var scale = box.scale;
+            var pos = box.position;
+            var rotation = box.rotation;
+
+            var box3d = psr_to_xyz(pos, scale, rotation);
+            
+            var imgpos = matmul(calib.extrinsic, box3d, 4);
+            var imgpos3 = vector4to3(imgpos);
+            var imgpos2 = matmul(calib.intrinsic, imgpos3, 3);
+
+            if (!all_points_in_image_range(imgpos3)){
+                return;
+            }
+            var imgfinal = vector3_nomalize(imgpos2);
+
+            var box_svg = box_to_svg(box, imgfinal, trans_ratio, selected_box == box);
+
+            svg.appendChild(box_svg);
+
+        });
+
+
+    }
 
 }
+
+function box_to_svg(box, box_corners, trans_ratio, selected){
+    
+
+    var imgfinal = box_corners.map(function(x, i){
+        if (i%2==0){
+            return Math.round(x * trans_ratio.x);
+        }else {
+            return Math.round(x * trans_ratio.y);
+        }
+    })
+
+
+    var svg = document.createElementNS("http://www.w3.org/2000/svg", 'g');
+    svg.setAttribute("id", "svg-box-local-"+box.obj_local_id);
+
+
+    var front_panel =  document.createElementNS("http://www.w3.org/2000/svg", 'polygon');
+    svg.appendChild(front_panel);
+    front_panel.setAttribute("points",
+        imgfinal.slice(0, 4*2).reduce(function(x,y){            
+            return String(x)+","+y;
+        })
+    )
+
+    /*
+    var back_panel =  document.createElementNS("http://www.w3.org/2000/svg", 'polygon');
+    svg.appendChild(back_panel);
+    back_panel.setAttribute("points",
+        imgfinal.slice(4*2).reduce(function(x,y){            
+            return String(x)+","+y;
+        })
+    )
+    */
+
+   for (var i = 0; i<4; ++i){
+        var line =  document.createElementNS("http://www.w3.org/2000/svg", 'line');
+        svg.appendChild(line);
+        line.setAttribute("x1", imgfinal[(4+i)*2]);
+        line.setAttribute("y1", imgfinal[(4+i)*2+1]);
+        line.setAttribute("x2", imgfinal[(4+(i+1)%4)*2]);
+        line.setAttribute("y2", imgfinal[(4+(i+1)%4)*2+1]);
+    }
+
+
+    for (var i = 0; i<4; ++i){
+        var line =  document.createElementNS("http://www.w3.org/2000/svg", 'line');
+        svg.appendChild(line);
+        line.setAttribute("x1", imgfinal[i*2]);
+        line.setAttribute("y1", imgfinal[i*2+1]);
+        line.setAttribute("x2", imgfinal[(i+4)*2]);
+        line.setAttribute("y2", imgfinal[(i+4)*2+1]);
+    }
+
+    return svg;
+}
+
 
 function draw_box_on_image(ctx, box, box_corners, trans_ratio, selected){
     var imgfinal = box_corners;

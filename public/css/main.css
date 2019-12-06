@@ -72,7 +72,23 @@ canvas {
 	height:100%;
 	border: 0px;
 	padding: 0px;
+
+	stroke: #00ff0088;
+	stroke-width: 1px;
+	fill: #00ff0022;
 }
+
+.box-svg-selected{
+	stroke: #ff00ff88;
+	stroke-width: 1px;
+	fill: #ff00ff22;
+}
+
+.maincanvas-line{
+	/*stroke-dasharray: 3,3;*/
+
+}
+
 
 #maincanvas-wrapper {
 	position: absolute;
@@ -339,12 +355,6 @@ td {
 }
 
 
-.maincanvas-line{
-	/*stroke-dasharray: 3,3;*/
-	stroke: #00ff00;
-	stroke-width: 1px;
-	fill: none;
-}
 
 .svg-line{
 	stroke-dasharray: 3,3;

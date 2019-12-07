@@ -369,7 +369,7 @@ var TransformControls = function ( camera, domElement ) {
 			if ( axis.indexOf( 'Y' ) === - 1 ) offset.y = 0;else offset.y/2;
 			if ( axis.indexOf( 'Z' ) === - 1 ) offset.z = 0;else offset.z/2;
 
-			console.log(offset, positionStart, pointStart);
+			//console.log(offset, positionStart, pointStart);
 
 			var local_offset = offset.clone();
 

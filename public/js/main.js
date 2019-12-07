@@ -8,7 +8,7 @@ import {matmul2, euler_angle_to_rotate_matrix} from "./util.js"
 import {header} from "./header.js"
 import {get_obj_cfg_by_type, obj_type_map, get_next_obj_type_name} from "./obj_cfg.js"
 
-import {init_image_op, render_2d_image, update_image_box_projection, clear_canvas, clear_main_canvas, choose_best_camera_for_point} from "./image.js"
+import {init_image_op, render_2d_image, update_image_box_projection, clear_canvas, clear_main_canvas, choose_best_camera_for_point, image_manager} from "./image.js"
 import {add_calib_gui}  from "./calib.js"
 import {mark_bbox, paste_bbox, auto_adjust_bbox, smart_paste} from "./auto-adjust.js"
 import {save_annotation} from "./save.js"
@@ -234,13 +234,8 @@ function highlight_selected_box(){
 function install_context_menu(){
 
     document.getElementById("context-menu-wrapper").onclick = function(event){
-        //event.currentTarget.style.display="none";
-    }
-
-    document.getElementById("context-menu-wrapper").onmousedown = function(event){
         event.currentTarget.style.display="none";
-        //event.preventDefault();
-    };
+    }
 
     document.getElementById("context-menu-wrapper").oncontextmenu = function(event){
         //event.currentTarget.style.display="none";
@@ -922,6 +917,7 @@ function unselect_bbox(new_object, keep_lock){
                         view_state.lock_obj_track_id = "";
                     }
 
+                    image_manager.unselect_bbox(selected_box.obj_local_id);
                     selected_box = null;
                     view_handles.hide();
 
@@ -954,6 +950,7 @@ function unselect_bbox(new_object, keep_lock){
             selected_box.material.opacity = data.box_opacity;                
             floatLabelManager.unselect_box(selected_box.obj_local_id);
             floatLabelManager.update_position(selected_box, true);
+            image_manager.unselect_bbox(selected_box.obj_local_id);
 
             selected_box = null;
             view_handles.hide();
@@ -987,8 +984,13 @@ function select_bbox(object){
         var best_iamge = choose_best_camera_for_point(selected_box.position.x, selected_box.position.y, selected_box.position.z);
 
         if (best_iamge){
-            document.getElementById("camera-selector").value=best_iamge;
-            data.set_active_image(best_iamge);
+            
+            var image_changed = data.set_active_image(best_iamge);
+
+            if (image_changed){
+                document.getElementById("camera-selector").value=best_iamge;
+                image_manager.display_image();
+            }
         }
 
         view_state.lock_obj_track_id = object.obj_track_id;
@@ -1095,6 +1097,8 @@ function add_bbox(){
 
     floatLabelManager.add_label(box, function(){select_bbox(box);});
     
+    image_manager.add_box(box);
+
     select_bbox(box);
     
     return box;
@@ -1554,17 +1558,20 @@ function remove_selected_box(){
         // restroe color
         restore_box_points_color(target_box);
 
+        image_manager.remove_box(target_box.obj_local_id);
+
         floatLabelManager.remove_box(target_box);
         scene.remove(target_box);        
         
         //selected_box.dispose();
         data.world.remove_box(target_box);
 
+        
         selected_box = null;
         
-
         render();
-        render_2d_image();
+        //render_2d_image();
+        
     }
 }
 
@@ -1600,7 +1607,10 @@ function on_box_changed(box){
     update_subview_by_bbox(box);
     view_handles.update_view_handle(views[1].viewport, selected_box.scale);
     update_image_box_projection(box);
-    render_2d_image();
+    
+    //render_2d_image();
+    image_manager.update_box(box);
+
     header.update_box_info(box);
     //floatLabelManager.update_position(box, false);  don't update position, or the ui is annoying.
     header.mark_changed_flag();
@@ -1640,13 +1650,16 @@ function on_selected_box_changed(box){
         update_subview_by_bbox(box);
         view_handles.update_view_handle(views[1].viewport, selected_box.scale);
 
+        image_manager.select_bbox(box.obj_local_id);
     } else {
         header.clear_box_info();
-        clear_canvas();
+        //clear_canvas();
+        //render_2d_image();
     }
 
       
-    render_2d_image();
+    
+    
 }
 
 
@@ -1697,6 +1710,7 @@ function add_global_obj_type(){
             switch_bbox_type(event.currentTarget.getAttribute("uservalue"));
             grow_box();
             on_box_changed(selected_box);
+            
         }
     }
 

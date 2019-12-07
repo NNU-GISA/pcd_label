@@ -69,11 +69,18 @@ var data = {
     },
 
     active_image_name: "",
+
+    // return null means not changed.
     set_active_image: function(name){
+        if (name === this.active_image_name){
+            return null;
+        }
+
         this.active_image_name = name;
         if (this.world){
             this.world.images.activate(name);
         }
+        return name;
     },
 
     make_new_world: function(scene_name, frame, on_preload_finished){

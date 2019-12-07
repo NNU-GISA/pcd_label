@@ -1,6 +1,6 @@
 
 import {data} from "./data.js"
-import {params, selected_box } from "./main.js"
+import {params, selected_box, select_bbox } from "./main.js"
 import {vector4to3, vector3_nomalize, psr_to_xyz, matmul} from "./util.js"
 import {get_obj_cfg_by_type} from "./obj_cfg.js"
 
@@ -140,10 +140,19 @@ function on_mouse_down(e){
 
 // all boxes
 function clear_main_canvas(){
-    var c = document.getElementById("maincanvas");
-    var ctx = c.getContext("2d");
+
+    //var c = document.getElementById("maincanvas");
+    //var ctx = c.getContext("2d");
                 
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    //ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    var boxes = document.getElementById("svg-boxes").children;
+    
+    if (boxes.length>0){
+        for (var c=boxes.length-1; c >= 0; c--){
+            boxes[c].remove();                    
+        }
+    }
 }
 
 function set_camera(name){
@@ -202,7 +211,39 @@ function choose_best_camera_for_point(x,y,z){
 
 }
 
+function get_trans_ratio(){
+    var img = data.world.images.active_image();       
+
+    if (!img || img.width==0){
+        return null;
+    }
+
+    var clientWidth, clientHeight;
+
+    clientWidth = 2048;
+    clientHeight = 1536;
+
+    var trans_ratio ={
+        x: clientWidth/img.naturalWidth,
+        y: clientHeight/img.naturalHeight,
+    };
+
+    return trans_ratio;
+}
+
+function show_image(){
+    var svgimage = document.getElementById("svg-image");
+
+    // active img is set by global, it's not set sometimes.
+    var img = data.world.images.active_image();
+    if (img)
+        svgimage.setAttribute("xlink:href", img.src);
+}
+
+
 function render_2d_image(){
+    console.log("2d iamge rendered!");
+
     clear_main_canvas();
 
     if (params["hide image"]){
@@ -210,10 +251,7 @@ function render_2d_image(){
         return;
     }
 
-    
-
-    var svgimage = document.getElementById("svg-image");
-    svgimage.setAttribute("xlink:href", data.world.images.active_image().src);
+    show_image();
 
     draw_svg();
 
@@ -403,51 +441,47 @@ function render_2d_image(){
 
         show_canvas();
 
-        var clientWidth, clientHeight;
-
-        clientWidth = 2048;
-        clientHeight = 1536;
-
-        var trans_ratio ={
-            x: clientWidth/img.naturalWidth,
-            y: clientHeight/img.naturalHeight,
-        };
+        var trans_ratio = get_trans_ratio();
 
         var calib = get_active_calib();
         if (!calib){
             return;
         }
 
-        var svg = document.getElementById("maincanvas-svg");
+        var svg = document.getElementById("svg-boxes");
 
         // draw boxes
         data.world.boxes.forEach(function(box){
-            
-
-            var scale = box.scale;
-            var pos = box.position;
-            var rotation = box.rotation;
-
-            var box3d = psr_to_xyz(pos, scale, rotation);
-            
-            var imgpos = matmul(calib.extrinsic, box3d, 4);
-            var imgpos3 = vector4to3(imgpos);
-            var imgpos2 = matmul(calib.intrinsic, imgpos3, 3);
-
-            if (!all_points_in_image_range(imgpos3)){
-                return;
+            var imgfinal = box_to_2d_points(box, calib);
+            if (imgfinal){
+                var box_svg = box_to_svg(box, imgfinal, trans_ratio, selected_box == box);
+                svg.appendChild(box_svg);
             }
-            var imgfinal = vector3_nomalize(imgpos2);
-
-            var box_svg = box_to_svg(box, imgfinal, trans_ratio, selected_box == box);
-
-            svg.appendChild(box_svg);
 
         });
 
 
     }
 
+}
+
+function box_to_2d_points(box, calib){
+    var scale = box.scale;
+    var pos = box.position;
+    var rotation = box.rotation;
+
+    var box3d = psr_to_xyz(pos, scale, rotation);
+    
+    var imgpos = matmul(calib.extrinsic, box3d, 4);
+    var imgpos3 = vector4to3(imgpos);
+    var imgpos2 = matmul(calib.intrinsic, imgpos3, 3);
+
+    if (!all_points_in_image_range(imgpos3)){
+        return null;
+    }
+    var imgfinal = vector3_nomalize(imgpos2);
+
+    return imgfinal;
 }
 
 function box_to_svg(box, box_corners, trans_ratio, selected){
@@ -465,6 +499,9 @@ function box_to_svg(box, box_corners, trans_ratio, selected){
     var svg = document.createElementNS("http://www.w3.org/2000/svg", 'g');
     svg.setAttribute("id", "svg-box-local-"+box.obj_local_id);
 
+    if (selected){
+        svg.setAttribute("class", "box-svg-selected");
+    }
 
     var front_panel =  document.createElementNS("http://www.w3.org/2000/svg", 'polygon');
     svg.appendChild(front_panel);
@@ -710,5 +747,112 @@ function vectorsub(vs, v){
 }
 
 
+var image_manager = {
+    display_image: function(){
+        render_2d_image();
+    },
 
-export {init_image_op, render_2d_image, update_image_box_projection, clear_canvas, clear_main_canvas, choose_best_camera_for_point}
+    add_box: function(box){
+        var calib = get_active_calib();
+        if (!calib){
+            return;
+        }
+
+        var trans_ratio = get_trans_ratio();
+        var imgfinal = box_to_2d_points(box, calib);
+
+        var imgfinal = imgfinal.map(function(x, i){
+            if (i%2==0){
+                return Math.round(x * trans_ratio.x);
+            }else {
+                return Math.round(x * trans_ratio.y);
+            }
+        })
+
+        var svg_box = box_to_svg(box, imgfinal, trans_ratio);
+        var svg = document.getElementById("svg-boxes");
+        svg.appendChild(svg_box);
+    },
+
+
+    select_bbox: function(box_obj_local_id){
+        var b = document.getElementById("svg-box-local-"+box_obj_local_id);
+        if (b)
+            b.setAttribute("class", "box-svg-selected");
+    },
+
+
+    unselect_bbox: function(box_obj_local_id){
+        var b = document.getElementById("svg-box-local-"+box_obj_local_id);
+
+        if (b)
+            b.setAttribute("class", "");
+    },
+
+    remove_box: function(box_obj_local_id){
+        var b = document.getElementById("svg-box-local-"+box_obj_local_id);
+
+        if (b)
+            b.remove();
+    },
+
+    update_box: function(box){
+        var b = document.getElementById("svg-box-local-"+box.obj_local_id);
+        if (!b){
+            return;
+        }
+
+        var children = b.childNodes;
+
+        var calib = get_active_calib();
+        if (!calib){
+            return;
+        }
+
+        var trans_ratio = get_trans_ratio();
+        var imgfinal = box_to_2d_points(box, calib);
+
+        if (!imgfinal){
+            //box may go out of image
+            return;
+        }
+        var imgfinal = imgfinal.map(function(x, i){
+            if (i%2==0){
+                return Math.round(x * trans_ratio.x);
+            }else {
+                return Math.round(x * trans_ratio.y);
+            }
+        })
+
+        if (imgfinal){
+            var front_panel = children[0];
+            front_panel.setAttribute("points",
+                imgfinal.slice(0, 4*2).reduce(function(x,y){            
+                    return String(x)+","+y;
+                })
+            )
+
+
+
+            for (var i = 0; i<4; ++i){
+                var line =  children[1+i];
+                line.setAttribute("x1", imgfinal[(4+i)*2]);
+                line.setAttribute("y1", imgfinal[(4+i)*2+1]);
+                line.setAttribute("x2", imgfinal[(4+(i+1)%4)*2]);
+                line.setAttribute("y2", imgfinal[(4+(i+1)%4)*2+1]);
+            }
+
+
+            for (var i = 0; i<4; ++i){
+                var line =  children[5+i];
+                line.setAttribute("x1", imgfinal[i*2]);
+                line.setAttribute("y1", imgfinal[i*2+1]);
+                line.setAttribute("x2", imgfinal[(i+4)*2]);
+                line.setAttribute("y2", imgfinal[(i+4)*2+1]);
+            }
+        }
+
+    }
+}
+
+export {init_image_op, render_2d_image, update_image_box_projection, clear_canvas, clear_main_canvas, choose_best_camera_for_point, image_manager}

@@ -3,7 +3,7 @@
 import * as THREE from './lib/three.module.js';
 import { PCDLoader } from './lib/PCDLoader.js';
 import { get_obj_cfg_by_type } from './obj_cfg.js';
-import {matmul, euler_angle_to_rotate_matrix, transpose} from "./util.js"
+import { matmul, euler_angle_to_rotate_matrix, transpose, psr_to_xyz, vector_range} from "./util.js"
 var data = {
     
     // point_size: 1.5,
@@ -597,20 +597,20 @@ var data = {
                 this.points.points_index = points_index;
             },
 
-            points_index_grid_size: 2,
+            points_index_grid_size: 1,
 
             get_position_key:function(x,y,z){
-                var grid_size = 2;
-                return [Math.round(x/this.points_index_grid_size),
-                        Math.round(y/this.points_index_grid_size),
-                        Math.round(z/this.points_index_grid_size),];
+                return [Math.floor(x/this.points_index_grid_size),
+                        Math.floor(y/this.points_index_grid_size),
+                        Math.floor(z/this.points_index_grid_size),];
             },
             key_to_str: function(k){
                 return k[0]+","+k[1]+","+k[2];
             },
 
             // candidate pionts, covering the box(center, scale), but larger.
-            get_covering_position_indices: function(points, center, scale){
+            get_covering_position_indices: function(points, center, scale, rotation, scale_ratio){
+                /*
                 var ck = this.get_position_key(center.x, center.y, center.z);
                 var radius = Math.sqrt(scale.x*scale.x + scale.y*scale.y + scale.z*scale.z)/2;
                 var radius_grid = Math.ceil(radius/this.points_index_grid_size);// + 1;
@@ -626,7 +626,33 @@ var data = {
                     }
                 }
 
-                console.log("found indices: " + indices.length);
+                console.log("found indices 1: " + indices.length);
+                //return indices;
+                */
+
+                var indices=[];
+                
+                var scaled_scale = {
+                    x: scale.x*scale_ratio,
+                    y: scale.y*scale_ratio,
+                    z: scale.z*scale_ratio,
+                }
+
+                var box_corners = psr_to_xyz(center, scaled_scale, rotation);
+                var extreme = vector_range(box_corners, 4);
+
+                var indices = [];
+                for(var x = Math.floor(extreme.min[0]/this.points_index_grid_size); x <= Math.floor(extreme.max[0]/this.points_index_grid_size); x++){
+                    for(var y = Math.floor(extreme.min[1]/this.points_index_grid_size); y <= Math.floor(extreme.max[1]/this.points_index_grid_size); y++){
+                        for(var z = Math.floor(extreme.min[2]/this.points_index_grid_size); z <= Math.floor(extreme.max[2]/this.points_index_grid_size); z++){
+                            var temp = points.points_index[this.key_to_str([x, y, z])];
+                            if (temp)
+                                indices = indices.concat(temp);
+                        }
+                    }
+                }
+
+                console.log("found indices 2: " + indices.length);
                 return indices;
             },
 
@@ -857,7 +883,7 @@ var data = {
                 var cand_point_indices = point_indices;
                 if (!point_indices)
                 {                    
-                    cand_point_indices = this.get_covering_position_indices(points, box.position, box.scale);
+                    cand_point_indices = this.get_covering_position_indices(points, box.position, box.scale, box.rotation, scale_ratio);
                 }
 
 
@@ -941,7 +967,7 @@ var data = {
 
                 var indices=[];
                 var outer_indices=[];
-                var cand_point_indices = this.get_covering_position_indices(points, box.position, box.scale);
+                var cand_point_indices = this.get_covering_position_indices(points, box.position, box.scale, box.rotation);
                 
                 var extreme= {
                     max: {        

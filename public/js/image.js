@@ -757,21 +757,21 @@ var image_manager = {
         if (!calib){
             return;
         }
-
-        var trans_ratio = get_trans_ratio();
         var imgfinal = box_to_2d_points(box, calib);
+        if (imgfinal.length>0){
+            var trans_ratio = get_trans_ratio();
+            var imgfinal = imgfinal.map(function(x, i){
+                if (i%2==0){
+                    return Math.round(x * trans_ratio.x);
+                }else {
+                    return Math.round(x * trans_ratio.y);
+                }
+            })
 
-        var imgfinal = imgfinal.map(function(x, i){
-            if (i%2==0){
-                return Math.round(x * trans_ratio.x);
-            }else {
-                return Math.round(x * trans_ratio.y);
-            }
-        })
-
-        var svg_box = box_to_svg(box, imgfinal, trans_ratio);
-        var svg = document.getElementById("svg-boxes");
-        svg.appendChild(svg_box);
+            var svg_box = box_to_svg(box, imgfinal, trans_ratio);
+            var svg = document.getElementById("svg-boxes");
+            svg.appendChild(svg_box);
+        }
     },
 
 

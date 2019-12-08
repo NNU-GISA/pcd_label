@@ -43,4 +43,6 @@
 39.  try reduce points searching times, at one adjustments, there are 6 point searching invoke.
 40.  add global parameter 'sticky mode'
 41.  project points to image
-42.  
+42.  remove image when new frame is loading
+43.  improve performance of coloring object points.
+44.  find box points and extreme shall be seperated

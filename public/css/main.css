@@ -74,13 +74,17 @@ canvas {
 	padding: 0px;
 
 	stroke: #00ff0088;
-	stroke-width: 1px;
+	stroke-width: 2px;
 	fill: #00ff0022;
 }
 
+/* 
+this css can be moved to dynamic css in main.js, after obj-type css being set 
+for now when a box is selected, its objtype class in css is removed so the color is set by selected state.
+dynamic set obj-type css has higher priority than this one.
+*/
 .box-svg-selected{
 	stroke: #ff00ff88;
-	stroke-width: 1px;
 	fill: #ff00ff22;
 }
 

@@ -3,7 +3,7 @@
 import * as THREE from './lib/three.module.js';
 import { PCDLoader } from './lib/PCDLoader.js';
 import { get_obj_cfg_by_type } from './obj_cfg.js';
-import { matmul, euler_angle_to_rotate_matrix, transpose, psr_to_xyz, vector_range} from "./util.js"
+import { matmul, euler_angle_to_rotate_matrix, transpose, psr_to_xyz, array_as_vector_range, vector_range} from "./util.js"
 var data = {
     
     // point_size: 1.5,
@@ -639,7 +639,7 @@ var data = {
                 }
 
                 var box_corners = psr_to_xyz(center, scaled_scale, rotation);
-                var extreme = vector_range(box_corners, 4);
+                var extreme = array_as_vector_range(box_corners, 4);
 
                 var indices = [];
                 for(var x = Math.floor(extreme.min[0]/this.points_index_grid_size); x <= Math.floor(extreme.max[0]/this.points_index_grid_size); x++){
@@ -840,11 +840,40 @@ var data = {
                 return this._get_points_of_box(this.points, box, 1).position;
             },
             get_points_dimmension_of_box: function(box){
-                return this._get_points_of_box(this.points, box, 1).extreme;
+                var p = this._get_points_of_box(this.points, box, 1).position;
+
+                var extreme = vector_range(p, 3);
+
+                return {
+                    max:{
+                        x: extreme.max[0],
+                        y: extreme.max[1],
+                        z: extreme.max[2],
+                    },
+                    min:{
+                        x: extreme.min[0],
+                        y: extreme.min[1],
+                        z: extreme.min[2],
+                    }
+                }
             },
             // given points and box, calculate new box scale
             get_dimension_of_points: function(indices, box){
-                return this._get_points_of_box(this.points, box, 1, indices).extreme;                
+                var p = this._get_points_of_box(this.points, box, 1, indices).position;                
+                var extreme = vector_range(p, 3);
+
+                return {
+                    max:{
+                        x: extreme.max[0],
+                        y: extreme.max[1],
+                        z: extreme.max[2],
+                    },
+                    min:{
+                        x: extreme.min[0],
+                        y: extreme.min[1],
+                        z: extreme.min[2],
+                    }
+                }
             },
 
 
@@ -862,20 +891,7 @@ var data = {
 
                 
                 var relative_position = [];
-                var extreme= {
-                    max: {        
-                        x:-100000,
-                        y:-100000,
-                        z:-100000,
-                    },
-            
-                    min: {        
-                        x:1000000,
-                        y:1000000,
-                        z:1000000,
-                    },
-                };
-
+                
                 var r = box.rotation;
                 var trans = transpose(euler_angle_to_rotate_matrix(r, {x:0, y:0, z:0}), 4);
 
@@ -908,51 +924,15 @@ var data = {
                         indices.push(i);
                     }
                     
-                    
-                    
-                    
                     relative_position.push([tp[0],tp[1],tp[2]]);
-
-                    if (tp[0] > extreme.max.x) {
-                        extreme.max.x = tp[0];
-                    } 
                     
-                    if (tp[0] < extreme.min.x){
-                        extreme.min.x = tp[0];
-                    }
-            
-                    if (tp[1] > extreme.max.y){
-                        extreme.max.y = tp[1];
-                    }
-                    
-                    if (tp[1] < extreme.min.y){
-                        extreme.min.y = tp[1];
-                    }
-            
-                    if (tp[2] > extreme.max.z){
-                        extreme.max.z = tp[2];
-                    }
-                    
-                    if (tp[2] < extreme.min.z){
-                        extreme.min.z = tp[2];
-                    }
                 });
-                
-                extreme.max.x += 0.01;
-                extreme.max.y += 0.01;
-                extreme.max.z += 0.01;
-
-                extreme.min.x -= 0.01;
-                extreme.min.y -= 0.01;
-                extreme.min.z -= 0.01;
-
                 
                 console.log("found indices: " + indices.length);
 
                 return {
                     index: indices,
-                    position: relative_position,
-                    extreme: extreme,
+                    position: relative_position,                    
                 }
             },
 

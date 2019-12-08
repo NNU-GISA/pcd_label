@@ -119,18 +119,46 @@ function vector4to3(v)
     return ret;
 }
 
+function vector_range(v){
+
+    if (v.length === 0){
+        return null;
+    }
+
+    var min, max;
+    min = [...v[0]];
+    max = [...v[0]];
+
+    for (var i=1; i<v.length; ++i){
+        for (var j=0; j<min.length; ++j){
+            if (min[j] > v[i][j]){
+                min[j] = v[i][j];
+            }
+
+            if (max[j] < v[i][j]){
+                max[j] = v[i][j];
+            }
+        }
+    }
+
+    return {
+        min: min, 
+        max: max,
+    }
+
+}
 
 // v is array of vector, vl is vector length
-function vector_range(v, vl){
+function array_as_vector_range(v, vl){
+    
     var n = v.length/vl;
     
     var min, max;
-    if (n > 0){
+    if (n === 0){
+        return null;
+    } else{
         min = v.slice(0, vl);
         max = v.slice(0, vl);
-    }
-    else{
-        return null;
     }
 
     for (var i=1; i<n; ++i){
@@ -278,4 +306,4 @@ function rotation_matrix_to_euler_angle(m){ //m is 4* 4
 }
 
 
-export {vector_range, vector4to3, vector3_nomalize, psr_to_xyz, matmul, matmul2, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle, transpose}
+export {vector_range, array_as_vector_range, vector4to3, vector3_nomalize, psr_to_xyz, matmul, matmul2, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle, transpose}

@@ -666,6 +666,7 @@ function object_category_changed(event){
         floatLabelManager.set_object_type(selected_box.obj_local_id, selected_box.obj_type);
         header.mark_changed_flag();
         update_box_points_color(selected_box);
+        image_manager.update_obj_type(selected_box.obj_local_id, selected_box.obj_type);
     }
 }
 
@@ -917,7 +918,7 @@ function unselect_bbox(new_object, keep_lock){
                         view_state.lock_obj_track_id = "";
                     }
 
-                    image_manager.unselect_bbox(selected_box.obj_local_id);
+                    image_manager.unselect_bbox(selected_box.obj_local_id, selected_box.obj_type);
                     selected_box = null;
                     view_handles.hide();
 
@@ -950,7 +951,7 @@ function unselect_bbox(new_object, keep_lock){
             selected_box.material.opacity = data.box_opacity;                
             floatLabelManager.unselect_box(selected_box.obj_local_id);
             floatLabelManager.update_position(selected_box, true);
-            image_manager.unselect_bbox(selected_box.obj_local_id);
+            image_manager.unselect_bbox(selected_box.obj_local_id, selected_box.obj_type);
 
             selected_box = null;
             view_handles.hide();
@@ -1057,7 +1058,7 @@ function onWindowResize() {
 
     //dirLightShadowMapViewer.updateForWindowResize();
 
-    document.getElementById("maincanvas").parentElement.style.left="20%";
+    //document.getElementById("maincanvas").parentElement.style.left="20%";
 
 }
 
@@ -1650,7 +1651,7 @@ function on_selected_box_changed(box){
         update_subview_by_bbox(box);
         view_handles.update_view_handle(views[1].viewport, selected_box.scale);
 
-        image_manager.select_bbox(box.obj_local_id);
+        image_manager.select_bbox(box.obj_local_id, box.obj_type);
     } else {
         header.clear_box_info();
         //clear_canvas();
@@ -1682,7 +1683,10 @@ function add_global_obj_type(){
     var sheet = window.document.styleSheets[1];
 
     for (var o in obj_type_map){
-        var rule = '.'+o+ '{ color: '+obj_type_map[o].color+'; }';
+        var rule = '.'+o+ '{color:'+obj_type_map[o].color+';'+ 
+                            'stroke:' +obj_type_map[o].color+ ';'+
+                            'fill:' +obj_type_map[o].color+ '22' + ';'+
+                            '}';
         sheet.insertRule(rule, sheet.cssRules.length);
     }
 

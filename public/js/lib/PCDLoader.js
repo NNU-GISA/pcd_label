@@ -65,8 +65,44 @@ PCDLoader.prototype = {
 
 	},
 
-	parse: function ( data, url) {
+	parse: function(data, url){
+		var addr = url.split(".");
+		var file_ext = addr[addr.length-1];
 
+		if (file_ext === "pcd")
+			return this.parsePcd(data, url);
+		else {
+			console.log("load", file_ext, "file");
+			return this.parseBin(data, url);
+		}
+			
+	},
+
+	parseBin: function(data, url){
+		var dataview = new DataView( data, 0);
+
+		var position = [];
+		var normal = [];
+		var color = [];
+
+		//kitti format, xyzi
+		var offset = 0;
+
+		for ( var row = 0; row < data.byteLength/(4*4); row += 1 ) {
+			position.push( dataview.getFloat32( row*16 + 0, this.littleEndian ) );
+			position.push( dataview.getFloat32( row*16 + 4, this.littleEndian ) );
+			position.push( dataview.getFloat32( row*16 + 8, this.littleEndian ) );
+		}
+
+		return {
+			position: position,
+			color: color,
+			normal: normal,
+		};
+	},
+
+	parsePcd: function ( data, url) {
+	
 		function parseHeader( data ) {
 
 			var PCDheader = {};

@@ -99,6 +99,7 @@ var data = {
                 dir: "",
                 scene: "",
                 frame: "",
+                pcd_ext: "",
                 frame_index: 0,
                 transform_matrix: null,
                 annotation_format: "psr", //xyz(24 number), csr(center, scale, rotation, 9 number)
@@ -114,7 +115,7 @@ var data = {
         
                 
                 get_pcd_path: function(){
-                    return 'static/data/'+ this.scene + "/pcd/" + this.frame+".pcd";
+                    return 'static/data/'+ this.scene + "/pcd/" + this.frame + scene_meta.pcd_ext;
                 },
             
                 get_anno_path: function(){
@@ -249,9 +250,17 @@ var data = {
                 content:{},
                 on_all_loaded: null,
 
-                load: function(on_all_loaded){
+                load: function(on_all_loaded, active_name){
                     this.on_all_loaded = on_all_loaded;
+                    
+                    // if global camera not set, use first camera as default.
+                    if (active_name.length > 0)
+                        this.active_name = active_name;
+                    else if (this.names.length>0)
+                        this.active_name = this.names[0];
+
                     var _self = this;
+
                     if (this.names){
                         this.names.forEach(function(img){
                             _self.content[img] = new Image();
@@ -264,7 +273,7 @@ var data = {
                                 _self.on_image_loaded();
                             };
 
-                            _self.content[img].src = '/static/data/'+scene_name+'/image/' + img + '/'+ frame+'.jpg';
+                            _self.content[img].src = '/static/data/'+scene_name+'/image/' + img + '/'+ frame + scene_meta.image_ext;
                         });
                     }
                 },
@@ -327,8 +336,7 @@ var data = {
                 this.load_annotation();
                 var _self = this;
 
-                this.images.load(function(){_self.on_image_loaded();});
-                this.images.activate(this.data.active_image_name);
+                this.images.load(function(){_self.on_image_loaded();}, this.data.active_image_name);
 
             },
 
@@ -1207,15 +1215,24 @@ var data = {
                 });
             },
 
-            add_box: function(x,y,z){
+            add_box: function(pos, scale, rotation, obj_type, track_id){
 
                 var mesh = this.new_bbox_cube();
-                mesh.position.x = x;
-                mesh.position.y = y;
-                mesh.position.z = z;
+                mesh.position.x = pos.x;
+                mesh.position.y = pos.y;
+                mesh.position.z = pos.z;
 
-                mesh.obj_track_id = "";  //tracking id
-                mesh.obj_type = "Car";
+                mesh.scale.x = scale.x;
+                mesh.scale.y = scale.y;
+                mesh.scale.z = scale.z;
+
+                mesh.rotation.x = rotation.x;
+                mesh.rotation.y = rotation.y;
+                mesh.rotation.z = rotation.z;
+
+                mesh.obj_track_id = track_id;  //tracking id
+                mesh.obj_type = obj_type;
+
                 mesh.obj_local_id =  this.get_new_box_local_id();
 
                 this.boxes.push(mesh);
@@ -1288,7 +1305,9 @@ var data = {
                 box.name="bbox";
                 box.obj_type="car";                
 
-                box.computeLineDistances();
+                //box.computeLineDistances();
+                
+
 
                 return box;
             },

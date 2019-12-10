@@ -579,7 +579,7 @@ var image_manager = {
             return;
         }
         var imgfinal = box_to_2d_points(box, calib);
-        if (imgfinal.length>0){
+        if (imgfinal){
             var trans_ratio = get_trans_ratio();
             var imgfinal = imgfinal.map(function(x, i){
                 if (i%2==0){

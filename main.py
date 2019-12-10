@@ -115,6 +115,7 @@ class Root(object):
           #if os.path.isfile("public/data/"+s+"/pcd/"+f):
             filename, fileext = os.path.splitext(f)
             scene["frames"].append(filename)
+            scene["pcd_ext"] = fileext
 
         point_transform_matrix=[]
 
@@ -166,7 +167,9 @@ class Root(object):
                 calib[calib_name]["extrinsic"] = map(strip_str, lines[0].strip().split(","))
                 calib[calib_name]["intrinsic"] = lines[1].strip().split(",") 
 
+        # camera names
         image = []
+        image_ext = ""
         cam_path = "public/data/"+s+"/image"
         if os.path.exists(cam_path):
           if os.path.exists(cam_path):
@@ -174,12 +177,21 @@ class Root(object):
             for c in cams:
               cam_file = "public/data/"+s+"/image/" + c
               if os.path.isdir(cam_file):
+
                 if image:
                   image.append(c)
                 else:
                   image = [c]
 
-            
+                if image_ext == "":
+                  #detect image file ext
+                  files = os.listdir(cam_file)
+                  if len(files)>2:
+                    _,image_ext = os.path.splitext(files[0])
+
+        scene["image_ext"] = image_ext
+
+        
         if not os.path.isdir("public/data/"+s+"/bbox.xyz"):
           scene["boxtype"] = "psr"
           if point_transform_matrix:
@@ -197,7 +209,7 @@ class Root(object):
           if image:
             scene["image"] = image
 
-      
+
       print(data)
       return data
       # return [

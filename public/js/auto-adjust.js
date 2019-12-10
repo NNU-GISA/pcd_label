@@ -33,20 +33,7 @@ function paste_bbox(pos){
     else
        pos.z = marked_object.position.z;
 
-    var box = data.world.add_box(pos.x, pos.y, pos.z);
-
-    box.obj_track_id = marked_object.obj_track_id;
-    box.obj_type = marked_object.obj_type;
-
-
-    box.scale.x = marked_object.scale.x;
-    box.scale.y = marked_object.scale.y;
-    box.scale.z = marked_object.scale.z;
-
-    box.rotation.x = marked_object.rotation.x;
-    box.rotation.y = marked_object.rotation.y;
-    box.rotation.z = marked_object.rotation.z;
-
+    var box = data.world.add_box(pos, marked_object.scale, marked_object.rotation, marked_object.obj_type, marked_object.obj_track_id);
 
     scene.add(box);
 

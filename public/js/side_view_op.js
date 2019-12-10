@@ -222,6 +222,8 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
     
         set_line_pos(left, right, top, bottom);    
     
+        // note when the object is too thin, the height/width value may be negative,
+        // this causes error reporting, but we just let it be.
         var de = handles.left;
         de.setAttribute('x', Math.ceil(left-10));
         de.setAttribute('y', Math.ceil(top+10));
@@ -292,7 +294,6 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
         de = document.getElementById(view_prefix+"move-handle");
         de.setAttribute('x', Math.ceil((left+right)/2-20));
         de.setAttribute('y', Math.ceil((top+bottom)/2-20));
-        
     }
     
     
@@ -997,4 +998,4 @@ var view_handles = {
 }
 
 
-export {view_handles} 
+export {view_handles}

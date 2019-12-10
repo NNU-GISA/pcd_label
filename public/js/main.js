@@ -1083,16 +1083,19 @@ function change_transform_control_view(){
 
 
 
-function add_bbox(){
-
-
+function add_bbox(obj_type){
     // todo: move to data.world
     var pos = get_mouse_location_in_world();
+    var rotation = {x:0, y:0, z:views[0].camera.rotation.z};
 
-    var box = data.world.add_box(pos.x, pos.y, pos.z);
+    var obj_cfg = get_obj_cfg_by_type(obj_type);
+    var scale = {   
+        x: obj_cfg.size[0],
+        y: obj_cfg.size[1],
+        z: obj_cfg.size[2]
+    };
 
-    // let the rotation of z be same as camera.
-    box.rotation.z = views[0].camera.rotation.z;
+    var box = data.world.add_box(pos, scale, rotation, obj_type, "");
 
     scene.add(box);
 
@@ -1289,8 +1292,8 @@ function keydown( ev ) {
             break;
         case 'N':    
         case 'n':
-            add_bbox();
-            header.mark_changed_flag();
+            //add_bbox();
+            //header.mark_changed_flag();
             break;        
         case 'B':
         case 'b':
@@ -1710,8 +1713,9 @@ function add_global_obj_type(){
     // install click actions
     for (var o in obj_type_map){        
         document.getElementById("cm-new-"+o).onclick = function(event){
-            add_bbox();
-            switch_bbox_type(event.currentTarget.getAttribute("uservalue"));
+            var obj_type = event.currentTarget.getAttribute("uservalue");
+            add_bbox(obj_type);
+            //switch_bbox_type(event.currentTarget.getAttribute("uservalue"));
             grow_box();
             on_box_changed(selected_box);
             

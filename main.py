@@ -161,11 +161,10 @@ class Root(object):
             calib_file = "public/data/"+s+"/calib/" + c
             calib_name, _ = os.path.splitext(c)
             if os.path.isfile(calib_file):
-              calib[calib_name] = {}
+              print(calib_file)
               with open(calib_file)  as f:
-                lines = f.readlines()
-                calib[calib_name]["extrinsic"] = map(strip_str, lines[0].strip().split(","))
-                calib[calib_name]["intrinsic"] = lines[1].strip().split(",") 
+                cal = json.load(f)
+                calib[calib_name] = cal
 
         # camera names
         image = []
@@ -191,7 +190,7 @@ class Root(object):
 
         scene["image_ext"] = image_ext
 
-        
+
         if not os.path.isdir("public/data/"+s+"/bbox.xyz"):
           scene["boxtype"] = "psr"
           if point_transform_matrix:

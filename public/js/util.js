@@ -4,14 +4,18 @@
 
 
 // matrix (m*n), matrix(n*l), vl=n 
+// this matmul is row-wise multiplication. 'x' and result are row-vectors.
+// ret^T = m * x^T
+//
 function  matmul(m, x, vl)  //vl is vector length
 {
     var ret=[];
+    var res_l = m.length/vl;
     for (var vi =0; vi < x.length/vl; vi++){  //vector index
         for (var r = 0; r<m.length/vl; r++){  //row of matrix
-            ret[vi*vl+r] = 0;
+            ret[vi*res_l+r] = 0;
             for (var i = 0; i<vl; i++){
-                ret[vi*vl+r] += m[r*vl+i]*x[vi*vl+i];
+                ret[vi*res_l+r] += m[r*vl+i]*x[vi*vl+i];
             }
         }
     }

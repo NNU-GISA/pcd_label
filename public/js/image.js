@@ -300,8 +300,19 @@ function box_to_2d_points(box, calib){
     var box3d = psr_to_xyz(pos, scale, rotation);
     
     var imgpos = matmul(calib.extrinsic, box3d, 4);
+    
+    if (calib.rect){
+        imgpos = matmul(calib.rect, imgpos, 4);
+    }
+
     var imgpos3 = vector4to3(imgpos);
-    var imgpos2 = matmul(calib.intrinsic, imgpos3, 3);
+
+    var imgpos2;
+    if (calib.intrinsic.length>9) {
+        imgpos2 = matmul(calib.intrinsic, imgpos, 4);
+    }
+    else
+        imgpos2 = matmul(calib.intrinsic, imgpos3, 3);
 
     if (!all_points_in_image_range(imgpos3)){
         return null;
@@ -483,17 +494,10 @@ function update_image_box_projection(box){
             clear_canvas();
 
 
-            var box3d = psr_to_xyz(pos, scale, rotation);
+            var imgfinal = box_to_2d_points(box, calib)
+            
 
-            // project corners to image plane
-            var imgpos = matmul(calib.extrinsic, box3d, 4);
-            var imgpos3 = vector4to3(imgpos);            
-
-            if (all_points_in_image_range(imgpos3)){  // if projection is out of range of the image, stop drawing.
-                var imgpos2 = matmul(calib.intrinsic, imgpos3, 3);
-                var imgfinal = vector3_nomalize(imgpos2);
-
-                //console.log(imgfinal);
+            if (imgfinal != null){  // if projection is out of range of the image, stop drawing.
                 
                 var c = document.getElementById("canvas");
                 var ctx = c.getContext("2d");

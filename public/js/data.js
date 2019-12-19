@@ -4,6 +4,7 @@ import * as THREE from './lib/three.module.js';
 import { PCDLoader } from './lib/PCDLoader.js';
 import { get_obj_cfg_by_type } from './obj_cfg.js';
 import { matmul, euler_angle_to_rotate_matrix, transpose, psr_to_xyz, array_as_vector_range, vector_range} from "./util.js"
+import {settings} from "./settings.js"
 var data = {
     
     // point_size: 1.5,
@@ -562,17 +563,17 @@ var data = {
                     return annotations.map(function(b){
                         var mesh = _self.new_bbox_cube(parseInt("0x"+get_obj_cfg_by_type(b.obj_type).color.slice(1)));
 
-                        mesh.position.x = b.position.x;
-                        mesh.position.y = b.position.y;
-                        mesh.position.z = b.position.z;
+                        mesh.position.x = b.psr.position.x;
+                        mesh.position.y = b.psr.position.y;
+                        mesh.position.z = b.psr.position.z;
 
-                        mesh.scale.x = b.scale.x;
-                        mesh.scale.y = b.scale.y;
-                        mesh.scale.z = b.scale.z;
+                        mesh.scale.x = b.psr.scale.x;
+                        mesh.scale.y = b.psr.scale.y;
+                        mesh.scale.z = b.psr.scale.z;
 
-                        mesh.rotation.x = b.rotation.x;
-                        mesh.rotation.y = b.rotation.y;
-                        mesh.rotation.z = b.rotation.z;    
+                        mesh.rotation.x = b.psr.rotation.x;
+                        mesh.rotation.y = b.psr.rotation.y;
+                        mesh.rotation.z = b.psr.rotation.z;    
 
                         mesh.obj_track_id = b.obj_id;  //tracking id
                         mesh.obj_local_id = _self.get_new_box_local_id();
@@ -847,21 +848,33 @@ var data = {
             get_points_of_box_in_box_coord: function(box){
                 return this._get_points_of_box(this.points, box, 1).position;
             },
+
+            // IMPORTANT
+            // ground plane affects auto-adjustment
+            // we don't count in the ponits of lowest part to reduce the affection.
             get_points_dimmension_of_box: function(box){
                 var p = this._get_points_of_box(this.points, box, 1).position;
 
-                var extreme = vector_range(p, 3);
+                var extreme1 = vector_range(p, 3);
+
+                //filter out lowest part
+                var p = p.filter(function(x){
+                    return x[2] - settings.ground_filter_height > extreme1.min[2];
+                })
+
+                //compute range again.
+                var extreme2 = vector_range(p, 3);
 
                 return {
                     max:{
-                        x: extreme.max[0],
-                        y: extreme.max[1],
-                        z: extreme.max[2],
+                        x: extreme2.max[0],
+                        y: extreme2.max[1],
+                        z: extreme1.max[2],
                     },
                     min:{
-                        x: extreme.min[0],
-                        y: extreme.min[1],
-                        z: extreme.min[2],
+                        x: extreme2.min[0],
+                        y: extreme2.min[1],
+                        z: extreme1.min[2],
                     }
                 }
             },

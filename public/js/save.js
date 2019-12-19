@@ -21,6 +21,7 @@ function save_annotation(done){
                 },
             },
             
+            /*
             position:b.position,
             scale:b.scale,
             rotation:{
@@ -28,7 +29,8 @@ function save_annotation(done){
                 y:b.rotation.y,
                 z:b.rotation.z,
             },
-
+            */
+           
             obj_type: b.obj_type,
             obj_id: b.obj_track_id,
             vertices: vertices,

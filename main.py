@@ -95,6 +95,7 @@ class Root(object):
 
       scenes = os.listdir("./public/data")
       print(scenes)
+      scenes.sort()
 
       for s in scenes:
         scene = {

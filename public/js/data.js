@@ -881,18 +881,26 @@ var data = {
             // given points and box, calculate new box scale
             get_dimension_of_points: function(indices, box){
                 var p = this._get_points_of_box(this.points, box, 1, indices).position;                
-                var extreme = vector_range(p, 3);
+                var extreme1 = vector_range(p, 3);
+
+                //filter out lowest part
+                var p = p.filter(function(x){
+                    return x[2] - settings.ground_filter_height > extreme1.min[2];
+                })
+
+                //compute range again.
+                var extreme2 = vector_range(p, 3);
 
                 return {
                     max:{
-                        x: extreme.max[0],
-                        y: extreme.max[1],
-                        z: extreme.max[2],
+                        x: extreme2.max[0],
+                        y: extreme2.max[1],
+                        z: extreme1.max[2],
                     },
                     min:{
-                        x: extreme.min[0],
-                        y: extreme.min[1],
-                        z: extreme.min[2],
+                        x: extreme2.min[0],
+                        y: extreme2.min[1],
+                        z: extreme1.min[2],
                     }
                 }
             },

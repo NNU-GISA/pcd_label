@@ -119,27 +119,28 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
     }
 
     function set_line_pos(x1,x2,y1,y2){
-        lines.top.setAttribute("x1", x1);
+        lines.top.setAttribute("x1", "0%");
         lines.top.setAttribute("y1", y1);
-        lines.top.setAttribute("x2", x2);
+        lines.top.setAttribute("x2", "100%");
         lines.top.setAttribute("y2", y1);
 
-        lines.bottom.setAttribute("x1", x1);
+        lines.bottom.setAttribute("x1", "0%");
         lines.bottom.setAttribute("y1", y2);
-        lines.bottom.setAttribute("x2", x2);
+        lines.bottom.setAttribute("x2", "100%");
         lines.bottom.setAttribute("y2", y2);
 
         lines.left.setAttribute("x1", x1);
-        lines.left.setAttribute("y1", y1);
+        lines.left.setAttribute("y1", "0%");
         lines.left.setAttribute("x2", x1);
-        lines.left.setAttribute("y2", y2);
+        lines.left.setAttribute("y2", "100%");
 
         lines.right.setAttribute("x1", x2);
-        lines.right.setAttribute("y1", y1);
+        lines.right.setAttribute("y1", "0%");
         lines.right.setAttribute("x2", x2);
-        lines.right.setAttribute("y2", y2);
+        lines.right.setAttribute("y2", "100%");
     }
 
+    // when direction handler is draging
     function rotate_lines(theta){
 
         console.log(theta);
@@ -152,38 +153,74 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
             0, 0, 1,
         ]
 
-        var points =[
+        var points ;/*= `[
             -view_handle_dimension.x/2, view_handle_dimension.x/2,view_handle_dimension.x/2,-view_handle_dimension.x/2, 0,
             -view_handle_dimension.y/2, -view_handle_dimension.y/2,view_handle_dimension.y/2,  view_handle_dimension.y/2, -view_center.y,
             1,1,1,1,1
+        ]; */
+        var trans_points ;//= matmul2(trans_matrix, points, 3);
+
+        //console.log(points);
+        //var trans_points ;//= matmul2(trans_matrix, points, 3);
+        //console.log(trans_points);
+
+        points =[
+            0,
+            -view_center.y,
+            1
         ];
+        trans_points = matmul2(trans_matrix, points, 3);
+        lines.direction.setAttribute("x2", Math.ceil(trans_points[0]));
+        lines.direction.setAttribute("y2", Math.ceil(trans_points[1]));
 
-        console.log(points);
+        points =[
+            -view_center.x, view_center.x,//-view_handle_dimension.x/2, view_handle_dimension.x/2,
+            -view_handle_dimension.y/2, -view_handle_dimension.y/2,
+            1,1,
+        ];
         var trans_points = matmul2(trans_matrix, points, 3);
-        console.log(trans_points);
-
-        lines.direction.setAttribute("x2", Math.ceil(trans_points[4]));
-        lines.direction.setAttribute("y2", Math.ceil(trans_points[4+5]));
 
         lines.top.setAttribute("x1", Math.ceil(trans_points[0]));
-        lines.top.setAttribute("y1", Math.ceil(trans_points[0+5]));
+        lines.top.setAttribute("y1", Math.ceil(trans_points[0+2]));
         lines.top.setAttribute("x2", Math.ceil(trans_points[1]));
-        lines.top.setAttribute("y2", Math.ceil(trans_points[1+5]));
+        lines.top.setAttribute("y2", Math.ceil(trans_points[1+2]));
+
+
+        points =[
+            -view_handle_dimension.x/2, -view_handle_dimension.x/2,
+            -view_center.y, view_center.y,
+            1,1,
+        ];
+        trans_points = matmul2(trans_matrix, points, 3);
 
         lines.left.setAttribute("x1", Math.ceil(trans_points[0]));
-        lines.left.setAttribute("y1", Math.ceil(trans_points[0+5]));
-        lines.left.setAttribute("x2", Math.ceil(trans_points[3]));
-        lines.left.setAttribute("y2", Math.ceil(trans_points[3+5]));
+        lines.left.setAttribute("y1", Math.ceil(trans_points[0+2]));
+        lines.left.setAttribute("x2", Math.ceil(trans_points[1]));
+        lines.left.setAttribute("y2", Math.ceil(trans_points[1+2]));
 
-        lines.bottom.setAttribute("x1", Math.ceil(trans_points[3]));
-        lines.bottom.setAttribute("y1", Math.ceil(trans_points[3+5]));
-        lines.bottom.setAttribute("x2", Math.ceil(trans_points[2]));
-        lines.bottom.setAttribute("y2", Math.ceil(trans_points[2+5]));
 
-        lines.right.setAttribute("x1", Math.ceil(trans_points[1]));
-        lines.right.setAttribute("y1", Math.ceil(trans_points[1+5]));
-        lines.right.setAttribute("x2", Math.ceil(trans_points[2]));
-        lines.right.setAttribute("y2", Math.ceil(trans_points[2+5]));
+        points =[
+            view_center.x,-view_center.x,
+            view_handle_dimension.y/2,  view_handle_dimension.y/2,
+            1,1
+        ];
+        trans_points = matmul2(trans_matrix, points, 3);
+        lines.bottom.setAttribute("x1", Math.ceil(trans_points[1]));
+        lines.bottom.setAttribute("y1", Math.ceil(trans_points[1+2]));
+        lines.bottom.setAttribute("x2", Math.ceil(trans_points[0]));
+        lines.bottom.setAttribute("y2", Math.ceil(trans_points[0+2]));
+
+        points =[
+             view_handle_dimension.x/2,view_handle_dimension.x/2,
+            -view_center.y,view_center.y,
+            1,1
+        ];
+        trans_points = matmul2(trans_matrix, points, 3);
+
+        lines.right.setAttribute("x1", Math.ceil(trans_points[0]));
+        lines.right.setAttribute("y1", Math.ceil(trans_points[0+2]));
+        lines.right.setAttribute("x2", Math.ceil(trans_points[1]));
+        lines.right.setAttribute("y2", Math.ceil(trans_points[1+2]));
 
     }
     
@@ -228,27 +265,27 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
         // this causes error reporting, but we just let it be.
         var de = handles.left;
         de.setAttribute('x', Math.ceil(left-10));
-        de.setAttribute('y', Math.ceil(top+10));
-        de.setAttribute('height', Math.ceil(bottom-top-20));
+        de.setAttribute('y', "0%"); //Math.ceil(top+10));
+        de.setAttribute('height', "100%");//Math.ceil(bottom-top-20));
         de.setAttribute('width', 20);
 
     
         de = handles.right;
         de.setAttribute('x', Math.ceil(right-10));
-        de.setAttribute('y', Math.ceil(top+10));
-        de.setAttribute('height', Math.ceil(bottom-top-20));
+        de.setAttribute('y', "0%");//Math.ceil(top+10));
+        de.setAttribute('height', "100%");//Math.ceil(bottom-top-20));
         de.setAttribute('width', 20);
         
         de = handles.top;
-        de.setAttribute('x', Math.ceil(left+10));
+        de.setAttribute('x', "0%");//Math.ceil(left+10));
         de.setAttribute('y', Math.ceil(top-10));
-        de.setAttribute('width', Math.ceil(right-left-20));
+        de.setAttribute('width', "100%");//Math.ceil(right-left-20));
         de.setAttribute('height', 20);
 
         de = handles.bottom;
-        de.setAttribute('x', Math.ceil(left+10));
+        de.setAttribute('x', "0%");//Math.ceil(left+10));
         de.setAttribute('y', Math.ceil(bottom-10));
-        de.setAttribute('width', Math.ceil(right-left-20));
+        de.setAttribute('width', "100%");//Math.ceil(right-left-20));
         de.setAttribute('height', 20);
     
 

@@ -2,7 +2,7 @@
 var obj_type_map = {
     Car:            {color: '#00ff00',  size:[1.8, 4.5, 1.5]},
     Van:            {color: '#00ff00',  size:[1.8, 4.5, 1.5]},
-    Bus:            {color: '#ffff00',  size:[2.8, 10, 3]},
+    Bus:            {color: '#ffff00',  size:[3, 13, 3.5]},
     Pedestrian:     {color: '#ff0000',  size:[0.5, 0.4, 1.7]},
     Rider:          {color: '#ff8800',  size:[0.6, 1.6, 1.6]},
     Cyclist:        {color: '#ff8800',  size:[0.6, 1.6, 1.6]},

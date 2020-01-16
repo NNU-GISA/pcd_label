@@ -1,5 +1,5 @@
 
-import {transform_bbox, selected_box, translate_box, on_box_changed} from "./main.js"
+import {transform_bbox, translate_box, on_box_changed, selected_box, update_subview_by_windowsize} from "./main.js"
 import {data} from "./data.js"
 import {views} from "./view.js"
 import {matmul2} from "./util.js"
@@ -10,7 +10,7 @@ import {
 	Vector3
 } from "./lib/three.module.js";
 
-function create_view_handler(view_prefix, on_edge_changed, on_direction_changed, on_auto_shrink, on_moved, on_scale){
+function create_view_handler(view_prefix, on_edge_changed, on_direction_changed, on_auto_shrink, on_moved, on_scale, on_wheel){
 
     var mouse_start_pos;
 
@@ -55,6 +55,8 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
         move: document.getElementById(view_prefix+"move-handle"),
     }
 
+    var viewport_info;
+    
     var this_axis = view_prefix[0];
 
     function line(name){
@@ -197,12 +199,12 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
     
         if (box_ratio > viewport_ratio){
             //handle width is viewport.width*2/3
-            width = viewport.width*2/3;
+            width = viewport.width*(2/3)/viewport.zoom_ratio;
             height = width/box_ratio;
         }
         else{
             //handle height is viewport.height*2/3
-            height = viewport.height*2/3;
+            height = viewport.height*2/3/viewport.zoom_ratio;
             width = height*box_ratio;
         }
     
@@ -364,6 +366,17 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
                 event.preventDefault();
                 event.stopPropagation();
             }
+        };
+
+        div.onwheel = function(event){
+            //console.log(event);
+            if (event.deltaY>0){
+                console.log("down");
+            } else {
+                console.log("up");
+            }
+
+            on_wheel(event.deltaY);            
         };
 
         install_edge_hanler(handles.left,   lines,   {x:-1,y:0});
@@ -710,6 +723,21 @@ function on_edge_changed(delta, direction){
 }
 
 
+function on_wheel(subview, wheel_direction){
+    var multiplier = 1.0;
+    if (wheel_direction > 0){
+        multiplier = 1.1;
+    } else {
+        multiplier = 0.9;
+    }
+
+    subview.zoom_ratio *= multiplier;
+
+    return;
+}
+
+
+
 ///////////////////////////////////////////////////////////////////////////////////
 function on_z_auto_shrink(direction){
     var  extreme = get_selected_obj_support_point()
@@ -746,7 +774,9 @@ function on_z_edge_changed(ratio, direction){
 }
 
 function on_z_direction_changed(theta, sticky){
+    // points indices shall be obtained before rotation.
     var points_indices = data.world.get_points_indices_of_box(selected_box);
+        
 
     var _tempQuaternion = new Quaternion();
     var rotationAxis = new Vector3(0,0,1);
@@ -793,7 +823,13 @@ function on_z_scaled(ratio){
     on_box_changed(selected_box);
 }
 
-var z_view_handle = create_view_handler("z-", on_z_edge_changed, on_z_direction_changed, on_z_auto_shrink, on_z_moved, on_z_scaled);
+function on_z_wheel(wheel_direction){
+    on_wheel(views[1], wheel_direction);
+    update_subview_by_windowsize(selected_box);
+    z_view_handle.update_view_handle(views[1].viewport, {x: selected_box.scale.x, y:selected_box.scale.y});
+}
+
+var z_view_handle = create_view_handler("z-", on_z_edge_changed, on_z_direction_changed, on_z_auto_shrink, on_z_moved, on_z_scaled, on_z_wheel);
 
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -853,14 +889,32 @@ function on_y_moved(ratio){
     on_box_changed(selected_box);
 }
 
-function on_y_direction_changed(theta){
+function on_y_direction_changed(theta, sticky){
     //selected_box.rotation.x += theta;
     //on_box_changed(selected_box);
+    
+    var points_indices = data.world.get_points_indices_of_box(selected_box);
+    
     var _tempQuaternion = new Quaternion();
     var rotationAxis = new Vector3(0, 1, 0);
     selected_box.quaternion.multiply( _tempQuaternion.setFromAxisAngle( rotationAxis, -theta ) ).normalize();
+
+    if (sticky){
+        var extreme = data.world.get_dimension_of_points(points_indices, selected_box);
+
+        ['x','z'].forEach(function(axis){
+
+            translate_box(selected_box, axis, (extreme.max[axis] + extreme.min[axis])/2);
+            selected_box.scale[axis] = extreme.max[axis] - extreme.min[axis];        
+
+        }) 
+    }
+
+
     on_box_changed(selected_box);
 }
+
+
 
 
 function on_y_scaled(ratio){
@@ -879,7 +933,14 @@ function on_y_scaled(ratio){
     
     on_box_changed(selected_box);
 }
-var y_view_handle = create_view_handler("y-", on_y_edge_changed, on_y_direction_changed, on_y_auto_shrink, on_y_moved, on_y_scaled);
+
+function on_y_wheel(wheel_direction){
+    on_wheel(views[2], wheel_direction);
+    update_subview_by_windowsize(selected_box);
+    y_view_handle.update_view_handle(views[2].viewport, {x: selected_box.scale.x, y:selected_box.scale.z});
+}
+
+var y_view_handle = create_view_handler("y-", on_y_edge_changed, on_y_direction_changed, on_y_auto_shrink, on_y_moved, on_y_scaled, on_y_wheel);
 
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -940,12 +1001,27 @@ function on_x_moved(ratio){
     on_box_changed(selected_box);
 }
 
-function on_x_direction_changed(theta){
+function on_x_direction_changed(theta, sticky){
+    var points_indices = data.world.get_points_indices_of_box(selected_box);
+
     //selected_box.rotation.x += theta;
     //on_box_changed(selected_box);
     var _tempQuaternion = new Quaternion();
     var rotationAxis = new Vector3(1,0,0);
     selected_box.quaternion.multiply( _tempQuaternion.setFromAxisAngle( rotationAxis, theta ) ).normalize();
+
+    if (sticky){
+        var extreme = data.world.get_dimension_of_points(points_indices, selected_box);
+
+        ['y','z'].forEach(function(axis){
+
+            translate_box(selected_box, axis, (extreme.max[axis] + extreme.min[axis])/2);
+            selected_box.scale[axis] = extreme.max[axis] - extreme.min[axis];        
+
+        }) 
+    }
+
+
     on_box_changed(selected_box);
 
 }
@@ -965,7 +1041,13 @@ function on_x_scaled(ratio){
     
     on_box_changed(selected_box);
 }
-var x_view_handle = create_view_handler("x-", on_x_edge_changed, on_x_direction_changed, on_x_auto_shrink, on_x_moved, on_x_scaled);
+
+function on_x_wheel(wheel_direction){
+    on_wheel(views[3], wheel_direction);
+    update_subview_by_windowsize(selected_box);
+    x_view_handle.update_view_handle(views[3].viewport, {x: selected_box.scale.y, y:selected_box.scale.z});
+}
+var x_view_handle = create_view_handler("x-", on_x_edge_changed, on_x_direction_changed, on_x_auto_shrink, on_x_moved, on_x_scaled, on_x_wheel);
 
 
 

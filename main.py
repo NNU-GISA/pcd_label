@@ -110,13 +110,15 @@ class Root(object):
         data.append(scene)
 
         frames = os.listdir("public/data/"+s+"/pcd")
-        print(s, frames)
+        #print(s, frames)
         frames.sort()
         for f in frames:
           #if os.path.isfile("public/data/"+s+"/pcd/"+f):
             filename, fileext = os.path.splitext(f)
             scene["frames"].append(filename)
             scene["pcd_ext"] = fileext
+        if scene["pcd_ext"]=="":
+          scene["pcd_ext"]=".pcd"
 
         point_transform_matrix=[]
 

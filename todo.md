@@ -47,3 +47,7 @@
 44.  improve performance of coloring object points.
 45.  find box points and extreme shall be seperated
 46.  change box may cause camera switching.
+47.  initial z positin shall be configurable, or when a new box is created, the z position/scale shall be computed. 
+48.  height shall be infinity at init.
+49.  0324,458, 27,48,-2. box dimension incorrect.
+50.  zoom in/out in sub-sideview.

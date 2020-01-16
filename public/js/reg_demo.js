@@ -63,7 +63,7 @@ function init() {
     document.addEventListener("keydown", keydown)
 
     init_gui();
-    scene.add( new THREE.AxesHelper( 2 ) );
+    //scene.add( new THREE.AxesHelper( 2 ) );
 
     onWindowResize();
     window.addEventListener( 'resize', onWindowResize, false );

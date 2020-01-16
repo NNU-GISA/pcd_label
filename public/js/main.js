@@ -385,6 +385,7 @@ function render(){
             bottom: window.innerHeight-bottom,
             width:width,
             height:height,
+            zoom_ratio:view.zoom_ratio,
         };
 
         renderer.setViewport( left, bottom, width, height );
@@ -447,12 +448,12 @@ function scene_changed(scene_name){
     document.getElementById("frame-selector").innerHTML = frame_selector_str;
     
     
-
-    var camera_selector_str = meta.image.map(function(c){
-        return '<option value="'+c+'">'+c+'</option>';
-    }).reduce(function(x,y){return x+y;}, "<option>--camera--</option>");
-    document.getElementById("camera-selector").innerHTML = camera_selector_str;
-
+    if (meta.image){
+        var camera_selector_str = meta.image.map(function(c){
+            return '<option value="'+c+'">'+c+'</option>';
+        }).reduce(function(x,y){return x+y;}, "<option>--camera--</option>");
+        document.getElementById("camera-selector").innerHTML = camera_selector_str;
+    }
 
     load_obj_ids_of_scene(scene_name);
 }
@@ -515,7 +516,7 @@ function init_gui(){
     };
 
     params["test2"] = function(){
-        grow_box(0.2);
+        grow_box(0.2, {x:1, y:1, z:3});
         on_box_changed(selected_box);
     };
     
@@ -709,18 +710,18 @@ function update_subview_by_windowsize(box){
         var view_height = Math.floor( window.innerHeight * view.height );
 
         if (ii==1){
-            exp_camera_width = box.scale.x*1.5;
-            exp_camera_height = box.scale.y*1.5;
+            exp_camera_width = box.scale.x*1.5*view.zoom_ratio;
+            exp_camera_height = box.scale.y*1.5*view.zoom_ratio;
 
             exp_camera_clip = box.scale.z+0.8;
         } else if (ii==2){
-            exp_camera_width = box.scale.x*1.5;
-            exp_camera_height = box.scale.z*1.5;
+            exp_camera_width = box.scale.x*1.5*view.zoom_ratio;
+            exp_camera_height = box.scale.z*1.5*view.zoom_ratio;
 
             exp_camera_clip = box.scale.y*1.2;
         }else if (ii==3){
-            exp_camera_width = box.scale.y*1.5;
-            exp_camera_height = box.scale.z*1.5;
+            exp_camera_width = box.scale.y*1.5*view.zoom_ratio;
+            exp_camera_height = box.scale.z*1.5*view.zoom_ratio;
 
             exp_camera_clip = box.scale.x*1.2;
         }
@@ -1243,9 +1244,22 @@ function switch_bbox_type(target_type){
     
 }
 
-function grow_box(min_distance){
+function auto_shrink_box(){
+    var  extreme = data.world.get_points_dimmension_of_box(selected_box);
+    
+    
+    ['x', 'y','z'].forEach(function(axis){
 
-    var extreme = data.world.grow_box(selected_box, 0.2);
+        translate_box(selected_box, axis, (extreme.max[axis] + extreme.min[axis])/2);
+        selected_box.scale[axis] = extreme.max[axis]-extreme.min[axis];        
+
+    }) 
+
+}
+
+function grow_box(min_distance, init_scale_ratio){
+
+    var extreme = data.world.grow_box(selected_box, min_distance, init_scale_ratio);
 
     if (extreme){
 
@@ -1609,7 +1623,7 @@ function update_frame_info(scene, frame){
 function on_box_changed(box){
 
     update_subview_by_bbox(box);
-    view_handles.update_view_handle(views[1].viewport, selected_box.scale);
+    view_handles.update_view_handle();
     update_image_box_projection(box);
     
     //render_2d_image();
@@ -1716,7 +1730,8 @@ function add_global_obj_type(){
             var obj_type = event.currentTarget.getAttribute("uservalue");
             add_bbox(obj_type);
             //switch_bbox_type(event.currentTarget.getAttribute("uservalue"));
-            grow_box();
+            grow_box(0.2, {x:1, y:1, z:3});
+            auto_shrink_box();
             on_box_changed(selected_box);
             
         }
@@ -1726,4 +1741,4 @@ function add_global_obj_type(){
 
 
 
-export {selected_box, params, on_box_changed, select_bbox, scene, floatLabelManager, on_load_world_finished, operation_state, transform_bbox, translate_box}
+export {selected_box, params, on_box_changed, select_bbox, scene, floatLabelManager, on_load_world_finished, operation_state, transform_bbox, translate_box, update_subview_by_windowsize}

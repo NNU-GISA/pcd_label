@@ -10,6 +10,7 @@ var views = [
         width: 1.0,
         height: 1.0,
         background: new THREE.Color( 0.0, 0.0, 0.0 ),
+        zoom_ratio: 1.0, //useless for mainview
     },
     {
         left: 0,
@@ -17,6 +18,7 @@ var views = [
         width: 0.2,
         height: 0.3,
         background: new THREE.Color( 0.1, 0.1, 0.2 ),
+        zoom_ratio: 1.0,
     },
     {
         left: 0,
@@ -24,6 +26,7 @@ var views = [
         width: 0.2,
         height: 0.2,
         background: new THREE.Color( 0.1, 0.2, 0.1 ),
+        zoom_ratio: 1.0,
     },
 
     {
@@ -32,6 +35,7 @@ var views = [
         width: 0.2,
         height: 0.2,
         background: new THREE.Color( 0.2, 0.1, 0.1 ),
+        zoom_ratio: 1.0,
     }
 ];
 

@@ -257,7 +257,7 @@ var data = {
                     // if global camera not set, use first camera as default.
                     if (active_name.length > 0)
                         this.active_name = active_name;
-                    else if (this.names.length>0)
+                    else if (this.names && this.names.length>0)
                         this.active_name = this.names[0];
 
                     var _self = this;
@@ -639,12 +639,20 @@ var data = {
                 //return indices;
                 */
 
+               if (typeof(scale_ratio) == "number"){
+                    scale_ratio = {
+                        x: scale_ratio,
+                        y: scale_ratio,
+                        z: scale_ratio,
+                    };
+                }
+
                 var indices=[];
                 
                 var scaled_scale = {
-                    x: scale.x*scale_ratio,
-                    y: scale.y*scale_ratio,
-                    z: scale.z*scale_ratio,
+                    x: scale.x*scale_ratio.x,
+                    y: scale.y*scale_ratio.y,
+                    z: scale.z*scale_ratio.z,
                 }
 
                 var box_corners = psr_to_xyz(center, scaled_scale, rotation);
@@ -927,7 +935,8 @@ var data = {
                 var indices=[];
                 var cand_point_indices = point_indices;
                 if (!point_indices)
-                {                    
+                {                   
+                    
                     cand_point_indices = this.get_covering_position_indices(points, box.position, box.scale, box.rotation, scale_ratio);
                 }
 
@@ -965,18 +974,16 @@ var data = {
                 }
             },
 
-            grow_box: function(box, min_distance){
+            grow_box: function(box, min_distance, init_scale_ratio){
 
                 var points = this.points;
                 var pos_array = points.geometry.getAttribute("position").array;
-                
-                var relative_position = [];
                 
                 var trans = transpose(euler_angle_to_rotate_matrix(box.rotation, {x:0, y:0, z:0}), 4);
 
                 var indices=[];
                 var outer_indices=[];
-                var cand_point_indices = this.get_covering_position_indices(points, box.position, box.scale, box.rotation);
+                var cand_point_indices = this.get_covering_position_indices(points, box.position, box.scale, box.rotation, init_scale_ratio);
                 
                 var extreme= {
                     max: {        
@@ -992,7 +999,7 @@ var data = {
                     },
                 };
 
-                var scale_ratio = 1.0;
+                var scale_ratio = init_scale_ratio;
                 cand_point_indices.forEach(function(i){
                 //for (var i  = 0; i < pos.count; i++){
                     var x = pos_array[i*3];
@@ -1004,9 +1011,9 @@ var data = {
 
                     
                     // if indices is provided by caller, don't filter
-                    if ((Math.abs(tp[0]) > box.scale.x/2 * scale_ratio+0.01) 
-                        || (Math.abs(tp[1]) > box.scale.y/2 * scale_ratio+0.01)
-                        || (Math.abs(tp[2]) > box.scale.z/2 *scale_ratio+0.01) ){
+                    if ((Math.abs(tp[0]) > box.scale.x/2 * scale_ratio.x+0.01) 
+                        || (Math.abs(tp[1]) > box.scale.y/2 * scale_ratio.y+0.01)
+                        || (Math.abs(tp[2]) > box.scale.z/2 *scale_ratio.z+0.01) ){
                         outer_indices.push(i);
                         return;
                     }

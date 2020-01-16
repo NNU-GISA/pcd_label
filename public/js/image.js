@@ -226,8 +226,9 @@ function show_image(){
 
     // active img is set by global, it's not set sometimes.
     var img = data.world.images.active_image();
-    if (img)
+    if (img){
         svgimage.setAttribute("xlink:href", img.src);
+    }
 }
 
 
@@ -247,11 +248,11 @@ function render_2d_image(){
 
     function hide_canvas(){
         //document.getElementsByClassName("ui-wrapper")[0].style.display="none";
-        //document.getElementById("maincanvas-wrapper").style.display="none";
+        document.getElementById("maincanvas-wrapper").style.display="none";
     }
 
     function show_canvas(){
-        document.getElementById("maincanvas-wrapper").style.display="inherit";
+        document.getElementById("maincanvas-wrapper").style.display="inline";
     }
 
 

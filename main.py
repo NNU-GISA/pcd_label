@@ -188,7 +188,7 @@ class Root(object):
                 if image_ext == "":
                   #detect image file ext
                   files = os.listdir(cam_file)
-                  if len(files)>2:
+                  if len(files)>=2:
                     _,image_ext = os.path.splitext(files[0])
 
         scene["image_ext"] = image_ext

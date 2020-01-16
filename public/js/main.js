@@ -381,10 +381,10 @@ function render(){
         var height = Math.ceil( window.innerHeight * view.height );
 
         view.viewport={
-            left: left,
-            bottom: window.innerHeight-bottom,
-            width:width,
-            height:height,
+            left: window.innerWidth * view.left,
+            bottom: window.innerHeight-window.innerHeight * view.bottom,
+            width:window.innerWidth * view.width,
+            height:window.innerHeight * view.height,
             zoom_ratio:view.zoom_ratio,
         };
 

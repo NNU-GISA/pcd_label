@@ -52,3 +52,5 @@
 49.  0324,458, 27,48,-2. box dimension incorrect.
 50.  zoom in/out in sub-sideview.
 51.  keep pointer type when draging in subviews.
+52.  reset button, reset dimension not rotation. obj_cfg shall be the default size of object.
+53.  hide context photo if image not available.

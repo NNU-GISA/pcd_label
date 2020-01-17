@@ -17,6 +17,28 @@ var obj_type_map = {
 }
 
 
+function guess_obj_type_by_dimension(scale){
+
+    var max_score = 0;
+    var max_name = 0;
+    for (var i in obj_type_map){
+        var o = obj_type_map[i];
+        var scorex = o.size[0]/scale.x;
+        var scorey = o.size[1]/scale.y;
+
+        if (scorex>1) scorex = 1/scorex;
+        if (scorey>1) scorey = 1/scorey;
+
+        if (scorex + scorey > max_score){
+            max_score = scorex + scorey;
+            max_name = i;
+        }
+    };
+
+
+    return max_name;
+}
+
 
 function get_obj_cfg_by_type(name){
     if (obj_type_map[name]){
@@ -49,4 +71,4 @@ function get_next_obj_type_name(name){
     return name_array[idx];
 }
 
-export {obj_type_map, get_obj_cfg_by_type, get_next_obj_type_name}
+export {obj_type_map, get_obj_cfg_by_type, get_next_obj_type_name, guess_obj_type_by_dimension}

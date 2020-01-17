@@ -183,6 +183,39 @@ function array_as_vector_range(v, vl){
     }
 }
 
+// v is 1-d array of vector, vl is vector length, p is index into v.
+function array_as_vector_index_range(v, vl, p){
+    
+    var n = p.length;
+    
+    var min, max;
+    if (n === 0){
+        return null;
+    } else{
+        min = v.slice(p[0]*vl, (p[0]+1)*vl);
+        max = v.slice(p[0]*vl, (p[0]+1)*vl);
+    }
+
+    for (var i=1; i<n; ++i){
+        for (var j=0; j<vl; ++j){
+            if (min[j] > v[p[i]*vl+j]){
+                min[j] = v[p[i]*vl+j];
+            }
+
+            if (max[j] < v[p[i]*vl+j]){
+                max[j] = v[p[i]*vl+j];
+            }
+        }
+    }
+
+    return {
+        min: min, 
+        max: max,
+    }
+}
+
+
+
 function vector3_nomalize(m){
     var ret=[];
     for (var i=0; i<m.length/3; i++){
@@ -310,4 +343,4 @@ function rotation_matrix_to_euler_angle(m){ //m is 4* 4
 }
 
 
-export {vector_range, array_as_vector_range, vector4to3, vector3_nomalize, psr_to_xyz, matmul, matmul2, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle, transpose}
+export {vector_range, array_as_vector_range, array_as_vector_index_range, vector4to3, vector3_nomalize, psr_to_xyz, matmul, matmul2, euler_angle_to_rotate_matrix, rotation_matrix_to_euler_angle, transpose}

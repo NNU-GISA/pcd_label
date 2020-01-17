@@ -6,7 +6,7 @@ import {create_views, views} from "./view.js"
 import {createFloatLabelManager} from "./floatlabel.js"
 import {matmul2, euler_angle_to_rotate_matrix} from "./util.js"
 import {header} from "./header.js"
-import {get_obj_cfg_by_type, obj_type_map, get_next_obj_type_name} from "./obj_cfg.js"
+import {get_obj_cfg_by_type, obj_type_map, get_next_obj_type_name, guess_obj_type_by_dimension} from "./obj_cfg.js"
 
 import {init_image_op, render_2d_image, update_image_box_projection, clear_canvas, clear_main_canvas, choose_best_camera_for_point, image_manager} from "./image.js"
 import {add_calib_gui}  from "./calib.js"
@@ -14,7 +14,7 @@ import {mark_bbox, paste_bbox, auto_adjust_bbox, smart_paste} from "./auto-adjus
 import {save_annotation} from "./save.js"
 import {load_obj_ids_of_scene, generate_new_unique_id} from "./obj_id_list.js"
 import {stop_play, pause_resume_play, play_current_scene_with_buffer} from "./play.js"
-import {init_mouse, onUpPosition, getIntersects, getMousePosition, get_mouse_location_in_world} from "./mouse.js"
+import {init_mouse, onUpPosition, getIntersects, getMousePosition, get_mouse_location_in_world, get_screen_location_in_world} from "./mouse.js"
 
 import {view_handles}  from "./side_view_op.js"
 
@@ -825,9 +825,26 @@ function handleSelectRect(x,y,w,h){
     console.log("main select rect", x,y,w,h);
 
     views[0].camera.updateProjectionMatrix();
-    data.world.select_points_by_view_rect(x,y,w,h, views[0].camera);
-    render();
-    render_2d_image();
+    //data.world.select_points_by_view_rect(x,y,w,h, views[0].camera);
+    //render();
+    //render_2d_image();
+
+    var center_pos = get_screen_location_in_world(x+w/2, y+h/2);
+    
+    var box = data.world.create_box_by_view_rect(x,y,w,h, views[0].camera, center_pos);
+    scene.add(box);
+       
+    image_manager.add_box(box);
+    
+    auto_shrink_box(box);
+    
+    // guess obj type here
+    box.obj_type = guess_obj_type_by_dimension(box.scale);
+    
+    floatLabelManager.add_label(box, function(){select_bbox(box);});
+
+    select_bbox(box);
+    on_box_changed(box);    
 }
 
 function handleLeftClick(event) {
@@ -1244,14 +1261,14 @@ function switch_bbox_type(target_type){
     
 }
 
-function auto_shrink_box(){
-    var  extreme = data.world.get_points_dimmension_of_box(selected_box);
+function auto_shrink_box(box){
+    var  extreme = data.world.get_points_dimmension_of_box(box);
     
     
     ['x', 'y','z'].forEach(function(axis){
 
-        translate_box(selected_box, axis, (extreme.max[axis] + extreme.min[axis])/2);
-        selected_box.scale[axis] = extreme.max[axis]-extreme.min[axis];        
+        translate_box(box, axis, (extreme.max[axis] + extreme.min[axis])/2);
+        box.scale[axis] = extreme.max[axis]-extreme.min[axis];        
 
     }) 
 
@@ -1731,7 +1748,7 @@ function add_global_obj_type(){
             add_bbox(obj_type);
             //switch_bbox_type(event.currentTarget.getAttribute("uservalue"));
             grow_box(0.2, {x:1.5, y:1.5, z:3});
-            auto_shrink_box();
+            auto_shrink_box(selected_box);
             on_box_changed(selected_box);
             
         }

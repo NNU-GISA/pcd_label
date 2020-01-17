@@ -3,7 +3,7 @@
 import * as THREE from './lib/three.module.js';
 import { PCDLoader } from './lib/PCDLoader.js';
 import { get_obj_cfg_by_type } from './obj_cfg.js';
-import { matmul, euler_angle_to_rotate_matrix, transpose, psr_to_xyz, array_as_vector_range, vector_range} from "./util.js"
+import { matmul, euler_angle_to_rotate_matrix, transpose, psr_to_xyz, array_as_vector_range, array_as_vector_index_range, vector_range} from "./util.js"
 import {settings} from "./settings.js"
 var data = {
     
@@ -1131,6 +1131,73 @@ var data = {
                 this.update_points_color();
             },
 
+            create_box_by_view_rect: function(x,y,w,h, camera, center){
+                var rotation_z = camera.rotation.z;
+
+                var points = this.points;
+                var pos_array = points.geometry.getAttribute("position").array;
+
+                var indices = [];
+                var p = new THREE.Vector3();
+
+                for (var i=0; i< pos_array.length/3; i++){
+                    p.set(pos_array[i*3], pos_array[i*3+1], pos_array[i*3+2]);
+                    p.project(camera);
+                    //p.x = p.x/p.z;
+                    //p.y = p.y/p.z;
+                    //console.log(p);
+                    if ((p.x > x) && (p.x < x+w) && (p.y>y) && (p.y<y+h) && (p.z>0)){
+                        indices.push(i);
+                    }
+                }
+
+                console.log("select rect points", indices.length);
+
+                //compute center, no need to tranform to box coordinates, and can't do it in this stage.
+                /*
+                var extreme = array_as_vector_index_range(pos_array, 3, indices);
+
+                var center = {
+                    x: (extreme.max[0]+extreme.min[0])/2,
+                    y: (extreme.max[1]+extreme.min[1])/2,
+                    z: (extreme.max[2]+extreme.min[2])/2,
+                };
+                */
+
+                var trans = transpose(euler_angle_to_rotate_matrix({x:0,y:0,z:rotation_z}, {x:0, y:0, z:0}), 4);
+
+                var relative_position = [];
+                indices.forEach(function(i){
+                //for (var i  = 0; i < pos.count; i++){
+                    var x = pos_array[i*3];
+                    var y = pos_array[i*3+1];
+                    var z = pos_array[i*3+2];
+                    var p = [x-center.x, y-center.y, z-center.z, 1];
+                    var tp = matmul(trans, p, 4);
+                    relative_position.push([tp[0],tp[1],tp[2]]);
+                });
+
+                var relative_extreme = vector_range(relative_position);
+                var scale = {
+                    x: relative_extreme.max[0] - relative_extreme.min[0],
+                    y: relative_extreme.max[1] - relative_extreme.min[1],
+                    z: relative_extreme.max[2] - relative_extreme.min[2],
+                };
+
+                // enlarge scale a little
+
+
+                // adjust center
+                center.x += relative_extreme.min[0] + scale.x/2;
+                center.y += relative_extreme.min[1] + scale.y/2;
+                center.z += relative_extreme.min[2] + scale.z/2;
+
+                scale.x += 0.02;
+                scale.y += 0.02;
+                scale.z += 0.02;
+
+                return this.add_box(center, scale, {x:0,y:0,z:rotation_z}, "Unknown", "");
+            },
 
             set_box_points_color: function(box, target_color){
                 //var pos = this.points.geometry.getAttribute("position");

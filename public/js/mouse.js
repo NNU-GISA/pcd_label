@@ -52,6 +52,21 @@ function get_mouse_location_in_world(){
 }
 
 
+function get_screen_location_in_world(x,y){
+    var screen_pos = new THREE.Vector2();
+    screen_pos.x = x;
+    screen_pos.y = y;
+
+    raycaster.setFromCamera( screen_pos, views[0].camera );
+    var o = raycaster.ray.origin;
+    var d = raycaster.ray.direction;
+
+    var alpha = - o.z/d.z;
+    var x = o.x + d.x*alpha;
+    var y = o.y + d.y*alpha;
+    return {x:x, y:y, z:0};
+}
+
 
 function onMouseDown( event ) {    
 
@@ -208,4 +223,4 @@ function getIntersects( point, objects ) {
 }
 
 
-export{getMousePosition, onMouseDown, onMouseMove,set_mouse_handler, get_mouse_location_in_world, init_mouse, onUpPosition, getIntersects}
+export{getMousePosition, onMouseDown, onMouseMove,set_mouse_handler, get_screen_location_in_world, get_mouse_location_in_world, init_mouse, onUpPosition, getIntersects}

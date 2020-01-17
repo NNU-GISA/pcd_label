@@ -1117,4 +1117,4 @@ var view_handles = {
 }
 
 
-export {view_handles}
+export {view_handles, on_z_direction_changed}

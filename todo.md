@@ -55,3 +55,5 @@
 52.  reset button, reset dimension not rotation. obj_cfg shall be the default size of object.
 53.  hide context photo if image not available.
 54.  should enlarge prototype dimension when creating new box.
+54.  add grid on screen, help rotating mainview.
+55.  boundary-aware rotation support on mainview.

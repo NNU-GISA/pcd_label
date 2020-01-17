@@ -16,7 +16,7 @@ import {load_obj_ids_of_scene, generate_new_unique_id} from "./obj_id_list.js"
 import {stop_play, pause_resume_play, play_current_scene_with_buffer} from "./play.js"
 import {init_mouse, onUpPosition, getIntersects, getMousePosition, get_mouse_location_in_world, get_screen_location_in_world} from "./mouse.js"
 
-import {view_handles}  from "./side_view_op.js"
+import {view_handles, on_z_direction_changed}  from "./side_view_op.js"
 
 
 var sideview_enabled = true;
@@ -825,9 +825,9 @@ function handleSelectRect(x,y,w,h){
     console.log("main select rect", x,y,w,h);
 
     views[0].camera.updateProjectionMatrix();
-    //data.world.select_points_by_view_rect(x,y,w,h, views[0].camera);
-    //render();
-    //render_2d_image();
+    data.world.select_points_by_view_rect(x,y,w,h, views[0].camera);
+    render();
+    render_2d_image();
 
     var center_pos = get_screen_location_in_world(x+w/2, y+h/2);
     
@@ -1454,12 +1454,14 @@ function keydown( ev ) {
 
         case 'f':
             if (selected_box){                
-                transform_bbox("z_rotate_right");                
+                //transform_bbox("z_rotate_right");                
+                on_z_direction_changed(-1/180*Math.PI, true);
             }
             break;
         case 'r':
             if (selected_box){
-                transform_bbox("z_rotate_left");
+                //transform_bbox("z_rotate_left");
+                on_z_direction_changed(1/180*Math.PI, true);
             }
             break;
         
@@ -1747,7 +1749,7 @@ function add_global_obj_type(){
             var obj_type = event.currentTarget.getAttribute("uservalue");
             add_bbox(obj_type);
             //switch_bbox_type(event.currentTarget.getAttribute("uservalue"));
-            grow_box(0.2, {x:1.5, y:1.5, z:3});
+            grow_box(0.2, {x:1.2, y:1.2, z:3});
             auto_shrink_box(selected_box);
             on_box_changed(selected_box);
             

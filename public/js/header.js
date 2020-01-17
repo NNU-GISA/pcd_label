@@ -1,3 +1,7 @@
+
+import {data} from './data.js'
+
+
 var header={
 
     clear_box_info: function(){
@@ -8,10 +12,12 @@ var header={
         var scale = box.scale;
         var pos = box.position;
         var rotation = box.rotation;
-    
+        var points_number = data.world.get_box_points_number(box);
+
         document.getElementById("box").innerHTML = "| "+pos.x.toFixed(2) +" "+pos.y.toFixed(2) + " " + pos.z.toFixed(2) + " | " +
                                                     scale.x.toFixed(2) +" "+scale.y.toFixed(2) + " " + scale.z.toFixed(2) + " | " +
-                                                    (rotation.x*180/Math.PI).toFixed(2)+" "+(rotation.y*180/Math.PI).toFixed(2)+" "+(rotation.z*180/Math.PI).toFixed(2)+" ";
+                                                    (rotation.x*180/Math.PI).toFixed(2)+" "+(rotation.y*180/Math.PI).toFixed(2)+" "+(rotation.z*180/Math.PI).toFixed(2)+" | " +
+                                                    points_number + " ";
     },
 
     set_ref_obj: function(marked_object){

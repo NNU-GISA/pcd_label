@@ -1199,6 +1199,11 @@ var data = {
                 return this.add_box(center, scale, {x:0,y:0,z:rotation_z}, "Unknown", "");
             },
 
+            get_box_points_number: function(box){
+                var indices = this._get_points_index_of_box(this.points, box, 1.0);
+                return indices.length;
+            },
+
             set_box_points_color: function(box, target_color){
                 //var pos = this.points.geometry.getAttribute("position");
                 var color = this.points.geometry.getAttribute("color");

@@ -1730,7 +1730,7 @@ function add_global_obj_type(){
             var obj_type = event.currentTarget.getAttribute("uservalue");
             add_bbox(obj_type);
             //switch_bbox_type(event.currentTarget.getAttribute("uservalue"));
-            grow_box(0.2, {x:1, y:1, z:3});
+            grow_box(0.2, {x:1.5, y:1.5, z:3});
             auto_shrink_box();
             on_box_changed(selected_box);
             

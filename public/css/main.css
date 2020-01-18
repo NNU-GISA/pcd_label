@@ -183,6 +183,14 @@ dynamic set obj-type css has higher priority than this one.
 	height:100%;
 }
 
+#main-view-grid {
+	position: absolute;
+	top: 0%;
+	left: 0%;
+	height: 100%;
+	width: 100%;	
+}
+
 #context-menu-wrapper {
 	position: absolute;
 	display: none;
@@ -375,4 +383,17 @@ td {
 	border: 1px solid #55aaff;
 	background-color: rgba(75, 160, 255, 0.3);
 	
+}
+
+#main-view-svg{
+	position: absolute;
+	top: 0%;
+	left: 0%;	
+}
+.grid-line {
+	
+	stroke-dasharray: 3,3;
+	stroke: yellow;
+	stroke-width: 1px;
+	stroke-opacity: 0.2;
 }

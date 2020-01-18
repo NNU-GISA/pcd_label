@@ -86,7 +86,7 @@ function init() {
     //document.body.appendChild( container );
     container.appendChild( renderer.domElement );
 
-    create_views(scene, renderer.domElement, render, on_box_changed);
+    create_views(scene, container/*renderer.domElement*/, render, on_box_changed);
 
     add_range_box();
 
@@ -146,9 +146,35 @@ function init() {
     view_handles.init_view_operation();
     view_handles.hide();
 
+    install_grid()
     
 }
 
+function install_grid(){
+    
+    var svg = document.getElementById("main-view-svg");
+
+    for (var i=1; i<10; i++){
+        const line = document. createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", "0%");
+        line.setAttribute("y1", String(i*10)+"%");
+        line.setAttribute("x2", "100%");
+        line.setAttribute("y2", String(i*10)+"%");
+        line.setAttribute("class", "grid-line");
+        svg.appendChild(line);
+    }
+
+    for (var i=1; i<10; i++){
+        const line = document. createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("y1", "0%");
+        line.setAttribute("x1", String(i*10)+"%");
+        line.setAttribute("y2", "100%");
+        line.setAttribute("x2", String(i*10)+"%");
+        line.setAttribute("class", "grid-line");
+        svg.appendChild(line);
+    }
+    
+}
 function install_fast_tool(){
     document.getElementById("label-del").onclick = function(){
         remove_selected_box();
@@ -1455,13 +1481,13 @@ function keydown( ev ) {
         case 'f':
             if (selected_box){                
                 //transform_bbox("z_rotate_right");                
-                on_z_direction_changed(-1/180*Math.PI, true);
+                on_z_direction_changed(-0.005, true);
             }
             break;
         case 'r':
             if (selected_box){
                 //transform_bbox("z_rotate_left");
-                on_z_direction_changed(1/180*Math.PI, true);
+                on_z_direction_changed(0.005, true);
             }
             break;
         

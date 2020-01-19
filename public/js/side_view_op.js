@@ -627,13 +627,18 @@ function create_view_handler(view_prefix, on_edge_changed, on_direction_changed,
             console.log("key down!")
             switch(event.key){
                 case 'e':
-                case 'f':
                     on_direction_changed(-0.005, event.ctrlKey);
                     break;
                 case 'q':
-                case 'r':                
                     on_direction_changed(0.005, event.ctrlKey);
                     break;
+                case 'f':
+                    on_direction_changed(-0.005, true);
+                    break;
+                case 'r':                
+                    on_direction_changed(0.005, true);
+                    break;
+
                 case 'w':
                 case 'ArrowUp':
                     if (mouse_right_down){
@@ -785,9 +790,7 @@ function on_z_auto_shrink(direction){
             translate_box(selected_box, axis, (extreme.max[axis] + extreme.min[axis])/2);
             selected_box.scale[axis] = extreme.max[axis] - extreme.min[axis];        
  
-        })       
-        
-
+        })
     } else{
         auto_shrink(extreme, direction)
     }

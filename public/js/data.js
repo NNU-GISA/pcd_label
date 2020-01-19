@@ -1188,15 +1188,33 @@ var data = {
 
 
                 // adjust center
-                center.x += relative_extreme.min[0] + scale.x/2;
-                center.y += relative_extreme.min[1] + scale.y/2;
-                center.z += relative_extreme.min[2] + scale.z/2;
+                this.translate_box_position(center, rotation_z, "x", relative_extreme.min[0] + scale.x/2);
+                this.translate_box_position(center, rotation_z, "y", relative_extreme.min[1] + scale.y/2);
+                this.translate_box_position(center, rotation_z, "z", relative_extreme.min[2] + scale.z/2);
+                
 
                 scale.x += 0.02;
                 scale.y += 0.02;
                 scale.z += 0.02;
 
                 return this.add_box(center, scale, {x:0,y:0,z:rotation_z}, "Unknown", "");
+            },
+
+            translate_box_position: function(pos, theta, axis, delta){
+                switch (axis){
+                    case 'x':
+                        pos.x += delta*Math.cos(theta);
+                        pos.y += delta*Math.sin(theta);
+                        break;
+                    case 'y':
+                        pos.x += delta*Math.cos(Math.PI/2 + theta);
+                        pos.y += delta*Math.sin(Math.PI/2 + theta);  
+                        break;
+                    case 'z':
+                        pos.z += delta;
+                        break;
+            
+                }
             },
 
             get_box_points_number: function(box){

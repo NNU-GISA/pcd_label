@@ -860,14 +860,22 @@ var data = {
             // IMPORTANT
             // ground plane affects auto-adjustment
             // we don't count in the ponits of lowest part to reduce the affection.
-            get_points_dimmension_of_box: function(box){
-                var p = this._get_points_of_box(this.points, box, 1).position;
+            // note how the 'lower part' is defined, we count 
+            // lowest_part_type has two options: lowest_point, or lowest_box
+            get_points_dimmension_of_box: function(box, use_box_bottom_as_limit){
+                var p = this._get_points_of_box(this.points, box, 1).position;  //position is relative to box coordinates
 
-                var extreme1 = vector_range(p, 3);
+                var lowest_limit = - box.scale.z/2;
+
+                if (!use_box_bottom_as_limit){
+                    var extreme1 = vector_range(p, 3);
+                    lowest_limit = extreme1.min[2];
+                }
+                
 
                 //filter out lowest part
                 var p = p.filter(function(x){
-                    return x[2] - settings.ground_filter_height > extreme1.min[2];
+                    return x[2] - settings.ground_filter_height > lowest_limit;
                 })
 
                 //compute range again.
@@ -877,15 +885,16 @@ var data = {
                     max:{
                         x: extreme2.max[0],
                         y: extreme2.max[1],
-                        z: extreme1.max[2],
+                        z: extreme2.max[2],
                     },
                     min:{
                         x: extreme2.min[0],
                         y: extreme2.min[1],
-                        z: extreme1.min[2],
+                        z: lowest_limit,
                     }
                 }
             },
+
             // given points and box, calculate new box scale
             get_dimension_of_points: function(indices, box){
                 var p = this._get_points_of_box(this.points, box, 1, indices).position;                
@@ -913,7 +922,6 @@ var data = {
                 }
             },
 
-
             _get_points_index_of_box: function(points, box, scale_ratio){
                 return this._get_points_of_box(points, box, scale_ratio).index;
             },
@@ -939,7 +947,6 @@ var data = {
                     
                     cand_point_indices = this.get_covering_position_indices(points, box.position, box.scale, box.rotation, scale_ratio);
                 }
-
 
                 cand_point_indices.forEach(function(i){
                 //for (var i  = 0; i < pos.count; i++){

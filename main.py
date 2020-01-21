@@ -38,7 +38,7 @@ class Root(object):
       cl = cherrypy.request.headers['Content-Length']
       rawbody = cherrypy.request.body.read(int(cl))
       print(rawbody)
-      with open("./public/data/"+scene +"/bbox.json/"+frame+".bbox.json",'w') as f:
+      with open("./data/"+scene +"/bbox.json/"+frame+".bbox.json",'w') as f:
         f.write(rawbody)
       
       return "ok"
@@ -46,7 +46,7 @@ class Root(object):
     @cherrypy.expose    
     @cherrypy.tools.json_out()
     def load_annotation(self, scene, frame):
-      filename = "./public/data/"+scene +"/bbox.json/"+ frame + ".bbox.json"
+      filename = "./data/"+scene +"/bbox.json/"+ frame + ".bbox.json"
       if (os.path.isfile(filename)):
         with open(filename,"r") as f:
           ann=json.load(f)
@@ -63,11 +63,11 @@ class Root(object):
       os.system("rm ./temp/src.pcd ./temp/tgt.pcd ./temp/out.pcd ./temp/trans.json")
 
 
-      tgt_pcd_file = "./public/data/"+scene +"/pcd/"+ref_frame+".pcd"
-      tgt_json_file = "./public/data/"+scene +"/bbox.json/"+ref_frame+".bbox.json"
+      tgt_pcd_file = "./data/"+scene +"/pcd/"+ref_frame+".pcd"
+      tgt_json_file = "./data/"+scene +"/bbox.json/"+ref_frame+".bbox.json"
 
-      src_pcd_file = "./public/data/"+scene +"/pcd/"+adj_frame+".pcd"      
-      src_json_file = "./public/data/"+scene +"/bbox.json/"+adj_frame+".bbox.json"
+      src_pcd_file = "./data/"+scene +"/pcd/"+adj_frame+".pcd"      
+      src_json_file = "./data/"+scene +"/bbox.json/"+adj_frame+".bbox.json"
 
       cmd = extract_object_exe +" "+ src_pcd_file + " " + src_json_file + " " + object_id + " " +"./temp/src.pcd"
       print(cmd)
@@ -93,7 +93,7 @@ class Root(object):
     def datameta(self):
       data = []
 
-      scenes = os.listdir("./public/data")
+      scenes = os.listdir("./data")
       print(scenes)
       scenes.sort()
 
@@ -103,17 +103,17 @@ class Root(object):
           "frames": []
         }
 
-        if os.path.exists(os.path.join("public/data", s, "disable")):
+        if os.path.exists(os.path.join("./data", s, "disable")):
           print(s, "disabled")
           continue
         
         data.append(scene)
 
-        frames = os.listdir("public/data/"+s+"/pcd")
+        frames = os.listdir("./data/"+s+"/pcd")
         #print(s, frames)
         frames.sort()
         for f in frames:
-          #if os.path.isfile("public/data/"+s+"/pcd/"+f):
+          #if os.path.isfile("./data/"+s+"/pcd/"+f):
             filename, fileext = os.path.splitext(f)
             scene["frames"].append(filename)
             scene["pcd_ext"] = fileext
@@ -122,8 +122,8 @@ class Root(object):
 
         point_transform_matrix=[]
 
-        if os.path.isfile("public/data/"+s+"/point_transform.txt"):
-          with open("public/data/"+s+"/point_transform.txt")  as f:
+        if os.path.isfile("./data/"+s+"/point_transform.txt"):
+          with open("./data/"+s+"/point_transform.txt")  as f:
             point_transform_matrix=f.read()
             point_transform_matrix = point_transform_matrix.split(",")
 
@@ -132,7 +132,7 @@ class Root(object):
 
 
         
-        # calib_file = "public/data/"+s+"/calib.txt"
+        # calib_file = "./data/"+s+"/calib.txt"
         # if os.path.isfile(calib_file):
         #   calib["image"] = {}
         #   with open(calib_file)  as f:
@@ -141,7 +141,7 @@ class Root(object):
         #     calib["image"]["intrinsic"] = lines[1].strip().split(",") 
 
         # calibleft={}
-        # calib_file = "public/data/"+s+"/calib_left.txt"
+        # calib_file = "./data/"+s+"/calib_left.txt"
         # if os.path.isfile(calib_file):
         #   calib["left"] = {}
         #   with open(calib_file)  as f:
@@ -150,7 +150,7 @@ class Root(object):
         #     calib["left"]["intrinsic"] = lines[1].strip().split(",") 
 
         # calibright={}
-        # calib_file = "public/data/"+s+"/calib_right.txt"
+        # calib_file = "./data/"+s+"/calib_right.txt"
         # if os.path.isfile(calib_file):
         #   calib["right"] = {}
         #   with open(calib_file)  as f:
@@ -158,10 +158,10 @@ class Root(object):
         #     calib["right"]["extrinsic"] = map(strip_str, lines[0].strip().split(","))
         #     calib["right"]["intrinsic"] = lines[1].strip().split(",") 
         calib={}
-        if os.path.exists("public/data/"+s+"/calib"):
-          calibs = os.listdir("public/data/"+s+"/calib")
+        if os.path.exists("./data/"+s+"/calib"):
+          calibs = os.listdir("./data/"+s+"/calib")
           for c in calibs:
-            calib_file = "public/data/"+s+"/calib/" + c
+            calib_file = "./data/"+s+"/calib/" + c
             calib_name, _ = os.path.splitext(c)
             if os.path.isfile(calib_file):
               print(calib_file)
@@ -172,12 +172,12 @@ class Root(object):
         # camera names
         image = []
         image_ext = ""
-        cam_path = "public/data/"+s+"/image"
+        cam_path = "./data/"+s+"/image"
         if os.path.exists(cam_path):
           if os.path.exists(cam_path):
             cams = os.listdir(cam_path)
             for c in cams:
-              cam_file = "public/data/"+s+"/image/" + c
+              cam_file = "./data/"+s+"/image/" + c
               if os.path.isdir(cam_file):
 
                 if image:
@@ -194,7 +194,7 @@ class Root(object):
         scene["image_ext"] = image_ext
 
 
-        if not os.path.isdir("public/data/"+s+"/bbox.xyz"):
+        if not os.path.isdir("./data/"+s+"/bbox.xyz"):
           scene["boxtype"] = "psr"
           if point_transform_matrix:
             scene["point_transform_matrix"] = point_transform_matrix
@@ -239,7 +239,7 @@ class Root(object):
     @cherrypy.expose    
     @cherrypy.tools.json_out()
     def objs_of_scene(self, scene):
-      return self.get_all_unique_objs(os.path.join("public/data",scene))
+      return self.get_all_unique_objs(os.path.join("./data",scene))
 
     def get_all_unique_objs(self, path):
       files = os.listdir(os.path.join(path, "bbox.json"))

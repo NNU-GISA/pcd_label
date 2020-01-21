@@ -116,7 +116,7 @@ var data = {
         
                 
                 get_pcd_path: function(){
-                    return 'static/data/'+ this.scene + "/pcd/" + this.frame + scene_meta.pcd_ext;
+                    return 'data/'+ this.scene + "/pcd/" + this.frame + scene_meta.pcd_ext;
                 },
             
                 get_anno_path: function(){
@@ -274,7 +274,7 @@ var data = {
                                 _self.on_image_loaded();
                             };
 
-                            _self.content[img].src = '/static/data/'+scene_name+'/image/' + img + '/'+ frame + scene_meta.image_ext;
+                            _self.content[img].src = 'data/'+scene_name+'/image/' + img + '/'+ frame + scene_meta.image_ext;
                         });
                     }
                 },
